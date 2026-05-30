@@ -1,35 +1,42 @@
-import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
+import { OnModuleInit } from "@nestjs/common";
 import { League, Match, Team } from "../common/domain";
-import {
-  FOOTBALL_DATA_PROVIDER,
-  FootballDataProvider,
-} from "../providers/football-data.provider";
+
+export interface FootballDataset {
+  leagues: League[];
+  teams: Team[];
+  matches: Match[];
+}
 
 /**
- * In-memory read repository over the football data source.
+ * Abstract in-memory-indexed read repository over the football data source.
  *
- * Repository pattern (per coding standards): services depend on this, not on
- * the provider or storage. Swapping the in-memory index for Postgres/Prisma
- * later means reimplementing these methods only.
+ * Repository pattern (per coding standards): services depend on this abstract
+ * type, not on the backing store. Concrete subclasses only implement load():
+ *   - MemoryFootballRepository  (provider-backed seed/live data)
+ *   - PostgresFootballRepository (Neon/Postgres via pg)
+ *
+ * Reads are served synchronously from in-memory indexes (data volumes are a
+ * few leagues), so swapping the backend never ripples into service code.
  */
-@Injectable()
-export class FootballRepository implements OnModuleInit {
+export abstract class FootballRepository implements OnModuleInit {
   private leagues: League[] = [];
   private teams: Team[] = [];
   private matches: Match[] = [];
   private teamsById = new Map<string, Team>();
 
-  constructor(
-    @Inject(FOOTBALL_DATA_PROVIDER)
-    private readonly provider: FootballDataProvider,
-  ) {}
+  /** Load the full dataset from the backing store. */
+  protected abstract load(): Promise<FootballDataset>;
 
   async onModuleInit(): Promise<void> {
-    [this.leagues, this.teams, this.matches] = await Promise.all([
-      this.provider.getLeagues(),
-      this.provider.getTeams(),
-      this.provider.getMatches(),
-    ]);
+    await this.reload();
+  }
+
+  /** (Re)load data into the in-memory indexes — call after ingestion. */
+  async reload(): Promise<void> {
+    const data = await this.load();
+    this.leagues = data.leagues;
+    this.teams = data.teams;
+    this.matches = data.matches;
     this.teamsById = new Map(this.teams.map((t) => [t.id, t]));
   }
 
@@ -55,12 +62,14 @@ export class FootballRepository implements OnModuleInit {
     return this.teamsById.get(id)?.name ?? id;
   }
 
-  getMatches(filter: {
-    leagueId?: string;
-    season?: string;
-    status?: Match["status"];
-    teamId?: string;
-  } = {}): Match[] {
+  getMatches(
+    filter: {
+      leagueId?: string;
+      season?: string;
+      status?: Match["status"];
+      teamId?: string;
+    } = {},
+  ): Match[] {
     return this.matches.filter((m) => {
       if (filter.leagueId && m.leagueId !== filter.leagueId) return false;
       if (filter.season && m.season !== filter.season) return false;
