@@ -1,0 +1,20 @@
+{
+  "name": "insightxi",
+  "version": "0.0.0",
+  "private": true,
+  "description": "InsightXI — True Football Intelligence Platform (monorepo root)",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm --filter \"./apps/*\" build",
+    "lint": "pnpm --filter \"./apps/*\" lint",
+    "test": "pnpm --filter \"./apps/*\" test",
+    "dev:web": "pnpm --filter @insightxi/web dev",
+    "dev:api": "pnpm --filter @insightxi/api dev",
+    "dev:ai": "cd apps/ai-service && uvicorn app.main:app --reload --port 8000"
+  }
+}
