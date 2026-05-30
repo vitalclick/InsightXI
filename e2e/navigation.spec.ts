@@ -27,9 +27,13 @@ test.describe("core navigation & data hub", () => {
     await expect(firstMatch).toBeVisible();
     await firstMatch.click();
     await expect(page).toHaveURL(/\/matches\//);
-    // Match Intelligence section renders (prediction may degrade if AI is off).
+    // Match-detail header always renders (the AI-backed Match Intelligence
+    // panel degrades gracefully when the AI service is offline, as in CI).
+    await expect(page.getByText(/Matchday/i)).toBeVisible();
+    // The Match Intelligence section is present whether the AI is up
+    // ("Match Intelligence" heading) or down ("unavailable" notice).
     await expect(
-      page.getByRole("heading", { name: "Match Intelligence" }),
+      page.getByText(/Match [Ii]ntelligence/),
     ).toBeVisible();
   });
 });

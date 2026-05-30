@@ -11,7 +11,10 @@ const nextConfig = {
   output: "standalone",
   // App lives in a pnpm workspace; point tracing at the repo root so the
   // standalone bundle resolves correctly and the lockfile warning is silenced.
-  outputFileTracingRoot: workspaceRoot,
+  // (In Next 14 this lives under `experimental`; it is top-level in Next 15.)
+  experimental: {
+    outputFileTracingRoot: workspaceRoot,
+  },
 };
 
 export default nextConfig;
