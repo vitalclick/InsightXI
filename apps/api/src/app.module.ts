@@ -13,6 +13,7 @@ import { LiveModule } from "./modules/live/live.module";
 import { JobsModule } from "./modules/jobs/jobs.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { HistoricalModule } from "./modules/historical/historical.module";
+import { IngestionModule } from "./modules/ingestion/ingestion.module";
 
 /**
  * Root module. Feature modules from the InsightXI backend structure
@@ -35,6 +36,7 @@ import { HistoricalModule } from "./modules/historical/historical.module";
     // Phase 3 — Real-Time & Tactical
     TacticalModule,
     LiveModule,
+    IngestionModule,
     JobsModule.register(),
     // Phase 4 — Historical & Premium
     AuthModule,

@@ -2,6 +2,7 @@ import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Logger } from "@nestjs/common";
 import { Job } from "bullmq";
 import { AnalyticsService } from "../analytics/analytics.service";
+import { IngestionService } from "../ingestion/ingestion.service";
 import {
   INTELLIGENCE_QUEUE,
   JOB_REFRESH_DATA,
@@ -21,7 +22,10 @@ import {
 export class IntelligenceProcessor extends WorkerHost {
   private readonly logger = new Logger(IntelligenceProcessor.name);
 
-  constructor(private readonly analytics: AnalyticsService) {
+  constructor(
+    private readonly analytics: AnalyticsService,
+    private readonly ingestion: IngestionService,
+  ) {
     super();
   }
 
@@ -29,6 +33,7 @@ export class IntelligenceProcessor extends WorkerHost {
     switch (job.name) {
       case JOB_REFRESH_DATA:
         this.logger.log("Refreshing football data from provider…");
+        await this.ingestion.ingestAll();
         this.analytics.invalidate();
         return { ok: true };
       case JOB_RETRAIN_MODELS:
