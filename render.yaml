@@ -1,0 +1,29 @@
+# Render Blueprint — alternative host for the API + AI service.
+# (Web deploys to Vercel; see apps/web/vercel.json and DEPLOYMENT.md.)
+services:
+  - type: web
+    name: insightxi-api
+    runtime: docker
+    dockerfilePath: apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATA_BACKEND
+        value: postgres
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: AI_SERVICE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENABLE_QUEUES
+        value: "true"
+
+  - type: web
+    name: insightxi-ai
+    runtime: docker
+    dockerfilePath: apps/ai-service/Dockerfile
+    dockerContext: apps/ai-service
+    healthCheckPath: /health

@@ -1,0 +1,17 @@
+{
+  "name": "InsightXI — True Football Intelligence",
+  "short_name": "InsightXI",
+  "description": "AI-powered, explainable football intelligence and analytics.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f1c",
+  "theme_color": "#0a0f1c",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

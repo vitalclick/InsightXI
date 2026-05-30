@@ -1,0 +1,37 @@
+// InsightXI service worker — minimal offline-ready app shell cache.
+const CACHE = "insightxi-v1";
+const APP_SHELL = ["/", "/manifest.webmanifest", "/icon.svg"];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)));
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))),
+      ),
+  );
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  if (request.method !== "GET") return;
+  // Network-first for navigations, falling back to cached shell when offline.
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request).catch(() =>
+        caches.match("/").then((r) => r ?? Response.error()),
+      ),
+    );
+    return;
+  }
+  // Cache-first for static assets.
+  event.respondWith(
+    caches.match(request).then((cached) => cached ?? fetch(request)),
+  );
+});

@@ -7,6 +7,8 @@ dist/
 build/
 .next/
 out/
+*.tsbuildinfo
+next-env.d.ts
 
 # Python
 __pycache__/
@@ -36,3 +38,9 @@ pnpm-debug.log*
 
 # Coverage
 coverage/
+
+# Trained model artifacts (regenerate via app.training.train)
+apps/ai-service/models/*.joblib
+
+# Python editable-install metadata
+*.egg-info/
