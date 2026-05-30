@@ -1,0 +1,73 @@
+name: Deploy (Railway)
+
+# Continuous delivery to Railway. Runs only after CI succeeds on main, so a
+# red build never ships. Each service is deployed independently; Railway builds
+# the Dockerfile referenced by its railway.json.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   RAILWAY_TOKEN              project token (Railway → Project → Settings → Tokens)
+#   RAILWAY_SERVICE_API        service name/id for the NestJS API
+#   RAILWAY_SERVICE_AI         service name/id for the FastAPI AI service
+#   RAILWAY_SERVICE_WEB        service name/id for the Next.js web app
+#
+# If RAILWAY_TOKEN is absent the job is skipped (so the workflow is safe before
+# you have provisioned Railway).
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-railway
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy services to Railway
+    runs-on: ubuntu-latest
+    # Only on a green CI run (or a manual dispatch).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard — require RAILWAY_TOKEN
+        id: guard
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "RAILWAY_TOKEN not set — skipping deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Railway CLI
+        if: steps.guard.outputs.ready == 'true'
+        run: npm i -g @railway/cli
+
+      # Deploy each service. --detach returns once the build is queued; Railway
+      # runs the in-repo Dockerfile and applies that service's env vars.
+      - name: Deploy API
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --ci --detach --service "${{ secrets.RAILWAY_SERVICE_API }}"
+
+      - name: Deploy AI service
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --ci --detach --service "${{ secrets.RAILWAY_SERVICE_AI }}"
+
+      - name: Deploy Web
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --ci --detach --service "${{ secrets.RAILWAY_SERVICE_WEB }}"
