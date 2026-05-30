@@ -54,4 +54,79 @@ export interface MatchPrediction {
   confidenceLevel: string;
   topSelection: { label: string; probability: number };
   explanations: string[];
+  modelBackend: string;
+}
+
+export interface TacticalProfile {
+  teamId: string;
+  name: string;
+  formation: string;
+  possession: number;
+  pressingIntensity: number;
+  defensiveLine: string;
+  attackingFlow: string;
+  transitionStyle: string;
+}
+
+export interface TacticalMatchup {
+  home: TacticalProfile;
+  away: TacticalProfile;
+  tacticalEdge: number;
+  insights: string[];
+}
+
+export type SubscriptionTier = "FREE" | "PREMIUM";
+
+export interface PublicUser {
+  id: string;
+  email: string;
+  tier: SubscriptionTier;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  user: PublicUser;
+}
+
+export interface H2HSummary {
+  teamA: string;
+  teamB: string;
+  played: number;
+  teamAWins: number;
+  teamBWins: number;
+  draws: number;
+  avgGoalsPerGame: number;
+  bttsRate: number;
+}
+
+export interface SeasonTrend {
+  season: string;
+  played: number;
+  points: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  avgXgFor: number;
+  avgXgAgainst: number;
+}
+
+export interface LiveEvent {
+  minute: number;
+  type: "GOAL" | "KICKOFF" | "FULLTIME";
+  teamId?: string;
+  text: string;
+}
+
+export interface LiveSnapshot {
+  matchId: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  minute: number;
+  homeGoals: number;
+  awayGoals: number;
+  momentum: number;
+  status: "LIVE" | "FINISHED";
+  events: LiveEvent[];
 }

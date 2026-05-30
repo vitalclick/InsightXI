@@ -6,6 +6,8 @@ const LINKS = [
   { href: "/results", label: "Results" },
   { href: "/standings", label: "Standings" },
   { href: "/live", label: "Live" },
+  { href: "/trends", label: "Trends" },
+  { href: "/account", label: "Account" },
 ];
 
 export function Nav() {
@@ -15,7 +17,7 @@ export function Nav() {
         <Link href="/" className="font-bold tracking-tight">
           Insight<span className="text-insight">XI</span>
         </Link>
-        <ul className="flex gap-5 text-sm text-white/70">
+        <ul className="flex flex-wrap gap-5 text-sm text-white/70">
           {LINKS.map((l) => (
             <li key={l.href}>
               <Link href={l.href} className="hover:text-white">

@@ -309,35 +309,51 @@ AI prediction `POST /predict` (transparent baseline model for now).
 
 ## MVP Phasing
 
-The product vision is broad; build it in phases rather than all at once.
+The product vision is broad; built in phases rather than all at once.
+Phases 1–4 below are **implemented** as a working, tested vertical slice
+running offline on a deterministic seed data source (swappable for a live
+provider behind `FootballDataProvider`).
 
-### Phase 1 — Foundations (current)
+### Phase 1 — Foundations ✅
 
-* Monorepo scaffold, shared env contract, CI skeleton
+* Monorepo scaffold, shared env contract, CI workflow
 * `health` endpoints across services
-* Football Data Hub read path: fixtures, results, league tables
-  (ingest from API-Football → Postgres)
-* Basic web shell: fixtures + match detail pages
+* Football Data Hub: leagues, teams (profiles/form), fixtures, results,
+  H2H, computed league tables — behind a `FootballDataProvider` abstraction
+  (mock seed provider now; API-Football → Postgres later)
+* Web shell: dashboard, fixtures, results, standings, match detail
 
-### Phase 2 — Intelligence Engine (first real models)
+### Phase 2 — Intelligence Engine ✅
 
-* Replace the AI baseline with Poisson + Elo + logistic regression,
-  then an XGBoost ensemble
-* Explainable predictions (`/predict` returns probabilities + reasoning)
-* `predictions` + `analytics` API modules wired to the AI service
-* Supported markets: Home/Draw/Away, Double Chance, Over 1.5, BTTS
+* Poisson scoreline model + Elo (Davidson) + Logistic Regression / XGBoost
+  ensemble, with reproducible training (`python -m app.training.train`) and
+  graceful fallback to the analytical blend when no artifacts exist
+* Explainable `/predict` (probabilities, expected goals, faithful reasoning)
+* `analytics` (Elo, strengths, form) + `predictions` API modules wired to the
+  AI service via a swappable client
+* Markets: 1X2, Double Chance, Draw No Bet, Over 1.5/2.5, Under 4.5, BTTS,
+  First Half Goal
 
-### Phase 3 — Real-Time & Tactical
+### Phase 3 — Real-Time & Tactical ✅
 
-* Live scores + live momentum via Socket.IO
-* BullMQ jobs for ingestion + daily model retraining
-* Tactical Intelligence layer (formations, pressing, transitions)
+* Live scores + live momentum + event feed via Socket.IO (simulated match)
+* Tactical Intelligence layer (formation, press, defensive line, transitions,
+  matchup edge + insights)
+* BullMQ jobs for ingestion refresh + daily retraining (feature-flagged via
+  `ENABLE_QUEUES`; boots without Redis)
 
-### Phase 4 — Historical & Premium
+### Phase 4 — Historical & Premium ✅
 
-* 5+ years historical analytics, H2H, manager history
-* Subscription tiers (free vs premium) + RBAC
-* PWA, Lighthouse 90+, performance hardening
+* Historical analytics across seasons: H2H summaries + per-season team trends
+* JWT auth + subscription tiers (FREE/PREMIUM) + RBAC guards
+  (premium-gated trends endpoint; free/premium demo accounts)
+* PWA: manifest, themed install, offline app-shell service worker
+
+### Next (beyond MVP)
+
+* Real provider integration (API-Football), Postgres/Prisma persistence
+* Model calibration + drift monitoring, richer feature set
+* Performance hardening to Lighthouse 90+, real manager/lineup data
 
 ---
 

@@ -8,6 +8,11 @@ import { MatchesModule } from "./modules/matches/matches.module";
 import { StatisticsModule } from "./modules/statistics/statistics.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { PredictionsModule } from "./modules/predictions/predictions.module";
+import { TacticalModule } from "./modules/tactical/tactical.module";
+import { LiveModule } from "./modules/live/live.module";
+import { JobsModule } from "./modules/jobs/jobs.module";
+import { AuthModule } from "./modules/auth/auth.module";
+import { HistoricalModule } from "./modules/historical/historical.module";
 
 /**
  * Root module. Feature modules from the InsightXI backend structure
@@ -27,6 +32,13 @@ import { PredictionsModule } from "./modules/predictions/predictions.module";
     // Phase 2 — Intelligence Engine
     AnalyticsModule,
     PredictionsModule,
+    // Phase 3 — Real-Time & Tactical
+    TacticalModule,
+    LiveModule,
+    JobsModule.register(),
+    // Phase 4 — Historical & Premium
+    AuthModule,
+    HistoricalModule,
   ],
 })
 export class AppModule {}

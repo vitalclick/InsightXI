@@ -3,6 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api-client";
 import { PredictionPanel } from "../../../components/prediction-panel";
+import { TacticalPanel } from "../../../components/tactical-panel";
+import { H2HPanel } from "../../../components/h2h-panel";
 
 export default function MatchPage({ params }: { params: { id: string } }) {
   const { data: match, isLoading } = useQuery({
@@ -40,6 +42,8 @@ export default function MatchPage({ params }: { params: { id: string } }) {
       </section>
 
       <PredictionPanel matchId={match.id} />
+      <TacticalPanel matchId={match.id} />
+      <H2HPanel homeId={match.homeTeamId} awayId={match.awayTeamId} />
     </main>
   );
 }
