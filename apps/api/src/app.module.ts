@@ -6,6 +6,8 @@ import { LeaguesModule } from "./modules/leagues/leagues.module";
 import { TeamsModule } from "./modules/teams/teams.module";
 import { MatchesModule } from "./modules/matches/matches.module";
 import { StatisticsModule } from "./modules/statistics/statistics.module";
+import { AnalyticsModule } from "./modules/analytics/analytics.module";
+import { PredictionsModule } from "./modules/predictions/predictions.module";
 
 /**
  * Root module. Feature modules from the InsightXI backend structure
@@ -22,6 +24,9 @@ import { StatisticsModule } from "./modules/statistics/statistics.module";
     TeamsModule,
     MatchesModule,
     StatisticsModule,
+    // Phase 2 — Intelligence Engine
+    AnalyticsModule,
+    PredictionsModule,
   ],
 })
 export class AppModule {}
