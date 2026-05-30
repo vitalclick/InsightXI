@@ -123,8 +123,8 @@ Advanced football tactical interpretation.
 * TypeScript
 * TailwindCSS
 * Framer Motion
-* Zustand or Redux Toolkit
-* React Query / TanStack Query
+* Zustand (state management — chosen over Redux Toolkit)
+* TanStack Query (server/cache state)
 
 ---
 
@@ -152,11 +152,17 @@ Advanced football tactical interpretation.
 ## Infrastructure
 
 * Vercel (frontend)
-* Railway or Render (backend)
-* Supabase or Neon (database)
+* Railway (backend — chosen over Render)
+* Neon (managed Postgres — chosen over Supabase)
 * Cloudflare CDN
 * Docker
 * GitHub Actions CI/CD
+* pnpm workspaces (monorepo tooling)
+
+> **Locked stack decisions.** The "X or Y" choices above are now resolved:
+> **Zustand** for state, **Railway** for backend hosting, **Neon** for the
+> database, and **pnpm workspaces** for the monorepo. Do not reintroduce the
+> alternatives without an explicit decision to change direction.
 
 ---
 
@@ -247,13 +253,91 @@ All outputs must be probabilistic.
 
 ```txt
 /apps/ai-service
+  /app
+    /inference
   /models
   /training
-  /inference
   /datasets
   /features
   /evaluation
+  /tests
 ```
+
+> **Scaffold status.** This monorepo structure is now materialized as a
+> runnable skeleton (pnpm workspace at the repo root). Each app boots and the
+> AI service ships passing tests. Feature modules listed above are stubs/
+> placeholders to be filled in per the MVP phasing below.
+
+---
+
+# Setup, Commands & MVP Phasing
+
+## Prerequisites
+
+* Node.js >= 20 and pnpm >= 9 (`npm i -g pnpm`)
+* Python >= 3.11 (for the AI service)
+* A running Postgres (Neon in cloud, or local) and Redis for full backend work
+
+## First-time setup
+
+```bash
+pnpm install                 # install web + api deps (workspace root)
+cp .env.example .env         # then fill in values — never commit .env
+
+# AI service (separate Python env)
+cd apps/ai-service
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+## Everyday commands (run from repo root)
+
+| Task                    | Command                                            |
+| ----------------------- | -------------------------------------------------- |
+| Run web + api (dev)     | `pnpm dev`                                          |
+| Run web only            | `pnpm dev:web`     → http://localhost:3000          |
+| Run api only            | `pnpm dev:api`     → http://localhost:4000          |
+| Run AI service          | `pnpm dev:ai`      → http://localhost:8000          |
+| Build all JS apps       | `pnpm build`                                        |
+| Lint all JS apps        | `pnpm lint`                                         |
+| Test all JS apps        | `pnpm test`                                         |
+| Test AI service         | `cd apps/ai-service && pytest`                      |
+| Lint AI service         | `cd apps/ai-service && ruff check .`                |
+
+Health checks: API `GET /health`, AI service `GET /health`,
+AI prediction `POST /predict` (transparent baseline model for now).
+
+## MVP Phasing
+
+The product vision is broad; build it in phases rather than all at once.
+
+### Phase 1 — Foundations (current)
+
+* Monorepo scaffold, shared env contract, CI skeleton
+* `health` endpoints across services
+* Football Data Hub read path: fixtures, results, league tables
+  (ingest from API-Football → Postgres)
+* Basic web shell: fixtures + match detail pages
+
+### Phase 2 — Intelligence Engine (first real models)
+
+* Replace the AI baseline with Poisson + Elo + logistic regression,
+  then an XGBoost ensemble
+* Explainable predictions (`/predict` returns probabilities + reasoning)
+* `predictions` + `analytics` API modules wired to the AI service
+* Supported markets: Home/Draw/Away, Double Chance, Over 1.5, BTTS
+
+### Phase 3 — Real-Time & Tactical
+
+* Live scores + live momentum via Socket.IO
+* BullMQ jobs for ingestion + daily model retraining
+* Tactical Intelligence layer (formations, pressing, transitions)
+
+### Phase 4 — Historical & Premium
+
+* 5+ years historical analytics, H2H, manager history
+* Subscription tiers (free vs premium) + RBAC
+* PWA, Lighthouse 90+, performance hardening
 
 ---
 
