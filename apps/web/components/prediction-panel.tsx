@@ -2,12 +2,33 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../services/api-client";
+import { ProbabilityRing } from "./charts/probability-ring";
+import { MarketBar } from "./charts/market-bar";
+import { XgCompare } from "./charts/xg-compare";
 
-function Pct({ value }: { value: number }) {
-  return <span className="tabular-nums">{(value * 100).toFixed(0)}%</span>;
+const HOME_COLOR = "#22c55e"; // signal
+const DRAW_COLOR = "rgba(255,255,255,0.35)";
+const AWAY_COLOR = "#3b82f6"; // insight
+
+function LegendDot({ color, label, value }: { color: string; label: string; value: number }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
+      <span className="text-white/60">{label}</span>
+      <span className="ml-auto font-semibold tabular-nums">{Math.round(value * 100)}%</span>
+    </div>
+  );
 }
 
-export function PredictionPanel({ matchId }: { matchId: string }) {
+export function PredictionPanel({
+  matchId,
+  homeName = "Home",
+  awayName = "Away",
+}: {
+  matchId: string;
+  homeName?: string;
+  awayName?: string;
+}) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["prediction", matchId],
     queryFn: () => api.prediction(matchId),
@@ -23,6 +44,8 @@ export function PredictionPanel({ matchId }: { matchId: string }) {
     );
 
   const { outcome } = data;
+  const top = Math.max(outcome.homeWin, outcome.draw, outcome.awayWin);
+
   return (
     <section className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
@@ -32,40 +55,37 @@ export function PredictionPanel({ matchId }: { matchId: string }) {
         </span>
       </div>
 
-      {/* 1X2 probability bar */}
-      <div className="flex overflow-hidden rounded-lg text-center text-xs font-medium">
-        <div className="bg-signal/70 py-2 text-black" style={{ width: `${outcome.homeWin * 100}%` }}>
-          <Pct value={outcome.homeWin} />
+      {/* Headline: probability ring + 1X2 legend */}
+      <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/10 bg-white/5 p-5 sm:flex-row sm:gap-8">
+        <ProbabilityRing
+          size={150}
+          data={[
+            { label: "Home win", value: outcome.homeWin, color: HOME_COLOR },
+            { label: "Draw", value: outcome.draw, color: DRAW_COLOR },
+            { label: "Away win", value: outcome.awayWin, color: AWAY_COLOR },
+          ]}
+          centerValue={`${Math.round(top * 100)}%`}
+          centerLabel={data.topSelection.label.toUpperCase()}
+        />
+        <div className="flex w-full max-w-xs flex-col gap-2">
+          <LegendDot color={HOME_COLOR} label={`${homeName} win`} value={outcome.homeWin} />
+          <LegendDot color={DRAW_COLOR} label="Draw" value={outcome.draw} />
+          <LegendDot color={AWAY_COLOR} label={`${awayName} win`} value={outcome.awayWin} />
         </div>
-        <div className="bg-white/20 py-2" style={{ width: `${outcome.draw * 100}%` }}>
-          <Pct value={outcome.draw} />
-        </div>
-        <div className="bg-insight/70 py-2" style={{ width: `${outcome.awayWin * 100}%` }}>
-          <Pct value={outcome.awayWin} />
-        </div>
-      </div>
-      <div className="flex justify-between text-xs text-white/50">
-        <span>Home win</span>
-        <span>Draw</span>
-        <span>Away win</span>
-      </div>
-
-      <div className="text-sm text-white/60">
-        Expected goals: {data.expectedGoals.home} – {data.expectedGoals.away}
       </div>
 
-      {/* Markets */}
-      <div className="grid gap-2 sm:grid-cols-2">
+      {/* xG comparison */}
+      <XgCompare
+        homeLabel={homeName}
+        awayLabel={awayName}
+        home={data.expectedGoals.home}
+        away={data.expectedGoals.away}
+      />
+
+      {/* Markets as proportional bars */}
+      <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
         {data.markets.map((m) => (
-          <div
-            key={m.market}
-            className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm"
-          >
-            <span className="text-white/70">{m.label}</span>
-            <span className="font-semibold">
-              <Pct value={m.probability} />
-            </span>
-          </div>
+          <MarketBar key={m.market} label={m.label} value={m.probability} />
         ))}
       </div>
 

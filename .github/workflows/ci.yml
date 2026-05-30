@@ -47,3 +47,21 @@ jobs:
         run: ruff check .
       - name: Test
         run: pytest -q
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Typecheck E2E
+        run: pnpm exec tsc --noEmit -p tsconfig.e2e.json
+      - name: Run E2E (offline mock backend)
+        run: pnpm test:e2e

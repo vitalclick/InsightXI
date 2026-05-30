@@ -1,6 +1,14 @@
 // InsightXI service worker — minimal offline-ready app shell cache.
-const CACHE = "insightxi-v1";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/icon.svg"];
+const CACHE = "insightxi-v3";
+const APP_SHELL = [
+  "/",
+  "/install",
+  "/manifest.webmanifest",
+  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/apple-touch-icon.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)));
@@ -21,6 +29,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
+  // Never cache cross-origin (API) requests — always go to network.
+  if (new URL(request.url).origin !== self.location.origin) return;
   // Network-first for navigations, falling back to cached shell when offline.
   if (request.mode === "navigate") {
     event.respondWith(

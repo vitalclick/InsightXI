@@ -60,6 +60,21 @@ secrets in the dashboard.
 
 ## CI
 
-`.github/workflows/ci.yml` runs typecheck/test/build for all three services on
-every PR. Add a deploy step (Railway/Vercel GitHub integrations or CLI) once
-host credentials are configured.
+`.github/workflows/ci.yml` runs typecheck/test/build for all three services
+plus a Playwright E2E job on every PR. Add a deploy step (Railway/Vercel GitHub
+integrations or CLI) once host credentials are configured.
+
+## End-to-end tests (Playwright)
+
+E2E specs live in `e2e/` and run the real web + API together against the
+deterministic offline mock backend (reproducible; no API key or DB needed).
+Playwright boots both servers itself (`playwright.config.ts` → `webServer`).
+
+```bash
+pnpm exec playwright install chromium   # one-time browser download
+pnpm test:e2e
+pnpm exec tsc --noEmit -p tsconfig.e2e.json   # typecheck specs without running
+```
+
+The browser binary is fetched from Playwright's CDN, which some sandboxes
+block — run these locally or in CI (the `e2e` job installs the browser).

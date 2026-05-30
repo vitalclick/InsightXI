@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { API_URL_PUBLIC } from "../../services/api-client";
 import type { LiveSnapshot } from "../../lib/types";
+import { MomentumGauge } from "../../components/charts/momentum-gauge";
 
 export default function LivePage() {
   const [snap, setSnap] = useState<LiveSnapshot | null>(null);
@@ -64,15 +65,11 @@ export default function LivePage() {
             </div>
 
             <div className="mt-5">
-              <div className="mb-1 flex justify-between text-[11px] text-white/40">
-                <span>Momentum</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-insight/40">
-                <div
-                  className="h-full bg-signal transition-all duration-700"
-                  style={{ width: `${snap.momentum}%` }}
-                />
-              </div>
+              <MomentumGauge
+                momentum={snap.momentum}
+                homeName={snap.homeTeamName}
+                awayName={snap.awayTeamName}
+              />
             </div>
           </section>
 

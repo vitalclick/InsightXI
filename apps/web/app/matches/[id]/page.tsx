@@ -41,7 +41,11 @@ export default function MatchPage({ params }: { params: { id: string } }) {
         )}
       </section>
 
-      <PredictionPanel matchId={match.id} />
+      <PredictionPanel
+        matchId={match.id}
+        homeName={match.homeTeamName}
+        awayName={match.awayTeamName}
+      />
       <TacticalPanel matchId={match.id} />
       <H2HPanel homeId={match.homeTeamId} awayId={match.awayTeamId} />
     </main>
