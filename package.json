@@ -15,6 +15,11 @@
     "test": "pnpm --filter \"./apps/*\" test",
     "dev:web": "pnpm --filter @insightxi/web dev",
     "dev:api": "pnpm --filter @insightxi/api dev",
-    "dev:ai": "cd apps/ai-service && uvicorn app.main:app --reload --port 8000"
+    "dev:ai": "cd apps/ai-service && uvicorn app.main:app --reload --port 8000",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.46.0",
+    "@types/node": "^20.14.10"
   }
 }
