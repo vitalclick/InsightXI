@@ -12,12 +12,19 @@ test.describe("auth & premium gating", () => {
     await page.getByRole("button", { name: /sign in/i }).click();
     await expect(page.getByText("PREMIUM")).toBeVisible();
 
-    await page.goto("/trends");
-    // Either the trend cards or the table appears (no upgrade prompt).
-    await expect(page.getByText(/premium subscription required/i)).toHaveCount(0);
+    // Navigate via the in-app link (client-side) so the auth store is
+    // preserved — a full page reload would race Zustand-persist rehydration.
+    await page.getByRole("link", { name: "Trends" }).click();
+    await expect(page).toHaveURL(/\/trends$/);
+    // No upgrade prompt for a premium user...
     await expect(
-      page.getByRole("heading", { name: "Historical Trends" }),
-    ).toBeVisible();
+      page.getByRole("heading", { name: "Sign in to view historical trends" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Premium subscription required" }),
+    ).toHaveCount(0);
+    // ...and the premium content (a season-trend summary card) is shown.
+    await expect(page.getByText("Goal difference")).toBeVisible();
   });
 
   test("free user is blocked from premium trends", async ({ page }) => {
@@ -27,7 +34,10 @@ test.describe("auth & premium gating", () => {
     await page.getByRole("button", { name: /sign in/i }).click();
     await expect(page.getByText("FREE")).toBeVisible();
 
-    await page.goto("/trends");
-    await expect(page.getByText(/premium subscription required/i)).toBeVisible();
+    await page.getByRole("link", { name: "Trends" }).click();
+    await expect(page).toHaveURL(/\/trends$/);
+    await expect(
+      page.getByRole("heading", { name: "Premium subscription required" }),
+    ).toBeVisible();
   });
 });
