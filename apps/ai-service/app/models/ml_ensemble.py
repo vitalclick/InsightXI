@@ -12,7 +12,9 @@ from typing import Optional
 
 import numpy as np
 
-MODELS_DIR = Path(os.environ.get("MODELS_DIR", Path(__file__).resolve().parents[2] / "models"))
+MODELS_DIR = Path(
+    os.environ.get("MODELS_DIR", Path(__file__).resolve().parents[2] / "models")
+)
 LOGREG_PATH = MODELS_DIR / "logreg_1x2.joblib"
 XGB_PATH = MODELS_DIR / "xgb_1x2.joblib"
 

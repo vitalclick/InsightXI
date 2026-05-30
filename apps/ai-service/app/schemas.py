@@ -63,3 +63,25 @@ class PredictionResponse(BaseModel):
     top_selection: TopSelection
     explanations: list[str]
     model_backend: str
+
+
+class EvaluationResponse(BaseModel):
+    """Latest persisted training evaluation report."""
+
+    status: str = Field(description="'ok' or 'unavailable' (no trained report yet)")
+    report: dict | None = None
+
+
+class DriftRequest(BaseModel):
+    """Recent production feature vectors to check against the training set.
+
+    Each row matches the model feature order
+    [elo_diff, attack_diff, defense_diff, form_diff, xg_diff].
+    """
+
+    features: list[list[float]]
+
+
+class DriftResponse(BaseModel):
+    status: str
+    report: dict
