@@ -11,9 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # pnpm version is pinned via the root package.json "packageManager" field
+      # (pnpm@9.12.0). Passing `version` here too makes action-setup@v4 fail with
+      # "Multiple versions of pnpm specified", so we let it read packageManager.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 20
