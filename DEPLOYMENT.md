@@ -1,8 +1,86 @@
 # Deployment
 
-InsightXI is three deployable services. Recommended hosts (per the locked
-stack): **web → Vercel**, **API → Railway**, **AI → Railway** (or Render),
-**database → Neon**, **Redis → Railway/Upstash**.
+InsightXI is three deployable services. The chosen hosting target is a single
+**Railway** project holding all three (web, API, AI) — one region, one
+dashboard, one bill, and no cross-region latency between them. Managed Postgres
+and Redis are added inside the same project when you move past mock data.
+
+## Railway architecture
+
+```
+                 ┌──────────────────────────────────────────────┐
+                 │  Railway project (one region)                 │
+   Internet ───► │   web (Next.js)  ──NEXT_PUBLIC_API_URL──►  api │
+                 │                                            │   │
+                 │                      AI_SERVICE_URL  ──►   ai   │
+                 │                                            │   │
+                 │   (later)  Postgres ◄── api ──► Redis (queues) │
+                 └──────────────────────────────────────────────┘
+```
+
+Each service deploys from its in-repo `railway.json` (Dockerfile builder +
+`/health` check). Internal calls (web→api, api→ai) use Railway's private
+networking, so they never leave the project.
+
+### Phase A — test on the free tier ($0)
+
+The app is built to run with **no database and no Redis** for testing: football
+reads are served from an in-memory cache and the AI service lazy-loads its ML
+libraries, so all three containers fit the free tier (1 vCPU / 0.5 GB each).
+
+Set these env vars per service in Railway:
+
+| Service | Env |
+| --- | --- |
+| `api`  | `DATA_BACKEND=memory`, `ENABLE_QUEUES=false`, `JWT_SECRET=<random>`, `AI_SERVICE_URL=http://ai.railway.internal:${AI_PORT}` |
+| `ai`   | `PORT=8000` (pin it so the internal URL is stable) |
+| `web`  | build arg `NEXT_PUBLIC_API_URL=https://<api-public-domain>` |
+
+Notes:
+- **AI internal port:** the AI service binds to Railway's `$PORT`. Pin it
+  (`PORT=8000` on the `ai` service) and point the API at the same value —
+  `AI_SERVICE_URL=http://ai.railway.internal:8000`. If you leave `PORT`
+  unpinned, set `AI_SERVICE_URL` to whatever port Railway assigned the `ai`
+  service (shown under its Networking settings); the two must match.
+- `NEXT_PUBLIC_API_URL` is **baked at build time** (it ships in the client
+  bundle), so it must be the API's *public* domain and a rebuild is needed if it
+  changes. The web→api call from the browser is public; api→ai is private.
+- Generate `JWT_SECRET` with `openssl rand -hex 32`.
+
+### Phase B — enable persistence (when you outgrow mock data)
+
+Add Postgres and Redis to the project, apply the schema once
+(`psql "$DATABASE_URL" -f apps/api/src/db/schema.sql`), then set on `api`:
+`DATA_BACKEND=postgres`, `DATABASE_URL=...`, `ENABLE_QUEUES=true`,
+`REDIS_URL=...`, and (for live data) `FOOTBALL_API_KEY`,
+`FOOTBALL_LEAGUE_IDS`, `FOOTBALL_SEASON`. Trigger the first load with
+`POST /ingestion/run` (premium JWT) or let the scheduled refresh job run.
+Ingestion upserts are batched, so a refresh is a couple of round trips even
+against managed Postgres.
+
+## Continuous delivery (GitHub Actions → Railway)
+
+`.github/workflows/deploy.yml` deploys on a green CI run on `main` (or manual
+`workflow_dispatch`). It is a no-op until you add the secrets, so it is safe to
+merge first.
+
+Required repository secrets (**Settings → Secrets and variables → Actions**):
+
+| Secret | Value |
+| --- | --- |
+| `RAILWAY_TOKEN` | Project token (Railway → Project → Settings → Tokens) |
+| `RAILWAY_SERVICE_API` | the `api` service name/id |
+| `RAILWAY_SERVICE_AI` | the `ai` service name/id |
+| `RAILWAY_SERVICE_WEB` | the `web` service name/id |
+
+Alternatively, connect the GitHub repo in the Railway dashboard for
+push-to-deploy and skip the workflow — set each service's **Root Directory** to
+the repo root and let it read the per-service `railway.json`.
+
+---
+
+> The host-agnostic notes below (Docker, Vercel, Render, Neon) remain valid for
+> alternative deployments.
 
 All services run offline-friendly defaults, so a missing key degrades
 gracefully rather than crashing:
