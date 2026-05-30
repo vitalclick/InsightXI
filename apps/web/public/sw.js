@@ -1,6 +1,14 @@
 // InsightXI service worker — minimal offline-ready app shell cache.
-const CACHE = "insightxi-v2";
-const APP_SHELL = ["/", "/install", "/manifest.webmanifest", "/icon.svg"];
+const CACHE = "insightxi-v3";
+const APP_SHELL = [
+  "/",
+  "/install",
+  "/manifest.webmanifest",
+  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/apple-touch-icon.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)));
