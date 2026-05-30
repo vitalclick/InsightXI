@@ -24,8 +24,8 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get("me")
-  me(@CurrentUser() user: JwtPayload) {
-    const found = this.users.findByEmail(user.email);
+  async me(@CurrentUser() user: JwtPayload) {
+    const found = await this.users.findByEmail(user.email);
     return found ? this.users.toPublic(found) : user;
   }
 }

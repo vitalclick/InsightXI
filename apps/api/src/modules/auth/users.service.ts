@@ -1,20 +1,14 @@
-import { Injectable, ConflictException } from "@nestjs/common";
-import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { ConflictException, Injectable, OnModuleInit } from "@nestjs/common";
+import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "crypto";
+import {
+  PublicUser,
+  SubscriptionTier,
+  UserRecord,
+  UserStore,
+} from "./user.store";
 
-export type SubscriptionTier = "FREE" | "PREMIUM";
-
-export interface User {
-  id: string;
-  email: string;
-  passwordHash: string; // salt:hash (hex)
-  tier: SubscriptionTier;
-}
-
-export interface PublicUser {
-  id: string;
-  email: string;
-  tier: SubscriptionTier;
-}
+export type { PublicUser, SubscriptionTier } from "./user.store";
+export type User = UserRecord;
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
@@ -33,66 +27,64 @@ function verifyPassword(password: string, stored: string): boolean {
 }
 
 /**
- * In-memory user store. Swap for a Postgres-backed repository later; the
- * service contract stays the same. Seeded with a free and a premium demo user.
+ * User management over a pluggable UserStore. Seeds FREE + PREMIUM demo
+ * accounts on startup (idempotent — safe across restarts and on Postgres).
  */
 @Injectable()
-export class UsersService {
-  private readonly users = new Map<string, User>();
-  private seq = 0;
+export class UsersService implements OnModuleInit {
+  constructor(private readonly store: UserStore) {}
 
-  constructor() {
-    this.seed("free@insightxi.dev", "password", "FREE");
-    this.seed("premium@insightxi.dev", "password", "PREMIUM");
+  async onModuleInit(): Promise<void> {
+    if (await this.store.findByEmail("free@insightxi.dev")) return;
+    await this.createWithTier("free@insightxi.dev", "password", "FREE");
+    await this.createWithTier("premium@insightxi.dev", "password", "PREMIUM");
   }
 
-  private seed(email: string, password: string, tier: SubscriptionTier): void {
-    const id = `u${++this.seq}`;
-    this.users.set(email, {
-      id,
-      email,
-      passwordHash: hashPassword(password),
-      tier,
-    });
-  }
-
-  create(
+  private async createWithTier(
     email: string,
     password: string,
-    tier: SubscriptionTier = "FREE",
-  ): PublicUser {
-    if (this.users.has(email)) {
-      throw new ConflictException("Email already registered");
-    }
-    const id = `u${++this.seq}`;
-    const user: User = {
-      id,
+    tier: SubscriptionTier,
+  ): Promise<PublicUser> {
+    const user: UserRecord = {
+      id: randomUUID(),
       email,
       passwordHash: hashPassword(password),
       tier,
     };
-    this.users.set(email, user);
+    await this.store.insert(user);
     return this.toPublic(user);
   }
 
-  validate(email: string, password: string): User | null {
-    const user = this.users.get(email);
+  async create(
+    email: string,
+    password: string,
+    tier: SubscriptionTier = "FREE",
+  ): Promise<PublicUser> {
+    if (await this.store.findByEmail(email)) {
+      throw new ConflictException("Email already registered");
+    }
+    return this.createWithTier(email, password, tier);
+  }
+
+  async validate(email: string, password: string): Promise<UserRecord | null> {
+    const user = await this.store.findByEmail(email);
     if (!user || !verifyPassword(password, user.passwordHash)) return null;
     return user;
   }
 
-  findByEmail(email: string): User | undefined {
-    return this.users.get(email);
+  async findByEmail(email: string): Promise<UserRecord | undefined> {
+    return this.store.findByEmail(email);
   }
 
-  setTier(email: string, tier: SubscriptionTier): PublicUser | null {
-    const user = this.users.get(email);
-    if (!user) return null;
-    user.tier = tier;
-    return this.toPublic(user);
+  async setTier(
+    email: string,
+    tier: SubscriptionTier,
+  ): Promise<PublicUser | undefined> {
+    const user = await this.store.updateTier(email, tier);
+    return user ? this.toPublic(user) : undefined;
   }
 
-  toPublic(user: User): PublicUser {
+  toPublic(user: UserRecord): PublicUser {
     return { id: user.id, email: user.email, tier: user.tier };
   }
 }

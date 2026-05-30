@@ -5,6 +5,11 @@ import { AuthService } from "./auth.service";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { PremiumGuard } from "./premium.guard";
+import { UserStore } from "./user.store";
+import { InMemoryUserStore } from "./in-memory-user.store";
+import { PostgresUserStore } from "./postgres-user.store";
+
+const usePostgres = process.env.DATA_BACKEND === "postgres";
 
 @Global()
 @Module({
@@ -15,7 +20,16 @@ import { PremiumGuard } from "./premium.guard";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UsersService, JwtAuthGuard, PremiumGuard],
+  providers: [
+    AuthService,
+    UsersService,
+    JwtAuthGuard,
+    PremiumGuard,
+    {
+      provide: UserStore,
+      useClass: usePostgres ? PostgresUserStore : InMemoryUserStore,
+    },
+  ],
   exports: [AuthService, UsersService, JwtAuthGuard, PremiumGuard, JwtModule],
 })
 export class AuthModule {}

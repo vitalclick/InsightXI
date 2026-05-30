@@ -4,6 +4,8 @@ import { ExecutionContext, ForbiddenException } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { UsersService } from "./users.service";
 import { PremiumGuard } from "./premium.guard";
+import { UserStore } from "./user.store";
+import { InMemoryUserStore } from "./in-memory-user.store";
 
 describe("Auth + subscriptions", () => {
   let auth: AuthService;
@@ -12,8 +14,13 @@ describe("Auth + subscriptions", () => {
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [JwtModule.register({ secret: "test-secret" })],
-      providers: [AuthService, UsersService],
+      providers: [
+        AuthService,
+        UsersService,
+        { provide: UserStore, useClass: InMemoryUserStore },
+      ],
     }).compile();
+    await moduleRef.init(); // seeds demo users via UsersService.onModuleInit
     auth = moduleRef.get(AuthService);
     jwt = moduleRef.get(JwtService);
   });

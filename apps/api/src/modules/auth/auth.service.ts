@@ -19,7 +19,7 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<{ accessToken: string; user: PublicUser }> {
-    const user = this.users.validate(email, password);
+    const user = await this.users.validate(email, password);
     if (!user) throw new UnauthorizedException("Invalid credentials");
     const payload: JwtPayload = {
       sub: user.id,
