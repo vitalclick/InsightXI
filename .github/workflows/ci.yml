@@ -25,6 +25,8 @@ jobs:
         run: pnpm --filter @insightxi/api test
       - name: Lint web
         run: pnpm --filter @insightxi/web lint
+      - name: Test web
+        run: pnpm --filter @insightxi/web test
       - name: Build web
         run: pnpm --filter @insightxi/web build
 

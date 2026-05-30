@@ -4,6 +4,7 @@
  */
 import type {
   AuthResponse,
+  EvaluationReport,
   H2HSummary,
   League,
   MatchPrediction,
@@ -71,6 +72,8 @@ export const api = {
   // Premium — requires a PREMIUM bearer token.
   trends: (teamId: string, token: string) =>
     apiGet<SeasonTrend[]>(`/historical/trends/${teamId}`, token),
+  modelEvaluation: (token: string) =>
+    apiGet<EvaluationReport>("/model-health/evaluation", token),
   login: (email: string, password: string) =>
     apiPost<AuthResponse>("/auth/login", { email, password }),
   register: (email: string, password: string) =>

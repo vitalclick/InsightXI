@@ -110,6 +110,24 @@ export interface SeasonTrend {
   avgXgAgainst: number;
 }
 
+export interface ModelMetrics {
+  feature_version?: string;
+  features?: string[];
+  calibrated?: boolean;
+  n_train?: number;
+  n_test?: number;
+  n?: number;
+  log_loss?: number;
+  brier?: number;
+  accuracy?: number;
+  ece?: number;
+}
+
+export interface EvaluationReport {
+  status: string;
+  report: ModelMetrics | null;
+}
+
 export interface LiveEvent {
   minute: number;
   type: "GOAL" | "KICKOFF" | "FULLTIME";

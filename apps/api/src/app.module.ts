@@ -14,6 +14,7 @@ import { JobsModule } from "./modules/jobs/jobs.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { HistoricalModule } from "./modules/historical/historical.module";
 import { IngestionModule } from "./modules/ingestion/ingestion.module";
+import { ModelHealthModule } from "./modules/model-health/model-health.module";
 
 /**
  * Root module. Feature modules from the InsightXI backend structure
@@ -41,6 +42,7 @@ import { IngestionModule } from "./modules/ingestion/ingestion.module";
     // Phase 4 — Historical & Premium
     AuthModule,
     HistoricalModule,
+    ModelHealthModule,
   ],
 })
 export class AppModule {}
