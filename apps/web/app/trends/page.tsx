@@ -5,6 +5,44 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { api, ApiError } from "../../services/api-client";
 import { useAuthStore } from "../../store/auth-store";
+import { Sparkline } from "../../components/charts/sparkline";
+import type { SeasonTrend } from "../../lib/types";
+
+function TrendCards({ data }: { data: SeasonTrend[] }) {
+  const points = data.map((t) => t.points);
+  const gd = data.map((t) => t.goalDifference);
+  const xgFor = data.map((t) => t.avgXgFor);
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      <TrendCard label="Points" value={points.at(-1)} series={points} color="#22c55e" />
+      <TrendCard label="Goal difference" value={gd.at(-1)} series={gd} color="#3b82f6" />
+      <TrendCard label="Avg xG for" value={xgFor.at(-1)} series={xgFor} color="#a855f7" />
+    </div>
+  );
+}
+
+function TrendCard({
+  label,
+  value,
+  series,
+  color,
+}: {
+  label: string;
+  value: number | undefined;
+  series: number[];
+  color: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="text-xs uppercase tracking-wide text-white/50">{label}</div>
+      <div className="mt-1 flex items-end justify-between">
+        <span className="text-2xl font-bold tabular-nums">{value ?? "—"}</span>
+        <Sparkline values={series} color={color} />
+      </div>
+      <div className="mt-1 text-[11px] text-white/40">latest season · trend</div>
+    </div>
+  );
+}
 
 export default function TrendsPage() {
   const { token, user } = useAuthStore();
@@ -53,7 +91,9 @@ export default function TrendsPage() {
           />
           {isLoading ? (
             <p className="text-white/40">Loading…</p>
-          ) : data ? (
+          ) : data && data.length > 0 ? (
+            <>
+            <TrendCards data={data} />
             <div className="overflow-x-auto rounded-xl border border-white/10">
               <table className="w-full text-sm">
                 <thead className="bg-white/5 text-left text-xs uppercase text-white/50">
@@ -94,6 +134,7 @@ export default function TrendsPage() {
                 </tbody>
               </table>
             </div>
+            </>
           ) : null}
         </>
       )}
