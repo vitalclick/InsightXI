@@ -72,7 +72,7 @@ export default function AccountPage() {
               </div>
             ) : (
               <Link href="/premium" className="btn btn-gold" style={{ marginBottom: 14, display: "inline-flex" }}>
-                Upgrade to VIP — $2.49/mo
+                Upgrade to Premium — $2.49/mo
               </Link>
             )}
             <div>

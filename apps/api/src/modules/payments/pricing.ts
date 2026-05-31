@@ -6,7 +6,7 @@
 export const PREMIUM_PLAN = {
   id: "premium-monthly",
   name: "Premium",
-  badge: "VIP",
+  badge: "PRO",
   tagline: "True Football Intelligence — unlocked",
   amountUsd: 2.49,
   baseCurrency: "USD",
@@ -14,10 +14,10 @@ export const PREMIUM_PLAN = {
   /** Access granted per successful payment. */
   periodDays: 30,
   features: [
-    "Daily Odds: 1.50 – 2.50",
-    "Mega Odds: 5.00 – 15.00",
-    "High-Confidence Picks",
-    "30 Days Access",
+    "Daily high-confidence selections",
+    "Value & long-shot probability reads",
+    "Confidence rating on every market",
+    "30 days full access",
   ],
   /** Analytical capabilities behind the tier (used by the value grid). */
   capabilities: [

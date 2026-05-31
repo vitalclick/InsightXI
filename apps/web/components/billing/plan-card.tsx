@@ -28,7 +28,7 @@ export function PlanCard({ token, isPremium, currentPeriodEnd, onActivated }: Pl
     >
       <div className="card-bd">
         <div className="flex aic jcb">
-          <span className="badge gold">⭐ {plan?.badge ?? "VIP"} · Premium</span>
+          <span className="badge gold">⭐ {plan?.badge ?? "PRO"} · Premium</span>
           {plan?.local.estimated && (
             <select
               aria-label="Currency"
@@ -61,10 +61,10 @@ export function PlanCard({ token, isPremium, currentPeriodEnd, onActivated }: Pl
 
         <div style={{ margin: "18px 0" }}>
           {(plan?.features ?? [
-            "Daily Odds: 1.50 – 2.50",
-            "Mega Odds: 5.00 – 15.00",
-            "High-Confidence Picks",
-            "30 Days Access",
+            "Daily high-confidence selections",
+            "Value & long-shot probability reads",
+            "Confidence rating on every market",
+            "30 days full access",
           ]).map((f) => (
             <div className="xai-row" key={f}>
               <span className="xai-ic">
@@ -97,7 +97,7 @@ export function PlanCard({ token, isPremium, currentPeriodEnd, onActivated }: Pl
           />
         ) : (
           <Link href="/account" className="btn btn-gold" style={{ width: "100%" }}>
-            Sign in to upgrade to VIP
+            Sign in to upgrade
           </Link>
         )}
       </div>

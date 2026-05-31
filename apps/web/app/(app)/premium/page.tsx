@@ -58,7 +58,7 @@ export default function PremiumPage() {
               </div>
               {!isPremium && (
                 <a href="#upgrade" className="btn btn-gold" style={{ marginTop: 16 }}>
-                  Upgrade to VIP Now!
+                  Upgrade to Premium
                 </a>
               )}
               {isPremium && (
@@ -89,15 +89,15 @@ export default function PremiumPage() {
           onActivated={onActivated}
         />
         <section className="card reveal">
-          <div className="card-hd"><h3>Everything in VIP</h3><span className="badge gold">30 days access</span></div>
+          <div className="card-hd"><h3>Everything in Premium</h3><span className="badge gold">30 days access</span></div>
           <div className="card-bd">
             {[
               "Elite confidence insights & probability rings",
               "Tactical AI reports and matchup edge",
               "Correct-score modelling & expected-goals matrix",
               "Hidden-trend detection and season trends",
-              "Daily & mega odds analysis (1.50–2.50, 5.00–15.00)",
-              "High-confidence picks, refreshed daily",
+              "Probability-ranked selections across value and long-shot reads",
+              "High-confidence picks refreshed daily",
             ].map((c) => (
               <div className="xai-row" key={c}>
                 <span className="xai-ic"><Icon name="check" size={15} /></span>

@@ -67,7 +67,7 @@ export class FlutterwaveGateway implements PaymentGateway {
         customer: { email: input.email },
         customizations: {
           title: "InsightXI Premium",
-          description: "VIP football intelligence — 30 days access",
+          description: "InsightXI Premium — 30 days football intelligence access",
         },
       }),
     });
