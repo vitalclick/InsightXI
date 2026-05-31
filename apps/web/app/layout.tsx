@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./design-system.css";
 import { Providers } from "./providers";
-import { Nav } from "../components/nav";
 import { ServiceWorkerRegistrar } from "../components/service-worker";
+import { ClientInit } from "../components/client-init";
 
 export const metadata: Metadata = {
   title: "InsightXI — True Football Intelligence Platform",
@@ -25,21 +26,23 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0a0f1c",
+  themeColor: "#070b14",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// Applied before paint to avoid a flash of the wrong theme.
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('ix-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-pitch text-white antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+      </head>
+      <body>
         <Providers>
           <ServiceWorkerRegistrar />
-          <Nav />
-          <div className="mx-auto max-w-6xl px-6 py-8">{children}</div>
+          <ClientInit />
+          {children}
         </Providers>
       </body>
     </html>

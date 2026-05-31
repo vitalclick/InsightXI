@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* The full InsightXI design system (variables, components, themes) is loaded
+   from ./design-system.css (imported after this file in the root layout so its
+   base styles win over Tailwind's preflight). */
+
