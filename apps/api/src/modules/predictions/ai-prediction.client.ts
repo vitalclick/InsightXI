@@ -62,6 +62,9 @@ export class HttpAiPredictionClient implements AiPredictionClient {
   private readonly logger = new Logger(HttpAiPredictionClient.name);
   private readonly baseUrl =
     process.env.AI_SERVICE_URL ?? "http://localhost:8000";
+  // Shared secret for service-to-service auth; the AI service rejects calls
+  // without it when AI_SERVICE_TOKEN is set (no-op when unset → sandbox).
+  private readonly internalToken = process.env.AI_SERVICE_TOKEN;
 
   private async request<T>(
     path: string,
@@ -73,7 +76,11 @@ export class HttpAiPredictionClient implements AiPredictionClient {
     try {
       const res = await fetch(`${this.baseUrl}${path}`, {
         ...init,
-        headers: { "Content-Type": "application/json", ...(init.headers ?? {}) },
+        headers: {
+          "Content-Type": "application/json",
+          ...(this.internalToken ? { "x-internal-key": this.internalToken } : {}),
+          ...(init.headers ?? {}),
+        },
         signal: controller.signal,
       });
       if (!res.ok) {

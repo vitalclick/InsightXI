@@ -20,6 +20,7 @@ export class ModelHealthService {
   private readonly logger = new Logger(ModelHealthService.name);
   private readonly baseUrl =
     process.env.AI_SERVICE_URL ?? "http://localhost:8000";
+  private readonly internalToken = process.env.AI_SERVICE_TOKEN;
 
   private async call<T>(path: string, init?: RequestInit): Promise<T> {
     const controller = new AbortController();
@@ -27,7 +28,11 @@ export class ModelHealthService {
     try {
       const res = await fetch(`${this.baseUrl}${path}`, {
         ...init,
-        headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+        headers: {
+          "Content-Type": "application/json",
+          ...(this.internalToken ? { "x-internal-key": this.internalToken } : {}),
+          ...(init?.headers ?? {}),
+        },
         signal: controller.signal,
       });
       if (!res.ok) throw new Error(`AI service responded ${res.status}`);

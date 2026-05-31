@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { join } from "path";
+import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
+import { RateLimitGuard } from "./common/security/rate-limit.guard";
 import { HealthModule } from "./modules/health/health.module";
 import { DataModule } from "./repositories/data.module";
 import { LeaguesModule } from "./modules/leagues/leagues.module";
@@ -56,6 +58,11 @@ import { ModelHealthModule } from "./modules/model-health/model-health.module";
     PaymentsModule,
     HistoricalModule,
     ModelHealthModule,
+  ],
+  providers: [
+    // Global IP-based rate limiting (dependency-free fixed window). Runs ahead
+    // of route guards; disable with RATE_LIMIT_ENABLED=false.
+    { provide: APP_GUARD, useClass: RateLimitGuard },
   ],
 })
 export class AppModule {}
