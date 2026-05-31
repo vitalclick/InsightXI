@@ -9,14 +9,9 @@ import { PageHead } from "../../../components/ui/page-head";
 import { Crest } from "../../../components/ui/crest";
 import { Icon } from "../../../components/ui/icon";
 import { usePredictions, confColor } from "../../../hooks/use-predictions";
+import { ScoreMatrix } from "../../../components/match/score-matrix";
 import { clubCode } from "../../../lib/club";
 import type { MatchPrediction, MatchView } from "../../../lib/types";
-
-function poisson(k: number, lambda: number): number {
-  let f = 1;
-  for (let i = 2; i <= k; i++) f *= i;
-  return (Math.pow(lambda, k) * Math.exp(-lambda)) / f;
-}
 
 export default function PremiumPage() {
   const { user } = useAuthStore();
@@ -42,24 +37,6 @@ export default function PremiumPage() {
     enabled: Boolean(featured),
     retry: 0,
   });
-
-  // Correct-score matrix (0..4) from the featured match expected goals.
-  const matrix = useMemo(() => {
-    if (!featured) return null;
-    const lh = featured.p.expectedGoals.home;
-    const la = featured.p.expectedGoals.away;
-    const cells: { h: number; a: number; prob: number }[] = [];
-    let best = { h: 0, a: 0, prob: 0 };
-    for (let h = 0; h <= 4; h++) {
-      for (let a = 0; a <= 4; a++) {
-        const prob = poisson(h, lh) * poisson(a, la);
-        cells.push({ h, a, prob });
-        if (prob > best.prob) best = { h, a, prob };
-      }
-    }
-    const max = Math.max(...cells.map((c) => c.prob));
-    return { cells, best, max, lh, la };
-  }, [featured]);
 
   return (
     <>
@@ -148,51 +125,13 @@ export default function PremiumPage() {
         <section className="card reveal">
           <div className="card-hd"><h3>Advanced Probability</h3><span className="badge">correct-score matrix</span></div>
           <div className="card-bd">
-            {matrix ? (
-              <>
-                <div className="flex gap-10">
-                  <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-around", padding: "4px 0", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--dim)" }}>
-                    {[0, 1, 2, 3, 4].map((h) => (
-                      <span key={h}>{clubCode(featured!.m.homeTeamName)} {h}</span>
-                    ))}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 5 }}>
-                      {matrix.cells.map((c) => {
-                        const intensity = c.prob / matrix.max;
-                        const isBest = c.h === matrix.best.h && c.a === matrix.best.a;
-                        return (
-                          <div
-                            key={`${c.h}-${c.a}`}
-                            title={`${c.h}-${c.a}: ${(c.prob * 100).toFixed(1)}%`}
-                            style={{
-                              aspectRatio: "1",
-                              borderRadius: 7,
-                              display: "grid",
-                              placeItems: "center",
-                              fontFamily: "var(--font-mono)",
-                              fontSize: 11,
-                              fontWeight: 600,
-                              border: isBest ? "1px solid var(--blue)" : "1px solid var(--line)",
-                              background: `rgba(46,125,255,${(intensity * 0.5).toFixed(2)})`,
-                              color: intensity > 0.5 ? "#fff" : "var(--text-2)",
-                            }}
-                          >
-                            {(c.prob * 100).toFixed(0)}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="flex jcb" style={{ marginTop: 6, fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--dim)" }}>
-                      <span>{clubCode(featured!.m.awayTeamName)} 0</span><span>1</span><span>2</span><span>3</span><span>4</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex aic gap-8" style={{ marginTop: 14, fontSize: 11.5, color: "var(--muted)" }}>
-                  <span className="dim">Most likely:</span>
-                  <span className="badge blue">{matrix.best.h}-{matrix.best.a} · {(matrix.best.prob * 100).toFixed(1)}%</span>
-                </div>
-              </>
+            {featured ? (
+              <ScoreMatrix
+                homeCode={clubCode(featured.m.homeTeamName)}
+                awayCode={clubCode(featured.m.awayTeamName)}
+                lambdaHome={featured.p.expectedGoals.home}
+                lambdaAway={featured.p.expectedGoals.away}
+              />
             ) : (
               <div className="empty"><p>Awaiting a featured fixture with expected-goals output.</p></div>
             )}
