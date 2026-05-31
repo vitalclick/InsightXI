@@ -4,11 +4,16 @@
  */
 import type {
   AuthResponse,
+  CheckoutSession,
+  ConfirmResult,
   EvaluationReport,
   H2HSummary,
   League,
   MatchPrediction,
   MatchView,
+  PaymentProvider,
+  PlanResponse,
+  PublicUser,
   SeasonTrend,
   StandingRow,
   TacticalMatchup,
@@ -43,16 +48,28 @@ export async function apiGet<T>(path: string, token?: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function apiPost<T>(path: string, body: unknown): Promise<T> {
+async function apiPost<T>(path: string, body: unknown, token?: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
     throw new ApiError(res.status, `API ${res.status}: ${res.statusText}`);
   }
   return res.json() as Promise<T>;
+}
+
+/** Optional currency/country hints for localized pricing. */
+function planQuery(hints?: { currency?: string; country?: string }): string {
+  const params = new URLSearchParams();
+  if (hints?.currency) params.set("currency", hints.currency);
+  if (hints?.country) params.set("country", hints.country);
+  const q = params.toString();
+  return q ? `?${q}` : "";
 }
 
 export const api = {
@@ -86,6 +103,22 @@ export const api = {
     apiPost<AuthResponse>("/auth/login", { email, password }),
   register: (email: string, password: string) =>
     apiPost<AuthResponse>("/auth/register", { email, password }),
+  oauthGoogle: (idToken: string) =>
+    apiPost<AuthResponse>("/auth/oauth/google", { idToken }),
+  oauthApple: (idToken: string, name?: string) =>
+    apiPost<AuthResponse>("/auth/oauth/apple", { idToken, name }),
+  me: (token: string) => apiGet<PublicUser>("/auth/me", token),
+
+  // Billing — localized Premium pricing + checkout (PayPal/Paystack/Flutterwave).
+  plan: (hints?: { currency?: string; country?: string }) =>
+    apiGet<PlanResponse>(`/payments/plan${planQuery(hints)}`),
+  checkout: (
+    provider: PaymentProvider,
+    token: string,
+    hints?: { currency?: string; country?: string },
+  ) => apiPost<CheckoutSession>("/payments/checkout", { provider, ...hints }, token),
+  confirmPayment: (provider: PaymentProvider, reference: string, token: string) =>
+    apiPost<ConfirmResult>("/payments/confirm", { provider, reference }, token),
 };
 
 export const API_URL_PUBLIC = API_URL;

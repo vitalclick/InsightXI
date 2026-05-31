@@ -3,7 +3,9 @@ import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody: true preserves the unparsed request body so payment webhook
+  // signatures (Paystack HMAC, Flutterwave verif-hash, PayPal) can be verified.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // DTO validation everywhere (coding standard: DTO validation).
   app.useGlobalPipes(

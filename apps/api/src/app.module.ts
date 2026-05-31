@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { join } from "path";
 import { ConfigModule } from "@nestjs/config";
 import { HealthModule } from "./modules/health/health.module";
 import { DataModule } from "./repositories/data.module";
@@ -12,6 +13,7 @@ import { TacticalModule } from "./modules/tactical/tactical.module";
 import { LiveModule } from "./modules/live/live.module";
 import { JobsModule } from "./modules/jobs/jobs.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { PaymentsModule } from "./modules/payments/payments.module";
 import { HistoricalModule } from "./modules/historical/historical.module";
 import { IngestionModule } from "./modules/ingestion/ingestion.module";
 import { ModelHealthModule } from "./modules/model-health/model-health.module";
@@ -23,7 +25,17 @@ import { ModelHealthModule } from "./modules/model-health/model-health.module";
  */
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    // Load the repo-root .env (the documented `cp .env.example .env` lives at
+    // the workspace root) as well as a local apps/api/.env, regardless of the
+    // process CWD. Real environment variables (Railway/Vercel) take precedence.
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: [
+        ".env",
+        join(process.cwd(), "../../.env"),
+        join(__dirname, "..", "..", "..", ".env"),
+      ],
+    }),
     DataModule,
     HealthModule,
     // Phase 1 — Football Data Hub
@@ -41,6 +53,7 @@ import { ModelHealthModule } from "./modules/model-health/model-health.module";
     JobsModule.register(),
     // Phase 4 — Historical & Premium
     AuthModule,
+    PaymentsModule,
     HistoricalModule,
     ModelHealthModule,
   ],
