@@ -31,3 +31,10 @@ pnpm dev:ai            # FastAPI AI service (separate, Python)
 ```
 
 Full command reference lives in `CLAUDE.md` → **Setup, Commands & MVP Phasing**.
+
+## Design docs
+
+* [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intelligence-engine.md)
+  — architecture & phased plan for the continuously self-improving
+  **Adaptive Intelligence Engine** (Experience Memory, Self-Evaluation,
+  Dynamic Weighting, Confidence Calibration, League Personality).
