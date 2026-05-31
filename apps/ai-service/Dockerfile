@@ -10,10 +10,21 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# App code. Trained model artifacts (models/*.joblib) are NOT baked in; the
-# service falls back to the analytical blend until a training job populates
-# MODELS_DIR (e.g. a mounted volume or an init job).
+# App code.
 COPY app ./app
+
+# Bake the trained ensemble into the image so production serves the calibrated
+# XGBoost + LogReg blend (model_backend: ensemble) rather than only the
+# analytical fallback. Training is deterministic (synthetic seasons) so the
+# artifacts are reproducible from the build. Pass --build-arg TRAIN_ON_BUILD=false
+# to skip and serve the analytical blend instead.
+ARG TRAIN_ON_BUILD=true
+RUN if [ "$TRAIN_ON_BUILD" = "true" ]; then \
+      python -m app.training.train --seasons 6 && \
+      echo "Baked trained ensemble into image."; \
+    else \
+      echo "Skipping training; service will use the analytical blend."; \
+    fi
 
 EXPOSE 8000
 # Bind IPv6 (::) so the service is reachable over Railway's private network,
