@@ -201,6 +201,16 @@ export interface ModelMetrics {
   brier?: number;
   accuracy?: number;
   ece?: number;
+  reliability?: ReliabilityBin[];
+}
+
+export interface ReliabilityBin {
+  /** Mean predicted (top-class) confidence in the bin. */
+  confidence: number;
+  /** Empirical accuracy of predictions in the bin. */
+  accuracy: number;
+  /** Number of predictions in the bin. */
+  count: number;
 }
 
 export interface EvaluationReport {
@@ -224,6 +234,8 @@ export interface LiveSnapshot {
   minute: number;
   homeGoals: number;
   awayGoals: number;
+  homeXg: number;
+  awayXg: number;
   momentum: number;
   status: "LIVE" | "FINISHED";
   events: LiveEvent[];

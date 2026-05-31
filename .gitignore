@@ -46,6 +46,8 @@ coverage/
 
 # Trained model artifacts (regenerate via app.training.train)
 apps/ai-service/models/*.joblib
+apps/ai-service/models/*.npz
+apps/ai-service/models/metrics.json
 
 # Python editable-install metadata
 *.egg-info/
