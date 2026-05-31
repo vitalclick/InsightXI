@@ -37,4 +37,15 @@ describe("Currency + geolocation pricing", () => {
     expect(geo.localizePlan({ currency: "EUR" }).local.currency).toBe("EUR");
     expect(geo.localizePlan({ country: "ZZ" }).local.currency).toBe("USD");
   });
+
+  it("resolvePlan keeps the cf-ipcountry signal without an IP lookup", async () => {
+    const plan = await geo.resolvePlan({ cfCountry: "GH" }, "8.8.8.8");
+    expect(plan.local.currency).toBe("GHS");
+  });
+
+  it("resolvePlan defaults to USD when no signal and no lookup URL is set", async () => {
+    delete process.env.GEO_IP_LOOKUP_URL;
+    const plan = await geo.resolvePlan({}, "8.8.8.8");
+    expect(plan.local.currency).toBe("USD");
+  });
 });

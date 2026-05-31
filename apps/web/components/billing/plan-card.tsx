@@ -29,21 +29,21 @@ export function PlanCard({ token, isPremium, currentPeriodEnd, onActivated }: Pl
       <div className="card-bd">
         <div className="flex aic jcb">
           <span className="badge gold">⭐ {plan?.badge ?? "PRO"} · Premium</span>
-          {plan?.local.estimated && (
-            <select
-              aria-label="Currency"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="tb-search"
-              style={{ width: "auto", height: 30, padding: "0 8px", fontSize: 12, margin: 0 }}
-            >
-              {CURRENCY_OPTIONS.map((c) => (
-                <option key={c} value={c}>
-                  {c === "AUTO" ? "Auto" : c}
-                </option>
-              ))}
-            </select>
-          )}
+          {/* Always available so the viewer can pick their currency even when
+              auto-detection (Cloudflare / IP) falls back to USD. */}
+          <select
+            aria-label="Display currency"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            className="tb-search"
+            style={{ width: "auto", height: 30, padding: "0 8px", fontSize: 12, margin: 0 }}
+          >
+            {CURRENCY_OPTIONS.map((c) => (
+              <option key={c} value={c}>
+                {c === "AUTO" ? "Auto (by location)" : c}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex aic gap-8" style={{ margin: "16px 0 4px" }}>

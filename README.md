@@ -67,6 +67,7 @@ the file.
 | `FLUTTERWAVE_SECRET_KEY`, `FLUTTERWAVE_PUBLIC_KEY`, `FLUTTERWAVE_WEBHOOK_HASH` | API | Flutterwave |
 | `WEB_APP_URL`, `PAYMENTS_CALLBACK_URL` | API | Where hosted checkouts redirect back |
 | `CURRENCY_RATES_JSON` | API | Optional FX overrides for price display |
+| `GEO_IP_LOOKUP_URL` | API | IP→country lookup for currency auto-detect (see below) |
 | `NEXT_PUBLIC_API_URL` | Web | Backend base URL |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Web | Must match the API's `GOOGLE_CLIENT_ID` |
 | `NEXT_PUBLIC_APPLE_CLIENT_ID` | Web | Must match the API's `APPLE_CLIENT_ID` |
@@ -75,6 +76,23 @@ the file.
 > sandbox/demo mode automatically when their keys are absent, so the full flow
 > (sign-in, localized pricing, checkout, premium activation) stays testable
 > offline. Adding real keys switches them to live with no code changes.
+
+#### Currency / geolocation
+
+The Premium price is anchored in USD ($2.49/mo) and **localized for display**.
+The viewer's country is detected in this order:
+
+1. **Cloudflare `cf-ipcountry`** header — automatic and zero-latency when the
+   app is served through Cloudflare (the production setup). **No variable needed.**
+2. **`GEO_IP_LOOKUP_URL`** — an IP→country endpoint (`{ip}` is substituted), used
+   only when there is no Cloudflare header. Set this if you are **not** behind
+   Cloudflare (e.g. local dev or a direct Railway URL), for example
+   `https://ipapi.co/{ip}/country/`. Private/localhost IPs are skipped.
+3. **Browser locale** hint, then **USD** default.
+
+Regardless of detection, the plan card always shows a **currency selector**, so a
+viewer can pick their currency manually. African gateways (Paystack/Flutterwave)
+charge in the local currency; PayPal settles in USD.
 
 ### Production
 

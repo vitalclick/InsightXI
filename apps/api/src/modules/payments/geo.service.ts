@@ -42,16 +42,22 @@ export interface LocalizedPlan {
 }
 
 /**
- * Resolves the viewer's currency from request signals and localizes the
- * Premium plan price. Resolution order: explicit currency → explicit country →
- * Cloudflare `cf-ipcountry` header → optional IP lookup → USD default.
+ * Resolves the viewer's currency and localizes the Premium plan price.
  *
- * The platform is fronted by Cloudflare (see CLAUDE.md infra), so the
- * `cf-ipcountry` header is the primary, zero-latency geolocation source.
+ * Country resolution order:
+ *   explicit currency → explicit country → Cloudflare `cf-ipcountry`
+ *   → IP geolocation (GEO_IP_LOOKUP_URL, when set) → USD default.
+ *
+ * Behind Cloudflare (see CLAUDE.md infra) the `cf-ipcountry` header is the
+ * primary, zero-latency source and no external call is made. For deployments
+ * not fronted by Cloudflare, set GEO_IP_LOOKUP_URL to a lookup endpoint
+ * containing `{ip}` (e.g. https://ipapi.co/{ip}/country/ or
+ * http://ip-api.com/json/{ip}?fields=countryCode).
  */
 @Injectable()
 export class GeoService implements OnModuleInit {
   private readonly logger = new Logger(GeoService.name);
+  private readonly ipCache = new Map<string, { country: string; at: number }>();
 
   onModuleInit(): void {
     applyRateOverrides(process.env.CURRENCY_RATES_JSON);
@@ -96,5 +102,60 @@ export class GeoService implements OnModuleInit {
       base: this.priceFrom(PREMIUM_PLAN.amountUsd, base),
       local: this.priceFrom(PREMIUM_PLAN.amountUsd, currency),
     };
+  }
+
+  /**
+   * Localizes the plan, falling back to an IP geolocation lookup when no other
+   * country signal is present (and GEO_IP_LOOKUP_URL is configured).
+   */
+  async resolvePlan(hints: RequestGeoHints, ip?: string): Promise<LocalizedPlan> {
+    const hasSignal = Boolean(hints.currency || hints.cfCountry || hints.country);
+    if (!hasSignal) {
+      const country = await this.lookupCountryByIp(ip);
+      if (country) return this.localizePlan({ ...hints, country });
+    }
+    return this.localizePlan(hints);
+  }
+
+  private isPublicIp(ip: string): boolean {
+    if (!ip || ip === "::1" || ip === "127.0.0.1") return false;
+    if (/^10\.|^192\.168\.|^172\.(1[6-9]|2\d|3[01])\.|^169\.254\./.test(ip)) return false;
+    if (/^(::ffff:)?(10|127)\./.test(ip)) return false;
+    return true;
+  }
+
+  /** Looks up a country code for an IP via GEO_IP_LOOKUP_URL (cached, timed out). */
+  private async lookupCountryByIp(ip?: string): Promise<string | null> {
+    const url = process.env.GEO_IP_LOOKUP_URL;
+    if (!url || !ip || !this.isPublicIp(ip)) return null;
+
+    const cached = this.ipCache.get(ip);
+    if (cached && Date.now() - cached.at < 6 * 3_600_000) return cached.country || null;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+    try {
+      const res = await fetch(url.replace("{ip}", encodeURIComponent(ip)), {
+        signal: controller.signal,
+      });
+      const text = (await res.text()).trim();
+      let country = "";
+      try {
+        const json = JSON.parse(text) as Record<string, unknown>;
+        const c = json.country_code ?? json.countryCode ?? json.country;
+        if (typeof c === "string") country = c;
+      } catch {
+        country = text; // plain-text endpoints return the bare code
+      }
+      country = country.toUpperCase().slice(0, 2);
+      if (!/^[A-Z]{2}$/.test(country)) country = "";
+      this.ipCache.set(ip, { country, at: Date.now() });
+      return country || null;
+    } catch {
+      this.logger.warn(`IP geolocation lookup failed for ${ip}`);
+      return null;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 }
