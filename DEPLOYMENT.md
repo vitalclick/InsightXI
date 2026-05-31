@@ -104,15 +104,16 @@ Trigger the first load with `POST /ingestion/run` (premium JWT) or let the
 scheduled BullMQ refresh run. Ingestion upserts are batched (one statement per
 table), so a refresh is a couple of round trips even against managed Postgres.
 
-> **Note on live football data:** the boot path currently has no fallback if the
-> provider errors at startup — and API-Football's free tier often restricts the
-> current season. Harden the provider boot (catch → fall back to mock) before
-> setting `FOOTBALL_API_KEY` in production.
+> **Live football data:** the provider boot is now resilient — if API-Football
+> errors or returns nothing (its free tier often restricts the current season),
+> the API transparently falls back to the deterministic seed provider instead
+> of crashing. Set `FOOTBALL_API_KEY` (+ `FOOTBALL_LEAGUE_IDS`, `FOOTBALL_SEASON`)
+> to go live; the seed remains the safety net.
 
-> **Note on the trained model:** production reports `model_backend: analytical`
-> because the trained `models/*.joblib` artifacts are not baked into the image.
-> To serve the XGBoost ensemble, bake the artifacts in (or train on boot and
-> mount a volume); otherwise the analytical Poisson+Elo blend is served.
+> **Trained model:** the AI image now bakes the trained ensemble at build time,
+> so production reports `model_backend: ensemble` (calibrated XGBoost + LogReg
+> blend). Build with `--build-arg TRAIN_ON_BUILD=false` to ship the analytical
+> Poisson+Elo blend instead.
 
 ## Continuous delivery (GitHub Actions → Railway)
 
@@ -130,12 +131,38 @@ keep in the repo.
 Alternatively (what we used), connect the GitHub repo in the Railway dashboard
 for push-to-deploy — each service rebuilds on a push to `main`.
 
-## Security follow-ups before a real launch
+## Security (configured at launch)
 
-- **CORS:** the API uses `enableCors({ origin: true })` (reflects any origin).
-  Restrict it to the web domain.
-- **AI service exposure:** the AI service has a public domain so the API can
-  reach it. Lock it down (private networking, or an auth header) before launch.
+These are now enforced in code and driven by env vars — set them in production:
+
+- **CORS:** restricted to `CORS_ORIGINS` (comma-separated) or `WEB_APP_URL`.
+  The API **refuses to boot in production** without an origin allow-list (and
+  with a default `JWT_SECRET`). Locally, a blank list reflects any origin.
+- **AI service exposure:** set `AI_SERVICE_TOKEN` on both the API and AI service.
+  The AI service then rejects any request without a matching `x-internal-key`
+  header (health stays public for liveness probes). Combine with private
+  networking where available.
+- **Rate limiting:** a built-in IP fixed-window limiter is on by default
+  (`RATE_LIMIT_MAX` / `RATE_LIMIT_WINDOW_MS`); set `RATE_LIMIT_ENABLED=false` if
+  a gateway/Cloudflare already throttles.
+- **Security headers:** hardened headers (CSP, X-Frame-Options DENY, nosniff,
+  HSTS in production) are emitted on every response; `X-Powered-By` is removed.
+- **Secrets:** set a strong unique `JWT_SECRET`. Access tokens are short-lived
+  with refresh tokens (`JWT_REFRESH_EXPIRES_IN`).
+
+### Email & errors
+
+- **Transactional email:** set `RESEND_API_KEY` (+ `EMAIL_FROM`) to deliver
+  verification, password-reset, and payment-receipt emails. Unset = sandbox
+  (logged, not sent).
+- **Error forwarding:** set `ERROR_WEBHOOK_URL` to forward 5xx errors to a
+  Slack/Discord/custom collector.
+
+### Legal (required before taking live payments)
+
+The web app serves `/privacy` and `/terms`. Payment providers (PayPal,
+Paystack, Flutterwave) require reachable Privacy + Terms URLs to approve a live
+account — make sure `NEXT_PUBLIC_SITE_URL` is set so they resolve on your domain.
 
 ---
 
