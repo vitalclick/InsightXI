@@ -8,6 +8,7 @@ import { useUiStore } from "../../store/ui-store";
 import { useAuthStore } from "../../store/auth-store";
 import { TOPNAV } from "./nav-config";
 import { SearchBox } from "./search-box";
+import { Freshness } from "./freshness";
 
 export function Topbar() {
   const pathname = usePathname();
@@ -37,6 +38,9 @@ export function Topbar() {
         })}
       </nav>
       <SearchBox />
+      <span className="tb-freshness">
+        <Freshness />
+      </span>
       <ThemeToggle />
       <button className="tb-icon" title="AI Assistant" aria-label="AI Assistant">
         <Icon name="bolt" size={17} />

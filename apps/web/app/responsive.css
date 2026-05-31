@@ -76,6 +76,9 @@ main.page:focus { outline: none; }
 }
 
 /* Topbar: reclaim space on small screens. */
+@media (max-width: 900px) {
+  .tb-freshness { display: none; }
+}
 @media (max-width: 680px) {
   .tb-search kbd { display: none; }
   .topbar { gap: 10px; padding: 0 14px; }
