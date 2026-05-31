@@ -18,7 +18,7 @@ export function Crest({
   const { c1, c2 } = clubColors(seed ?? name);
   const code = clubCode(name, shortName);
   return (
-    <div className={`crest ${size}`} style={{ background: `linear-gradient(150deg,${c1},${c2})` }}>
+    <div className={`crest ${size}`} style={{ background: `linear-gradient(150deg,${c1},${c2})` }} aria-hidden>
       {code}
     </div>
   );

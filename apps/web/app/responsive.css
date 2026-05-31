@@ -7,6 +7,42 @@
 
 /* Prevent horizontal scroll from fixed-width rows on small screens. */
 main.page { overflow-x: hidden; }
+main.page:focus { outline: none; }
+
+/* Accessibility: skip-to-content link, visible only when focused. */
+.skip-link {
+  position: fixed;
+  top: -60px;
+  left: 12px;
+  z-index: 200;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  transition: top .15s;
+}
+.skip-link:focus {
+  top: 12px;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Visible keyboard focus across interactive chrome (mouse users unaffected). */
+.btn:focus-visible,
+.chip:focus-visible,
+.nav-i:focus-visible,
+.tb-icon:focus-visible,
+.tb-avatar:focus-visible,
+.sb-toggle:focus-visible,
+.day-pill:focus-visible,
+.board-row:focus-visible,
+.topnav a:focus-visible,
+.card-hover:focus-visible {
+  outline: 2px solid var(--blue-2);
+  outline-offset: 2px;
+}
 
 /* Tablet: drop dense layouts to two columns. */
 @media (max-width: 1024px) {

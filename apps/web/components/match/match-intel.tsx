@@ -9,6 +9,7 @@ import { FormDots } from "../ui/form-dots";
 import { ChartBox } from "../charts/chart-box";
 import { formationLayout } from "../../lib/formation";
 import { clubCode } from "../../lib/club";
+import { ScoreMatrix } from "./score-matrix";
 import type { MarketProbability, MatchPrediction, MatchView, TacticalProfile } from "../../lib/types";
 import * as IX from "../../lib/ix-charts";
 
@@ -184,6 +185,27 @@ export function MatchIntel({ id }: { id: string }) {
             <PredictionCard pred={pred} homeName={match.homeTeamName} awayName={match.awayTeamName} />
             <ConfidenceCard pred={pred} />
           </div>
+
+          {/* CORRECT SCORE */}
+          <section className="card reveal" style={{ marginBottom: 18 }}>
+            <div className="card-hd">
+              <h3><span className="ic"><Icon name="grid" size={16} /></span> Correct-Score Heatmap</h3>
+              <span className="badge">Poisson · expected goals</span>
+            </div>
+            <div className="card-bd grid" style={{ gridTemplateColumns: "1.2fr 1fr", gap: 24, alignItems: "center" }}>
+              <ScoreMatrix
+                homeCode={clubCode(match.homeTeamName)}
+                awayCode={clubCode(match.awayTeamName)}
+                lambdaHome={pred.expectedGoals.home}
+                lambdaAway={pred.expectedGoals.away}
+              />
+              <div style={{ fontSize: 12.5, color: "var(--text-2)", lineHeight: 1.6 }}>
+                Each cell is the joint probability of that exact scoreline, derived from the model&apos;s expected goals
+                ({pred.expectedGoals.home.toFixed(2)} – {pred.expectedGoals.away.toFixed(2)}) under independent Poisson
+                processes. Darker cells are more likely; the ringed cell is the modal scoreline.
+              </div>
+            </div>
+          </section>
 
           {/* EXPLAINABLE */}
           <section className="card reveal" style={{ marginBottom: 18 }}>

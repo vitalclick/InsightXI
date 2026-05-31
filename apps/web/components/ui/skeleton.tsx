@@ -1,9 +1,9 @@
 /** Shimmering placeholder rows for list loading states (design `.skel`). */
 export function SkeletonRows({ rows = 6 }: { rows?: number }) {
   return (
-    <div style={{ padding: "8px 10px" }}>
+    <div style={{ padding: "8px 10px" }} role="status" aria-label="Loading" aria-busy="true">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex aic gap-12" style={{ padding: "11px 8px", borderTop: i ? "1px solid var(--line)" : "none" }}>
+        <div key={i} aria-hidden className="flex aic gap-12" style={{ padding: "11px 8px", borderTop: i ? "1px solid var(--line)" : "none" }}>
           <span className="skel" style={{ width: 46, height: 14 }} />
           <span className="skel" style={{ width: 26, height: 26, borderRadius: 7 }} />
           <span className="skel" style={{ flex: 1, height: 12 }} />
