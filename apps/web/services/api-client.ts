@@ -12,6 +12,9 @@ import type {
   SeasonTrend,
   StandingRow,
   TacticalMatchup,
+  Team,
+  TeamProfile,
+  TeamRatings,
 } from "../lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -67,6 +70,11 @@ export const api = {
     apiGet<MatchPrediction>(`/predictions/match/${matchId}`),
   tactical: (matchId: string) =>
     apiGet<TacticalMatchup>(`/tactical/match/${matchId}`),
+  teams: (league?: string) =>
+    apiGet<Team[]>(`/teams${league ? `?league=${league}` : ""}`),
+  teamProfile: (id: string) => apiGet<TeamProfile>(`/teams/${id}`),
+  ratings: (leagueId: string) => apiGet<TeamRatings[]>(`/analytics/ratings/${leagueId}`),
+  teamRatings: (teamId: string) => apiGet<TeamRatings>(`/analytics/team/${teamId}`),
   h2h: (home: string, away: string) =>
     apiGet<H2HSummary>(`/historical/h2h?home=${home}&away=${away}`),
   // Premium — requires a PREMIUM bearer token.

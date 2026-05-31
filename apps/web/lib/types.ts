@@ -8,6 +8,33 @@ export interface League {
   country: string;
 }
 
+export interface Team {
+  id: string;
+  name: string;
+  shortName: string;
+  leagueId: string;
+}
+
+export interface TeamProfile extends Team {
+  recentForm: string[];
+  played: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  avgXgFor: number;
+  avgXgAgainst: number;
+}
+
+export interface TeamRatings {
+  teamId: string;
+  name: string;
+  elo: number;
+  attackStrength: number;
+  defenseStrength: number;
+  recentFormPoints: number;
+  avgXgFor: number;
+  avgXgAgainst: number;
+}
+
 export interface MatchView {
   id: string;
   leagueId: string;

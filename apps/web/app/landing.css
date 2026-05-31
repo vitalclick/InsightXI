@@ -1,0 +1,28 @@
+/* Landing-page specific styles (marketing chrome + hero + feature cards). */
+.lp-nav { position: sticky; top: 0; z-index: 50; height: 66px; display: flex; align-items: center; gap: 22px; padding: 0 38px; background: rgba(8,12,22,.7); backdrop-filter: blur(18px); border-bottom: 1px solid var(--line); }
+html[data-theme="light"] .lp-nav { background: var(--chrome-topbar); }
+.lp-nav .links { display: flex; gap: 2px; margin-left: 18px; }
+.lp-nav .links a { padding: 8px 11px; border-radius: 9px; font-size: 13px; color: var(--text-2); font-weight: 500; transition: .15s; white-space: nowrap; }
+.lp-nav .links a:hover { background: var(--surface-2); color: var(--text); }
+.lp-brand { display: flex; align-items: center; gap: 11px; }
+.lp-brand .sb-logo { width: 34px; height: 34px; }
+.lp-brand b { font-family: var(--font-display); font-weight: 800; font-size: 19px; letter-spacing: -.03em; }
+.lp-brand b span { color: var(--blue-2); }
+.hero { position: relative; padding: 70px 38px 50px; max-width: 1320px; margin: 0 auto; }
+.hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 50px; align-items: center; }
+.hero h1 { font-size: 58px; line-height: 1.02; letter-spacing: -.035em; font-weight: 800; }
+.hero h1 .grad { background: linear-gradient(120deg, var(--blue-2), var(--green-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p.sub { font-size: 18px; color: var(--text-2); line-height: 1.55; margin: 22px 0 30px; max-width: 540px; }
+.glow-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
+.glow-bg::before { content:''; position: absolute; top: -120px; right: -80px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(46,125,255,.16), transparent 65%); }
+.glow-bg::after { content:''; position: absolute; bottom: -160px; left: -120px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(39,224,138,.10), transparent 65%); }
+.sect { max-width: 1320px; margin: 0 auto; padding: 60px 38px; }
+.sect-head { text-align: center; max-width: 680px; margin: 0 auto 42px; }
+.sect-head h2 { font-size: 38px; letter-spacing: -.03em; font-weight: 800; }
+.sect-head p { color: var(--muted); font-size: 16px; margin-top: 14px; line-height: 1.55; }
+.feat-card { background: linear-gradient(180deg, var(--surface-1), var(--card-grad-2)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; position: relative; overflow: hidden; transition: transform .25s, border-color .25s; }
+.feat-card:hover { transform: translateY(-4px); border-color: var(--line-2); }
+.feat-ic { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; margin-bottom: 18px; }
+.feat-card h3 { font-size: 19px; margin-bottom: 9px; }
+.feat-card p { color: var(--muted); font-size: 14px; line-height: 1.55; }
+@media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } .hero h1 { font-size: 42px; } .lp-nav .links { display: none; } }
