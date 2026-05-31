@@ -16,6 +16,7 @@ interface UserRow {
   name: string | null;
   avatar_url: string | null;
   provider: AuthProvider;
+  email_verified: boolean | null;
   subscription_status: SubscriptionStatus;
   subscription_provider: string | null;
   subscription_ref: string | null;
@@ -23,7 +24,7 @@ interface UserRow {
 }
 
 const COLUMNS =
-  "id, email, password_hash, tier, name, avatar_url, provider, " +
+  "id, email, password_hash, tier, name, avatar_url, provider, email_verified, " +
   "subscription_status, subscription_provider, subscription_ref, current_period_end";
 
 function toRecord(row: UserRow): UserRecord {
@@ -35,6 +36,7 @@ function toRecord(row: UserRow): UserRecord {
     name: row.name,
     avatarUrl: row.avatar_url,
     provider: row.provider,
+    emailVerified: row.email_verified ?? false,
     subscriptionStatus: row.subscription_status,
     subscriptionProvider: row.subscription_provider,
     subscriptionRef: row.subscription_ref,
@@ -68,7 +70,7 @@ export class PostgresUserStore extends UserStore {
   async insert(user: UserRecord): Promise<void> {
     await this.pg.query(
       `INSERT INTO users (${COLUMNS})
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (email) DO NOTHING`,
       [
         user.id,
@@ -78,6 +80,7 @@ export class PostgresUserStore extends UserStore {
         user.name,
         user.avatarUrl,
         user.provider,
+        user.emailVerified,
         user.subscriptionStatus,
         user.subscriptionProvider,
         user.subscriptionRef,
@@ -90,8 +93,8 @@ export class PostgresUserStore extends UserStore {
     const rows = await this.pg.query<UserRow>(
       `UPDATE users SET
          password_hash = $2, tier = $3, name = $4, avatar_url = $5,
-         provider = $6, subscription_status = $7, subscription_provider = $8,
-         subscription_ref = $9, current_period_end = $10
+         provider = $6, email_verified = $7, subscription_status = $8,
+         subscription_provider = $9, subscription_ref = $10, current_period_end = $11
        WHERE id = $1
        RETURNING ${COLUMNS}`,
       [
@@ -101,6 +104,7 @@ export class PostgresUserStore extends UserStore {
         user.name,
         user.avatarUrl,
         user.provider,
+        user.emailVerified,
         user.subscriptionStatus,
         user.subscriptionProvider,
         user.subscriptionRef,

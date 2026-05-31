@@ -2,6 +2,9 @@ import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { randomBytes } from "crypto";
 import { AuthResult, AuthService } from "../auth/auth.service";
 import { UsersService } from "../auth/users.service";
+import { UserRecord } from "../auth/user.store";
+import { EmailService } from "../email/email.service";
+import { paymentReceiptEmail } from "../email/templates";
 import { convertFromUsd, getCurrency } from "./currency";
 import { GeoService, RequestGeoHints } from "./geo.service";
 import { PREMIUM_PLAN } from "./pricing";
@@ -39,11 +42,28 @@ export class PaymentsService {
     private readonly geo: GeoService,
     private readonly users: UsersService,
     private readonly auth: AuthService,
+    private readonly email: EmailService,
     paypal: PaypalGateway,
     paystack: PaystackGateway,
     flutterwave: FlutterwaveGateway,
   ) {
     this.gateways = { paypal, paystack, flutterwave };
+  }
+
+  /** Email a receipt on activation; never let delivery break confirmation. */
+  private async sendReceipt(user: UserRecord, provider: PaymentProvider, reference: string): Promise<void> {
+    try {
+      await this.email.send(
+        paymentReceiptEmail(user.email, {
+          amountDisplay: `$${PREMIUM_PLAN.amountUsd.toFixed(2)} / ${PREMIUM_PLAN.periodDays} days`,
+          provider,
+          periodEnd: user.currentPeriodEnd,
+          reference,
+        }),
+      );
+    } catch (err) {
+      this.logger.warn(`Receipt email failed for ${user.email}: ${(err as Error).message}`);
+    }
   }
 
   private gatewayFor(provider: PaymentProvider): PaymentGateway {
@@ -115,6 +135,7 @@ export class PaymentsService {
     });
     if (!updated) throw new BadRequestException("Unknown user");
     this.logger.log(`Premium activated for ${updated.email} via ${provider}`);
+    await this.sendReceipt(updated, provider, result.reference);
     return { status: "active", auth: await this.auth.issueToken(updated) };
   }
 
@@ -131,12 +152,13 @@ export class PaymentsService {
       this.logger.warn(`Webhook reference without user id: ${result.reference}`);
       return { received: true };
     }
-    await this.users.activatePremium(userId, {
+    const updated = await this.users.activatePremium(userId, {
       provider,
       reference: result.reference,
       periodDays: PREMIUM_PLAN.periodDays,
     });
     this.logger.log(`Premium activated via ${provider} webhook for user ${userId}`);
+    if (updated) await this.sendReceipt(updated, provider, result.reference);
     return { received: true };
   }
 

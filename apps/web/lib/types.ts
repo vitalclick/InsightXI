@@ -117,12 +117,14 @@ export interface PublicUser {
   name: string | null;
   avatarUrl: string | null;
   provider: AuthProvider;
+  emailVerified: boolean;
   subscriptionStatus: SubscriptionStatus;
   currentPeriodEnd: string | null;
 }
 
 export interface AuthResponse {
   accessToken: string;
+  refreshToken: string;
   user: PublicUser;
 }
 

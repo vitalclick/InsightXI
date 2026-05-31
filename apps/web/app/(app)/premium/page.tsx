@@ -19,7 +19,7 @@ export default function PremiumPage() {
   const isPremium = user?.tier === "PREMIUM";
 
   function onActivated(auth: AuthResponse) {
-    setAuth(auth.accessToken, auth.user);
+    setAuth(auth.accessToken, auth.user, auth.refreshToken);
   }
 
   const { data: fixtures = [] } = useQuery({ queryKey: ["fixtures", ""], queryFn: () => api.fixtures() });

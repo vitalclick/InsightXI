@@ -18,8 +18,40 @@ export default function AccountPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [notice, setNotice] = useState<string | null>(null);
+
   function applyAuth(res: AuthResponse) {
-    setAuth(res.accessToken, res.user);
+    setAuth(res.accessToken, res.user, res.refreshToken);
+  }
+
+  async function forgotPassword() {
+    setError(null);
+    setNotice(null);
+    if (!email) {
+      setError("Enter your email above, then tap Forgot password.");
+      return;
+    }
+    try {
+      await api.forgotPassword(email);
+      setNotice("If that email has an account, a reset link is on its way.");
+    } catch {
+      setNotice("If that email has an account, a reset link is on its way.");
+    }
+  }
+
+  async function resendVerification() {
+    if (!token) return;
+    setNotice(null);
+    try {
+      const res = await api.resendVerification(token);
+      setNotice(
+        res.alreadyVerified
+          ? "Your email is already verified."
+          : "Verification email sent — check your inbox.",
+      );
+    } catch {
+      setNotice("Could not send the verification email. Try again shortly.");
+    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -61,9 +93,32 @@ export default function AccountPage() {
                 <div className="flex aic gap-8" style={{ marginTop: 6 }}>
                   <span className={`badge ${user.tier === "PREMIUM" ? "gold" : ""}`}>{user.tier}</span>
                   <span className="dim" style={{ fontSize: 11 }}>via {user.provider}</span>
+                  {user.emailVerified ? (
+                    <span className="dim" style={{ fontSize: 11 }}>· email verified</span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: "var(--gold, #e6b400)" }}>· email unverified</span>
+                  )}
                 </div>
               </div>
             </div>
+            {!user.emailVerified && (
+              <div
+                className="dim"
+                style={{ fontSize: 12.5, marginBottom: 14, lineHeight: 1.5 }}
+              >
+                Confirm your email to secure your account.{" "}
+                <button
+                  onClick={resendVerification}
+                  className="btn btn-ghost"
+                  style={{ padding: "2px 8px", fontSize: 12 }}
+                >
+                  Resend verification
+                </button>
+              </div>
+            )}
+            {notice && (
+              <p style={{ fontSize: 12.5, color: "var(--accent, #3b82f6)", marginBottom: 12 }}>{notice}</p>
+            )}
             {user.tier === "PREMIUM" ? (
               <div className="dim" style={{ fontSize: 12.5, marginBottom: 14 }}>
                 {user.currentPeriodEnd
@@ -144,9 +199,20 @@ export default function AccountPage() {
               style={{ width: "100%", margin: 0, height: 42 }}
             />
             {error && <p style={{ fontSize: 13, color: "var(--red)" }}>{error}</p>}
+            {notice && <p style={{ fontSize: 13, color: "var(--accent, #3b82f6)" }}>{notice}</p>}
             <button type="submit" disabled={loading} className="btn btn-primary" style={{ opacity: loading ? 0.6 : 1 }}>
               {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
             </button>
+            {mode === "signin" && (
+              <button
+                type="button"
+                onClick={forgotPassword}
+                className="btn btn-ghost"
+                style={{ fontSize: 12.5, alignSelf: "flex-start", padding: "4px 0", background: "none" }}
+              >
+                Forgot password?
+              </button>
+            )}
           </form>
 
           <p className="muted" style={{ fontSize: 12, marginTop: 16 }}>

@@ -3,6 +3,7 @@ import { join } from "path";
 import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { RateLimitGuard } from "./common/security/rate-limit.guard";
+import { EmailModule } from "./modules/email/email.module";
 import { HealthModule } from "./modules/health/health.module";
 import { DataModule } from "./repositories/data.module";
 import { LeaguesModule } from "./modules/leagues/leagues.module";
@@ -39,6 +40,7 @@ import { ModelHealthModule } from "./modules/model-health/model-health.module";
       ],
     }),
     DataModule,
+    EmailModule,
     HealthModule,
     // Phase 1 — Football Data Hub
     LeaguesModule,

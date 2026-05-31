@@ -11,6 +11,8 @@ export interface UserRecord {
   name: string | null;
   avatarUrl: string | null;
   provider: AuthProvider;
+  /** Whether the email address has been confirmed (OAuth accounts are trusted). */
+  emailVerified: boolean;
   subscriptionStatus: SubscriptionStatus;
   /** Gateway that activated the current subscription (paypal/paystack/...). */
   subscriptionProvider: string | null;
@@ -26,6 +28,7 @@ export interface PublicUser {
   name: string | null;
   avatarUrl: string | null;
   provider: AuthProvider;
+  emailVerified: boolean;
   subscriptionStatus: SubscriptionStatus;
   currentPeriodEnd: string | null;
 }
