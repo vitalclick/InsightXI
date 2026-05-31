@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 
 EXPOSE 8000
-# Shell form so ${PORT} expands at runtime: honor the platform-assigned port
-# (Railway/Render/etc.) when present, else default to 8000 for local/compose.
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Bind IPv6 (::) so the service is reachable over Railway's private network,
+# which is IPv6-only — 0.0.0.0 (IPv4) is NOT reachable on *.railway.internal.
+# Dual-stack also accepts IPv4, so local/compose still works. Shell form lets
+# ${PORT} expand at runtime (platform-assigned), defaulting to 8000.
+CMD uvicorn app.main:app --host :: --port ${PORT:-8000}
