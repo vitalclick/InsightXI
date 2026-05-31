@@ -187,6 +187,11 @@ export function CheckoutPanel({ token, plan, currency, onActivated }: CheckoutPa
         betting advice or guaranteed outcomes. Cancel anytime; access runs for the
         paid {plan.plan.periodDays}-day period.
       </p>
+      <p className="dim" style={{ fontSize: 11.5, marginTop: 8 }}>
+        By subscribing you agree to our{" "}
+        <a href="/terms">Terms of Service</a> and{" "}
+        <a href="/privacy">Privacy Policy</a>.
+      </p>
     </div>
   );
 }

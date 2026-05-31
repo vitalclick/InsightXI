@@ -225,6 +225,8 @@ export default function Landing() {
             <Link href="/dashboard">Platform</Link>
             <Link href="/premium">Premium</Link>
             <Link href="/historical">Analytics</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
           </div>
         </div>
       </footer>
