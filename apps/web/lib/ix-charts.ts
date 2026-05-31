@@ -222,6 +222,8 @@ export interface LineOpts {
   yDec?: number;
   xLabels?: string[];
   smooth?: boolean;
+  /** Vertical event markers drawn at an x value (e.g. goal minutes). */
+  markers?: { x: number; color: string }[];
 }
 export interface BarDatum {
   label: string;
@@ -506,6 +508,23 @@ export function line(target: HTMLElement, opts: LineOpts): void {
       });
       t.textContent = lb;
       s.appendChild(t);
+    });
+  if (opts.markers)
+    opts.markers.forEach((mk) => {
+      const mx = X(mk.x);
+      s.appendChild(
+        el("line", {
+          x1: mx,
+          y1: pad.t,
+          x2: mx,
+          y2: pad.t + ih,
+          stroke: mk.color,
+          "stroke-width": 1.5,
+          "stroke-dasharray": "3 3",
+          opacity: 0.7,
+        }),
+      );
+      s.appendChild(el("circle", { cx: mx, cy: pad.t + 3, r: 3, fill: mk.color }));
     });
   series.forEach((ser) => {
     const pts: Pt[] = ser.data.map((d, i) => [X(d.x ?? (i / (ser.data.length - 1)) * xMax), Y(d.y)]);

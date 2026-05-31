@@ -21,7 +21,7 @@ const CONFIDENCE_TIERS = [
   { label: "Elite 90%+", value: 90 },
 ] as const;
 
-const VALID_CONF = new Set(CONFIDENCE_TIERS.map((t) => t.value));
+const VALID_CONF = new Set<number>(CONFIDENCE_TIERS.map((t) => t.value));
 
 function BoardInner() {
   const router = useRouter();
