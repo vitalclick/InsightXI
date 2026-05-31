@@ -8,11 +8,14 @@ import { useUiStore } from "../../store/ui-store";
 import { useAuthStore } from "../../store/auth-store";
 import { TOPNAV } from "./nav-config";
 import { SearchBox } from "./search-box";
+import { Freshness } from "./freshness";
 
 export function Topbar() {
   const pathname = usePathname();
   const toggleCollapsed = useUiStore((s) => s.toggleCollapsed);
   const toggleMobile = useUiStore((s) => s.toggleMobile);
+  const toggleAssistant = useUiStore((s) => s.toggleAssistant);
+  const assistantOpen = useUiStore((s) => s.assistantOpen);
   const user = useAuthStore((s) => s.user);
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "IX";
 
@@ -37,8 +40,19 @@ export function Topbar() {
         })}
       </nav>
       <SearchBox />
+      <span className="tb-freshness">
+        <Freshness />
+      </span>
       <ThemeToggle />
-      <button className="tb-icon" title="AI Assistant" aria-label="AI Assistant">
+      <button
+        className="tb-icon"
+        title="Ask Insight (AI assistant)"
+        aria-label="Open Insight AI assistant"
+        aria-haspopup="dialog"
+        aria-expanded={assistantOpen}
+        onClick={toggleAssistant}
+        style={assistantOpen ? { color: "var(--blue-2)", borderColor: "rgba(46,125,255,.3)", background: "rgba(46,125,255,.1)" } : undefined}
+      >
         <Icon name="bolt" size={17} />
       </button>
       <Link href="/account" className="tb-icon" title="Notifications" aria-label="Notifications">

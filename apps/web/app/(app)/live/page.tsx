@@ -1,12 +1,36 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { PageHead } from "../../../components/ui/page-head";
 import { Crest } from "../../../components/ui/crest";
+import { ChartBox } from "../../../components/charts/chart-box";
 import { useLive } from "../../../hooks/use-live";
+import { liveWinProb, type WinProbPoint } from "../../../lib/live-winprob";
+import * as IX from "../../../lib/ix-charts";
 
 export default function LivePage() {
   const { snapshot: snap, connected } = useLive();
   const homePct = snap ? Math.round(50 + snap.momentum / 2) : 50;
+
+  // Accumulate a win-probability series across ticks, resetting per match.
+  const [series, setSeries] = useState<WinProbPoint[]>([]);
+  const matchRef = useRef<string | null>(null);
+  const lastMinute = useRef<number>(-1);
+
+  useEffect(() => {
+    if (!snap) return;
+    if (snap.matchId !== matchRef.current) {
+      matchRef.current = snap.matchId;
+      lastMinute.current = -1;
+      setSeries([]);
+    }
+    if (snap.minute !== lastMinute.current) {
+      lastMinute.current = snap.minute;
+      setSeries((prev) => [...prev, liveWinProb(snap)]);
+    }
+  }, [snap]);
+
+  const current = snap ? liveWinProb(snap) : null;
 
   return (
     <>
@@ -68,6 +92,32 @@ export default function LivePage() {
                 <span>{snap.homeTeamName}</span>
                 <span>{snap.awayTeamName}</span>
               </div>
+
+              {current && (
+                <>
+                  <div className="flex jcb aic" style={{ margin: "20px 0 8px" }}>
+                    <span className="label-xs">Win probability tracker</span>
+                    <div className="flex gap-8" style={{ fontSize: 11 }}>
+                      <span className="mono" style={{ color: "var(--blue-2)" }}>H {current.h}%</span>
+                      <span className="mono dim">D {current.d}%</span>
+                      <span className="mono" style={{ color: "var(--green-2)" }}>A {current.a}%</span>
+                    </div>
+                  </div>
+                  {series.length >= 2 ? (
+                    <ChartBox
+                      style={{ width: "100%" }}
+                      label={`In-play win probability over time. Currently home ${current.h} percent, draw ${current.d} percent, away ${current.a} percent.`}
+                      deps={[snap.matchId, series.length]}
+                      draw={(el) => IX.winprob(el, series, { w: 560, h: 150 })}
+                    />
+                  ) : (
+                    <div className="dim" style={{ fontSize: 12, padding: "8px 0" }}>Building the probability curve as the match progresses…</div>
+                  )}
+                  <div className="dim" style={{ fontSize: 11, marginTop: 4 }}>
+                    Transparent in-play estimate from live momentum, scoreline and time remaining — a probabilistic read, not a guaranteed outcome.
+                  </div>
+                </>
+              )}
             </div>
           </section>
 
