@@ -12,10 +12,12 @@ async function bootstrap() {
 
   app.enableCors({ origin: true, credentials: true });
 
-  const port = process.env.API_PORT ?? 4000;
-  await app.listen(port);
+  // Bind to 0.0.0.0 and prefer the platform-assigned PORT (Railway, Render,
+  // Heroku, etc. inject it), falling back to API_PORT, then 4000 for local dev.
+  const port = process.env.PORT ?? process.env.API_PORT ?? 4000;
+  await app.listen(port, "0.0.0.0");
   // eslint-disable-next-line no-console
-  console.log(`InsightXI API listening on http://localhost:${port}`);
+  console.log(`InsightXI API listening on http://0.0.0.0:${port}`);
 }
 
 bootstrap();
