@@ -70,6 +70,8 @@ export const api = {
     apiGet<MatchPrediction>(`/predictions/match/${matchId}`),
   tactical: (matchId: string) =>
     apiGet<TacticalMatchup>(`/tactical/match/${matchId}`),
+  tacticalMatchup: (home: string, away: string) =>
+    apiGet<TacticalMatchup>(`/tactical/matchup?home=${home}&away=${away}`),
   teams: (league?: string) =>
     apiGet<Team[]>(`/teams${league ? `?league=${league}` : ""}`),
   teamProfile: (id: string) => apiGet<TeamProfile>(`/teams/${id}`),

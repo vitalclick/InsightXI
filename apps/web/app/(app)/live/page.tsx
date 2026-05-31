@@ -12,8 +12,9 @@ export default function LivePage() {
   const { snapshot: snap, connected } = useLive();
   const homePct = snap ? Math.round(50 + snap.momentum / 2) : 50;
 
-  // Accumulate a win-probability series across ticks, resetting per match.
+  // Accumulate win-probability + cumulative-xG series across ticks, per match.
   const [series, setSeries] = useState<WinProbPoint[]>([]);
+  const [xgSeries, setXgSeries] = useState<{ minute: number; home: number; away: number }[]>([]);
   const matchRef = useRef<string | null>(null);
   const lastMinute = useRef<number>(-1);
 
@@ -23,10 +24,12 @@ export default function LivePage() {
       matchRef.current = snap.matchId;
       lastMinute.current = -1;
       setSeries([]);
+      setXgSeries([]);
     }
     if (snap.minute !== lastMinute.current) {
       lastMinute.current = snap.minute;
       setSeries((prev) => [...prev, liveWinProb(snap)]);
+      setXgSeries((prev) => [...prev, { minute: snap.minute, home: snap.homeXg, away: snap.awayXg }]);
     }
   }, [snap]);
 
@@ -118,6 +121,43 @@ export default function LivePage() {
                   </div>
                 </>
               )}
+
+              <div className="flex jcb aic" style={{ margin: "22px 0 8px" }}>
+                <span className="label-xs">Expected goals (cumulative)</span>
+                <div className="flex gap-8" style={{ fontSize: 11 }}>
+                  <span className="mono" style={{ color: "var(--blue-2)" }}>{snap.homeXg.toFixed(2)} xG</span>
+                  <span className="mono" style={{ color: "var(--green-2)" }}>{snap.awayXg.toFixed(2)} xG</span>
+                </div>
+              </div>
+              {xgSeries.length >= 2 ? (
+                <ChartBox
+                  style={{ width: "100%" }}
+                  label={`Cumulative expected goals over time. Currently ${snap.homeTeamName} ${snap.homeXg.toFixed(2)}, ${snap.awayTeamName} ${snap.awayXg.toFixed(2)}.`}
+                  deps={[snap.matchId, xgSeries.length]}
+                  draw={(el) =>
+                    IX.line(el, {
+                      w: 560,
+                      h: 150,
+                      xMax: 90,
+                      yMin: 0,
+                      gy: 3,
+                      yLabels: true,
+                      yDec: 1,
+                      xLabels: ["0'", "45'", "90'"],
+                      series: [
+                        { color: IX.C.blue, data: xgSeries.map((d) => ({ x: d.minute, y: d.home })) },
+                        { color: IX.C.green, data: xgSeries.map((d) => ({ x: d.minute, y: d.away })) },
+                      ],
+                    })
+                  }
+                />
+              ) : (
+                <div className="dim" style={{ fontSize: 12, padding: "8px 0" }}>Accruing expected goals as chances develop…</div>
+              )}
+              <div className="flex jcb" style={{ marginTop: 4, fontSize: 11, color: "var(--muted)" }}>
+                <span>{snap.homeTeamName}</span>
+                <span>{snap.awayTeamName}</span>
+              </div>
             </div>
           </section>
 

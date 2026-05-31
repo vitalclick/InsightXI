@@ -181,6 +181,8 @@ export interface LiveSnapshot {
   minute: number;
   homeGoals: number;
   awayGoals: number;
+  homeXg: number;
+  awayXg: number;
   momentum: number;
   status: "LIVE" | "FINISHED";
   events: LiveEvent[];

@@ -18,6 +18,9 @@ export interface LiveSnapshot {
   minute: number;
   homeGoals: number;
   awayGoals: number;
+  /** Cumulative expected goals (chance quality) accrued so far. */
+  homeXg: number;
+  awayXg: number;
   /** 0..100; 50 = neutral, >50 = home pressure. */
   momentum: number;
   status: "LIVE" | "FINISHED";
@@ -87,6 +90,8 @@ export class LiveService {
       minute: 0,
       homeGoals: 0,
       awayGoals: 0,
+      homeXg: 0,
+      awayXg: 0,
       momentum: 50,
       status: "LIVE",
       events: [{ minute: 0, type: "KICKOFF", text: "Kick-off" }],
@@ -107,6 +112,15 @@ export class LiveService {
 
     const pHome = (this.lambdaHome / 90) * MINUTES_PER_TICK;
     const pAway = (this.lambdaAway / 90) * MINUTES_PER_TICK;
+
+    // Accrue cumulative expected goals for the window, weighting each side by
+    // the momentum carried into it (the pressing team manufactures more chance
+    // quality). Independent of whether a goal is actually realised below.
+    const momHome = 0.7 + (s.momentum / 100) * 0.6;
+    const momAway = 0.7 + ((100 - s.momentum) / 100) * 0.6;
+    s.homeXg = round2(s.homeXg + pHome * momHome);
+    s.awayXg = round2(s.awayXg + pAway * momAway);
+
     if (rand() < pHome) {
       s.homeGoals++;
       s.events.push({
@@ -152,4 +166,8 @@ export class LiveService {
 
 function clamp(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));
+}
+
+function round2(x: number): number {
+  return Math.round(x * 100) / 100;
 }

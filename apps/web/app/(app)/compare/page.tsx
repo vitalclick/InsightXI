@@ -10,6 +10,7 @@ import { Crest } from "../../../components/ui/crest";
 import { ChartBox } from "../../../components/charts/chart-box";
 import { STRENGTH_AXES, strengthValues, compareRows } from "../../../lib/team-strength";
 import * as IX from "../../../lib/ix-charts";
+import type { TacticalMatchup } from "../../../lib/types";
 
 function CompareInner() {
   const router = useRouter();
@@ -42,6 +43,12 @@ function CompareInner() {
   const { data: h2h } = useQuery({
     queryKey: ["h2h", a, b],
     queryFn: () => api.h2h(a, b),
+    enabled: !!a && !!b && a !== b,
+    retry: 0,
+  });
+  const { data: tactical } = useQuery({
+    queryKey: ["tacticalMatchup", a, b],
+    queryFn: () => api.tacticalMatchup(a, b),
     enabled: !!a && !!b && a !== b,
     retry: 0,
   });
@@ -90,6 +97,7 @@ function CompareInner() {
       ) : !ra || !rb ? (
         <section className="card"><div className="card-bd empty"><p>Loading team ratings…</p></div></section>
       ) : (
+        <>
         <div className="grid" style={{ gridTemplateColumns: "1fr 1.1fr", alignItems: "start" }}>
           {/* Radar */}
           <section className="card reveal">
@@ -166,8 +174,82 @@ function CompareInner() {
             </div>
           </section>
         </div>
+
+        {tactical && <TacticalCard m={tactical} nameA={nameA} nameB={nameB} />}
+        </>
       )}
     </>
+  );
+}
+
+function TacticalCard({ m, nameA, nameB }: { m: TacticalMatchup; nameA: string; nameB: string }) {
+  const edge = m.tacticalEdge; // -100 (away) .. +100 (home)
+  const homePct = 50 + edge / 2; // map to 0..100 share of the bar
+  const leader = edge > 4 ? nameA : edge < -4 ? nameB : "Even";
+  return (
+    <section className="card reveal" style={{ marginTop: 18 }}>
+      <div className="card-hd">
+        <h3>Tactical matchup</h3>
+        <span className="badge">{leader === "Even" ? "Even tactical profile" : `${leader} edge`}</span>
+      </div>
+      <div className="card-bd">
+        {/* Edge bar */}
+        <div className="flex jcb" style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 6 }}>
+          <span>{nameA}</span>
+          <span className="mono">tactical edge {edge > 0 ? "+" : ""}{edge}</span>
+          <span>{nameB}</span>
+        </div>
+        <div style={{ display: "flex", height: 8, borderRadius: 20, overflow: "hidden", background: "var(--surface-3)" }}>
+          <i style={{ width: `${homePct}%`, background: "var(--blue)" }} />
+          <i style={{ width: `${100 - homePct}%`, background: "var(--green)" }} />
+        </div>
+
+        {/* Profiles */}
+        <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 18 }}>
+          <TacticalProfileCol p={m.home} accent="var(--blue)" />
+          <TacticalProfileCol p={m.away} accent="var(--green)" />
+        </div>
+
+        {/* Insights */}
+        {m.insights.length > 0 && (
+          <ul style={{ margin: "16px 0 0", paddingLeft: 18, fontSize: 13, color: "var(--text-2)", lineHeight: 1.7 }}>
+            {m.insights.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        )}
+        <p className="dim" style={{ fontSize: 11, marginTop: 12, marginBottom: 0 }}>
+          Heuristic tactical read derived from team ratings — explainable, not tracking data.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function TacticalProfileCol({ p, accent }: { p: TacticalMatchup["home"]; accent: string }) {
+  return (
+    <div style={{ borderLeft: `2px solid ${accent}`, paddingLeft: 12 }}>
+      <div className="flex jcb aic">
+        <b style={{ fontSize: 13 }}>{p.name}</b>
+        <span className="badge mono">{p.formation}</span>
+      </div>
+      <dl style={{ margin: "10px 0 0", fontSize: 12.5, color: "var(--text-2)" }}>
+        <Row k="Possession" v={`${p.possession}%`} />
+        <Row k="Pressing" v={`${p.pressingIntensity}/100`} />
+        <Row k="Defensive line" v={p.defensiveLine} />
+        <Row k="Attacking flow" v={p.attackingFlow} />
+        <Row k="Transitions" v={p.transitionStyle} />
+      </dl>
+    </div>
+  );
+}
+
+function Row({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex jcb" style={{ padding: "3px 0" }}>
+      <dt className="dim">{k}</dt>
+      <dd style={{ margin: 0, fontWeight: 600, color: "var(--text)" }}>{v}</dd>
+    </div>
   );
 }
 
