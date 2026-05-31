@@ -1,7 +1,6 @@
 # InsightXI Web (Next.js) — multi-stage build from the pnpm workspace root.
 # Build context must be the repo root:  docker build -f apps/web/Dockerfile .
-# Uses Next.js standalone output. Primary deploy target is Vercel; this image
-# is for self-hosting / docker-compose / non-Vercel hosts.
+# Uses Next.js standalone output. Deployable to Railway / any container host.
 FROM node:20-alpine AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH="$PNPM_HOME:$PATH"
@@ -22,9 +21,12 @@ RUN pnpm --filter @insightxi/web build
 
 FROM node:20-alpine AS runtime
 ENV NODE_ENV=production
+# Next's standalone server reads PORT and HOSTNAME. HOSTNAME must be 0.0.0.0 in
+# a container or it binds to localhost and the platform edge gets a 502.
+# PORT defaults to 3000 but is overridden by the platform-assigned $PORT.
 ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 WORKDIR /app
-# Standalone output bundles a minimal server + only the deps it needs.
 COPY --from=build /repo/apps/web/.next/standalone ./
 COPY --from=build /repo/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build /repo/apps/web/public ./apps/web/public
