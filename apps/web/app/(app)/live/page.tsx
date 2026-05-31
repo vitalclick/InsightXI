@@ -132,7 +132,7 @@ export default function LivePage() {
               {xgSeries.length >= 2 ? (
                 <ChartBox
                   style={{ width: "100%" }}
-                  label={`Cumulative expected goals over time. Currently ${snap.homeTeamName} ${snap.homeXg.toFixed(2)}, ${snap.awayTeamName} ${snap.awayXg.toFixed(2)}.`}
+                  label={`Cumulative expected goals over time. Currently ${snap.homeTeamName} ${snap.homeXg.toFixed(2)}, ${snap.awayTeamName} ${snap.awayXg.toFixed(2)}. Dashed markers indicate goals.`}
                   deps={[snap.matchId, xgSeries.length]}
                   draw={(el) =>
                     IX.line(el, {
@@ -144,6 +144,12 @@ export default function LivePage() {
                       yLabels: true,
                       yDec: 1,
                       xLabels: ["0'", "45'", "90'"],
+                      markers: snap.events
+                        .filter((e) => e.type === "GOAL")
+                        .map((e) => ({
+                          x: e.minute,
+                          color: e.teamId === snap.awayTeamId ? IX.C.green : IX.C.blue,
+                        })),
                       series: [
                         { color: IX.C.blue, data: xgSeries.map((d) => ({ x: d.minute, y: d.home })) },
                         { color: IX.C.green, data: xgSeries.map((d) => ({ x: d.minute, y: d.away })) },

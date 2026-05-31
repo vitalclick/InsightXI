@@ -66,4 +66,15 @@ describe("LiveService", () => {
     expect(fresh.homeXg).toBe(0);
     expect(fresh.awayXg).toBe(0);
   });
+
+  it("adds a discrete xG bump for each goal scored", () => {
+    service.startNextMatch();
+    let snap = service.snapshot();
+    for (let i = 0; i < 18; i++) snap = service.tick(() => 0.0); // always score
+    const goals = snap.homeGoals + snap.awayGoals;
+    expect(goals).toBeGreaterThan(0);
+    // Cumulative xG includes both continuous accrual and the per-goal bump,
+    // so it must exceed the goals * the goal-chance xG floor.
+    expect(snap.homeXg + snap.awayXg).toBeGreaterThan(goals * 0.35);
+  });
 });

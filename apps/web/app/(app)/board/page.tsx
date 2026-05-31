@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api-client";
 import { PageHead } from "../../../components/ui/page-head";
@@ -20,13 +21,30 @@ const CONFIDENCE_TIERS = [
   { label: "Elite 90%+", value: 90 },
 ] as const;
 
-export default function BoardPage() {
+const VALID_CONF = new Set(CONFIDENCE_TIERS.map((t) => t.value));
+
+function BoardInner() {
+  const router = useRouter();
+  const params = useSearchParams();
   const { data: fixtures = [] } = useQuery({ queryKey: ["fixtures", ""], queryFn: () => api.fixtures() });
   const { data: leagues = [] } = useQuery({ queryKey: ["leagues"], queryFn: api.leagues });
   const preds = usePredictions(fixtures.map((m) => m.id));
 
-  const [minConfidence, setMinConfidence] = useState(0);
-  const [market, setMarket] = useState<string | null>(null);
+  // Seed filter state from the URL so a filtered board is shareable.
+  const initConf = Number(params.get("conf"));
+  const [minConfidence, setMinConfidence] = useState(VALID_CONF.has(initConf) ? initConf : 0);
+  const [market, setMarket] = useState<string | null>(params.get("market") || null);
+
+  // Keep the URL in sync with the active filters.
+  useEffect(() => {
+    const qs = new URLSearchParams();
+    if (minConfidence) qs.set("conf", String(minConfidence));
+    if (market) qs.set("market", market);
+    const next = qs.toString() ? `/board?${qs.toString()}` : "/board";
+    if (`${window.location.pathname}${window.location.search}` !== next) {
+      router.replace(next, { scroll: false });
+    }
+  }, [minConfidence, market, router]);
 
   const entries: BoardEntry[] = useMemo(
     () => fixtures.map((m) => ({ m, p: preds[m.id] })),
@@ -196,6 +214,15 @@ export default function BoardPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function BoardPage() {
+  // useSearchParams() requires a Suspense boundary in the app router.
+  return (
+    <Suspense fallback={<div className="empty">Loading board…</div>}>
+      <BoardInner />
+    </Suspense>
   );
 }
 

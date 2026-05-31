@@ -28,6 +28,8 @@ export interface LiveSnapshot {
 }
 
 const MINUTES_PER_TICK = 5;
+/** Discrete xG added by the chance a goal is scored from (a finished shot). */
+const GOAL_XG = 0.35;
 
 /**
  * Drives a simulated live match. Pure state machine (no I/O) so it is unit
@@ -123,6 +125,7 @@ export class LiveService {
 
     if (rand() < pHome) {
       s.homeGoals++;
+      s.homeXg = round2(s.homeXg + GOAL_XG);
       s.events.push({
         minute: s.minute,
         type: "GOAL",
@@ -132,6 +135,7 @@ export class LiveService {
     }
     if (rand() < pAway) {
       s.awayGoals++;
+      s.awayXg = round2(s.awayXg + GOAL_XG);
       s.events.push({
         minute: s.minute,
         type: "GOAL",

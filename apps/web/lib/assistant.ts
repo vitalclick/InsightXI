@@ -72,6 +72,47 @@ export async function answerQuery(query: string): Promise<AssistantAnswer> {
 
   const [teams, fixtures] = await Promise.all([api.teams(), api.fixtures()]);
 
+  // --- Tactical matchup ("how do X and Y match up tactically?") ----------
+  // Checked before the generic comparison so a tactical question routes to the
+  // matchup engine (formations, press, edge) rather than the ratings tally.
+  const isTactical = /\btactic(s|al|ally)?\b|\bmatch\s?up\b|\bformation/.test(q);
+  if (isTactical) {
+    const pair = matchTeams(query, teams, 2);
+    if (pair.length === 2) {
+      const [ta, tb] = pair;
+      try {
+        const m = await api.tacticalMatchup(ta.id, tb.id);
+        const edge = m.tacticalEdge;
+        const verdict =
+          Math.abs(edge) <= 4
+            ? "Evenly matched tactical profiles — fine margins expected."
+            : `${edge > 0 ? ta.name : tb.name} holds the tactical edge (${edge > 0 ? "+" : ""}${edge}).`;
+        return {
+          title: `${ta.name} vs ${tb.name} — tactical`,
+          lines: [
+            verdict,
+            `${ta.name}: ${m.home.formation}, ${m.home.possession}% poss, press ${m.home.pressingIntensity} · ${tb.name}: ${m.away.formation}, ${m.away.possession}% poss, press ${m.away.pressingIntensity}`,
+            ...m.insights.slice(0, 2),
+          ],
+          href: `/compare?a=${ta.id}&b=${tb.id}`,
+          hrefLabel: "Open tactical matchup →",
+        };
+      } catch {
+        return { title: `${ta.name} vs ${tb.name} — tactical`, lines: [], note: "Tactical data is temporarily unavailable." };
+      }
+    }
+    if (pair.length === 0) {
+      return {
+        title: "Tactical matchup",
+        lines: [],
+        href: "/compare",
+        hrefLabel: "Open Team Comparison →",
+        note: "Name two teams, e.g. “how do Arsenal and Manchester City match up tactically?”.",
+      };
+    }
+    // Exactly one team named — fall through to the single-team ratings answer.
+  }
+
   // --- Comparison ("compare X and Y", "X vs Y") --------------------------
   // Runs before the single-team branch so a two-team query isn't swallowed by
   // the first team it matches. Built from ratings only (no prediction slate).
