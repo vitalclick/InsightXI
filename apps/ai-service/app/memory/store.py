@@ -152,6 +152,19 @@ class ExperienceStore:
         self._ensure_loaded()
         return sorted({r.league_id for r in self._records.values() if r.resolved})
 
+    def pending_match_ids(self) -> list[str]:
+        """Matches we predicted but haven't yet seen a result for.
+
+        The backend reconciles exactly these against finished fixtures, so we
+        never re-post feedback for matches that are already resolved.
+        """
+        self._ensure_loaded()
+        return [
+            mid
+            for mid, r in self._records.items()
+            if r.submodel_probs and r.actual_outcome is None
+        ]
+
     def counts(self) -> dict[str, int]:
         self._ensure_loaded()
         total = len(self._records)

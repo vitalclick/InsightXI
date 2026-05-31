@@ -1,10 +1,18 @@
 # Adaptive Intelligence Engine — Architecture & Design
 
-**Status:** Proposed (design only — no implementation yet)
+**Status:** Implemented (Phases A–D) — engine OFF by default (`ADAPTIVE_ENABLED=false`)
 **Author:** InsightXI engineering
 **Scope:** `apps/ai-service` (primary), `apps/api` (feedback wiring), `apps/web` (transparency surfaces)
 **Supersedes / extends:** the static ensemble in `apps/ai-service/app/inference/predictor.py`
 **Default posture:** **Conservative & explainable** (bounded adaptation, minimum-sample gating, full audit trail, graceful fallback to the static blend)
+
+> **Implementation note.** This document was written as a proposal and is kept as
+> the living design record. All five layers are now built and tested (offline,
+> deterministic): see `app/memory/`, `app/adaptive/`, the new endpoints in
+> `app/main.py`, the backend reconciliation in
+> `apps/api/src/modules/predictions/adaptive-feedback.service.ts`, and the web
+> transparency panel in `components/match/match-intel.tsx`. Where the build chose
+> a concrete option among the proposal's alternatives, §12 records the decision.
 
 ---
 
@@ -328,8 +336,9 @@ Documented in `.env.example` and `apps/ai-service/README.md`.
 
 Each phase is independently shippable, tested, and **off by default** until
 proven against baseline. Branch: `claude/beautiful-edison-y1azv`.
+**All four phases are now implemented and tested** (✅).
 
-### Phase A — Experience Memory + Feedback (foundation)
+### Phase A — Experience Memory + Feedback (foundation) ✅
 * `app/memory/store.py` + `ExperienceRecord` schema; `/feedback` endpoint;
   `/predict` records prediction-time state (behind flag).
 * Backend: `predictions` table + POST-to-`/feedback` on match resolution.
@@ -337,7 +346,7 @@ proven against baseline. Branch: `claude/beautiful-edison-y1azv`.
 * **Exit:** experience accrues end-to-end on the simulator; zero behavior change
   to published predictions.
 
-### Phase B — Self-Evaluation + Dynamic Weighting
+### Phase B — Self-Evaluation + Dynamic Weighting ✅
 * `app/adaptive/evaluate.py` (reuse `evaluation/metrics.py`) +
   `app/adaptive/weighting.py` + `state.py`; adaptive path in `predictor.py`.
 * `POST /adaptive/recompute`, `GET /adaptive/state`, extended `/evaluation`.
@@ -347,13 +356,13 @@ proven against baseline. Branch: `claude/beautiful-edison-y1azv`.
 * **Exit:** measurable, bounded, explained improvement; full revert via artifact
   delete.
 
-### Phase C — Confidence Calibration + League Personality
+### Phase C — Confidence Calibration + League Personality ✅
 * `app/adaptive/calibration.py` (isotonic/Platt, shrunk) + `personality.py`;
   league-aware explanations via `explain.py`.
 * **Tests:** ECE reduction on held-out data; monotonicity; no confidence
   inflation; identity behavior on sparse buckets.
 
-### Phase D — Closing the loop in production wiring + UI transparency
+### Phase D — Closing the loop in production wiring + UI transparency ✅
 * Wire `retrain-models` job to call `/adaptive/recompute` (frequent) and
   `train` (scheduled); pass `adjustment_trace` to web.
 * Web: an "Adaptive Intelligence" panel showing per-league weights, calibration
@@ -392,18 +401,28 @@ simulator, so "is it learning?" has a reproducible, offline answer.
 
 ---
 
-## 12. Open questions for review
+## 12. Design decisions (were open questions — now resolved by the build)
 
-1. **Experience store format** — JSONL (max inspectability) vs Parquet (scale)
-   for Phase A? Proposal: JSONL now, Parquet adapter later.
-2. **Context buckets** — start league-only, or also bucket by match archetype
-   (big-favourite / tight / high-total) in L4/L5 from the outset?
-3. **Recompute cadence** — how often should `retrain-models` trigger
-   `/adaptive/recompute` (e.g. hourly with `refresh-data`, or daily)?
-4. **System of record** — backend Postgres as durable truth + AI-service
-   working artifact (proposed), or AI-service artifact only for the MVP?
-5. **Calibration method** — isotonic (flexible, needs data) vs Platt (stable,
-   low-data) as the Phase C default per league.
+1. **Experience store format** — **JSONL** (append-only event log reduced on
+   load), for maximum inspectability. A Parquet adapter remains a later option.
+   → `app/memory/store.py`.
+2. **Context buckets** — **league-only** for now (plus a `global` bucket).
+   Match-archetype bucketing (big-favourite / tight / high-total) is deferred to
+   keep the first cut legible; the `resolve`/`recompute` shape already
+   generalises to more buckets.
+3. **Recompute cadence** — driven by the daily **`retrain-models`** BullMQ job,
+   which reconciles finished fixtures then calls `/adaptive/recompute`. Cheap
+   enough to move to hourly (alongside `refresh-data`) later if desired.
+4. **System of record** — **AI-service artifact only for the MVP**
+   (`experience.jsonl` + `adaptive_state.json`). The backend stays stateless and
+   reconciles outcomes by querying the AI service's *pending* list
+   (`GET /feedback/pending`) against finished fixtures — no Postgres
+   `predictions` table required to run the loop. The durable Postgres mirror
+   proposed in §6 remains a clean future enhancement.
+5. **Calibration method** — **temperature scaling** (single monotone parameter,
+   multiclass-correct, identity at T=1, trivially shrinkable on thin data) rather
+   than isotonic/Platt, which don't preserve the 1X2 simplex as cleanly.
+   → `app/adaptive/calibration.py`.
 
 ---
 

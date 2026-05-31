@@ -24,6 +24,7 @@ from app.schemas import (
     FeedbackRequest,
     FeedbackResponse,
     HealthResponse,
+    PendingResponse,
     PredictionRequest,
     PredictionResponse,
     RecomputeResponse,
@@ -69,6 +70,12 @@ def feedback(request: FeedbackRequest) -> FeedbackResponse:
         league_id=request.league_id,
     )
     return FeedbackResponse(status="ok", match_id=request.match_id, counts=store.counts())
+
+
+@app.get("/feedback/pending", response_model=PendingResponse)
+def feedback_pending() -> PendingResponse:
+    """Predicted-but-unresolved match ids for the backend to reconcile."""
+    return PendingResponse(match_ids=store.pending_match_ids(), counts=store.counts())
 
 
 @app.get("/evaluation", response_model=EvaluationResponse)

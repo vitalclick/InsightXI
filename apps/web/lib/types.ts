@@ -82,6 +82,10 @@ export interface MatchPrediction {
   topSelection: { label: string; probability: number };
   explanations: string[];
   modelBackend: string;
+  /** Whether the Adaptive Intelligence Engine shaped this prediction. */
+  adaptive?: boolean;
+  /** Human-readable record of any learned blend/calibration adjustments. */
+  adjustmentTrace?: string[];
 }
 
 export interface TacticalProfile {

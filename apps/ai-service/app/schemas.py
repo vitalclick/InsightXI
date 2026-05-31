@@ -93,6 +93,13 @@ class FeedbackResponse(BaseModel):
     counts: dict
 
 
+class PendingResponse(BaseModel):
+    """Match ids predicted but not yet resolved — the backend's reconcile list."""
+
+    match_ids: list[str]
+    counts: dict
+
+
 class AdaptiveStateResponse(BaseModel):
     status: str = Field(description="'ok' or 'unavailable' (engine off / no state yet)")
     enabled: bool
