@@ -2,6 +2,7 @@ import { Global, Logger, Module } from "@nestjs/common";
 import { FOOTBALL_DATA_PROVIDER } from "./football-data.provider";
 import { MockFootballProvider } from "./mock-football.provider";
 import { ApiFootballProvider } from "./api-football.provider";
+import { FallbackFootballProvider } from "./fallback-football.provider";
 
 /** Parse "39,140" -> [39, 140]; defaults to EPL + La Liga. */
 export function parseLeagueIds(value?: string): number[] {
@@ -27,8 +28,8 @@ export function parseLeagueIds(value?: string): number[] {
         const logger = new Logger("ProvidersModule");
         const apiKey = process.env.FOOTBALL_API_KEY;
         if (apiKey) {
-          logger.log("Football data: API-Football (live)");
-          return new ApiFootballProvider({
+          logger.log("Football data: API-Football (live, seed fallback)");
+          const live = new ApiFootballProvider({
             apiKey,
             baseUrl: process.env.FOOTBALL_API_BASE_URL,
             leagueIds: parseLeagueIds(process.env.FOOTBALL_LEAGUE_IDS),
@@ -36,6 +37,9 @@ export function parseLeagueIds(value?: string): number[] {
               process.env.FOOTBALL_SEASON ?? new Date().getFullYear(),
             ),
           });
+          // Never let an upstream outage (or a restricted free-tier season)
+          // crash the boot: fall back to the deterministic seed provider.
+          return new FallbackFootballProvider(live, new MockFootballProvider());
         }
         logger.log(
           "Football data: mock seed (set FOOTBALL_API_KEY to use live data)",

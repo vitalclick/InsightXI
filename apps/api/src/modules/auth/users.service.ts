@@ -40,6 +40,7 @@ interface NewUser {
   name?: string | null;
   avatarUrl?: string | null;
   provider?: AuthProvider;
+  emailVerified?: boolean;
 }
 
 /**
@@ -56,11 +57,13 @@ export class UsersService implements OnModuleInit {
       email: "free@insightxi.dev",
       password: "password",
       tier: "FREE",
+      emailVerified: true,
     });
     await this.buildAndInsert({
       email: "premium@insightxi.dev",
       password: "password",
       tier: "PREMIUM",
+      emailVerified: true,
     });
   }
 
@@ -74,6 +77,7 @@ export class UsersService implements OnModuleInit {
       name: input.name ?? null,
       avatarUrl: input.avatarUrl ?? null,
       provider: input.provider ?? "email",
+      emailVerified: input.emailVerified ?? false,
       subscriptionStatus: isPremium ? "active" : "none",
       subscriptionProvider: null,
       subscriptionRef: null,
@@ -127,6 +131,8 @@ export class UsersService implements OnModuleInit {
         avatarUrl: existing.avatarUrl ?? input.avatarUrl ?? null,
         // Keep "email" if a local password exists; else reflect the OAuth source.
         provider: existing.passwordHash ? existing.provider : input.provider,
+        // A verified identity provider confirms ownership of the address.
+        emailVerified: true,
       };
       return this.store.update(next);
     }
@@ -137,6 +143,28 @@ export class UsersService implements OnModuleInit {
       name: input.name ?? null,
       avatarUrl: input.avatarUrl ?? null,
       provider: input.provider,
+      emailVerified: true,
+    });
+  }
+
+  /** Marks an account's email as confirmed (idempotent). */
+  async markEmailVerified(userId: string): Promise<UserRecord | undefined> {
+    const user = await this.store.findById(userId);
+    if (!user) return undefined;
+    if (user.emailVerified) return user;
+    return this.store.update({ ...user, emailVerified: true });
+  }
+
+  /** Sets a new local password (used by the reset flow). */
+  async setPassword(
+    userId: string,
+    newPassword: string,
+  ): Promise<UserRecord | undefined> {
+    const user = await this.store.findById(userId);
+    if (!user) return undefined;
+    return this.store.update({
+      ...user,
+      passwordHash: hashPassword(newPassword),
     });
   }
 
@@ -180,6 +208,7 @@ export class UsersService implements OnModuleInit {
       name: user.name,
       avatarUrl: user.avatarUrl,
       provider: user.provider,
+      emailVerified: user.emailVerified,
       subscriptionStatus: user.subscriptionStatus,
       currentPeriodEnd: user.currentPeriodEnd,
     };

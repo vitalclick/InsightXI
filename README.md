@@ -69,8 +69,27 @@ client bundle by design.
 | `ENABLE_QUEUES` | API | unset | Set to enable BullMQ ingestion/retrain jobs (needs Redis) |
 | `API_PORT` | API | `4000` | Local HTTP port |
 | `PORT` | API | — | Platform-assigned port (Railway/Render); overrides `API_PORT` |
-| `JWT_SECRET` | API | `change-me-in-production` | JWT signing secret (secret) |
+| `JWT_SECRET` | API | `change-me-in-production` | JWT signing secret (secret) — **must be changed in production** |
 | `JWT_EXPIRES_IN` | API | `7d` | Access-token lifetime |
+| `JWT_REFRESH_EXPIRES_IN` | API | `30d` | Refresh-token lifetime (`POST /auth/refresh`) |
+
+**Security hardening**
+
+| Variable | Used by | Default | Notes |
+| --- | --- | --- | --- |
+| `CORS_ORIGINS` | API | — | Comma-separated allowed web origin(s). **Required in production** (or `WEB_APP_URL`); blank in dev reflects any origin |
+| `RATE_LIMIT_ENABLED` | API | `true` | IP fixed-window rate limiting; set `false` if a gateway throttles |
+| `RATE_LIMIT_MAX` | API | `120` | Max requests per window per IP |
+| `RATE_LIMIT_WINDOW_MS` | API | `60000` | Rate-limit window length (ms) |
+| `AI_SERVICE_TOKEN` | API + AI | — | Shared secret; AI service requires `x-internal-key` when set |
+| `ERROR_WEBHOOK_URL` | API | — | Optional: forward 5xx errors as JSON (Slack/Discord/custom) |
+
+**Transactional email** (blank → sandbox, logged not sent)
+
+| Variable | Used by | Notes |
+| --- | --- | --- |
+| `RESEND_API_KEY` | API | Resend API key; enables verification / reset / receipt emails |
+| `EMAIL_FROM` | API | From header (default `InsightXI <no-reply@insightxi.app>`) |
 
 **Auth — social sign-in** (blank → sandbox/demo mode)
 
@@ -104,6 +123,7 @@ client bundle by design.
 | Variable | Used by | Notes |
 | --- | --- | --- |
 | `NEXT_PUBLIC_API_URL` | Web | Backend base URL (default `http://localhost:4000`) |
+| `NEXT_PUBLIC_SITE_URL` | Web | Public site origin for `robots.txt` + `sitemap.xml` (default `https://insightxi.app`) |
 
 **AI service & football data**
 

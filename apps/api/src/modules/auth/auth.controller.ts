@@ -1,6 +1,21 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import { AuthService, JwtPayload } from "./auth.service";
-import { AppleAuthDto, CredentialsDto, GoogleAuthDto } from "./dto";
+import {
+  AppleAuthDto,
+  CredentialsDto,
+  ForgotPasswordDto,
+  GoogleAuthDto,
+  RefreshDto,
+  ResetPasswordDto,
+  TokenDto,
+} from "./dto";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { CurrentUser } from "./current-user.decorator";
 import { UsersService } from "./users.service";
@@ -30,6 +45,37 @@ export class AuthController {
   @Post("oauth/apple")
   apple(@Body() dto: AppleAuthDto) {
     return this.auth.loginWithApple(dto.idToken, dto.name);
+  }
+
+  @Post("refresh")
+  @HttpCode(200)
+  refresh(@Body() dto: RefreshDto) {
+    return this.auth.refresh(dto.refreshToken);
+  }
+
+  @Post("verify-email")
+  @HttpCode(200)
+  verifyEmail(@Body() dto: TokenDto) {
+    return this.auth.verifyEmail(dto.token);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("resend-verification")
+  @HttpCode(200)
+  resendVerification(@CurrentUser() user: JwtPayload) {
+    return this.auth.resendVerification(user.sub);
+  }
+
+  @Post("forgot-password")
+  @HttpCode(200)
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.auth.requestPasswordReset(dto.email);
+  }
+
+  @Post("reset-password")
+  @HttpCode(200)
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.auth.resetPassword(dto.token, dto.password);
   }
 
   @UseGuards(JwtAuthGuard)

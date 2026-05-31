@@ -110,6 +110,20 @@ export const api = {
   oauthApple: (idToken: string, name?: string) =>
     apiPost<AuthResponse>("/auth/oauth/apple", { idToken, name }),
   me: (token: string) => apiGet<PublicUser>("/auth/me", token),
+  refresh: (refreshToken: string) =>
+    apiPost<AuthResponse>("/auth/refresh", { refreshToken }),
+  verifyEmail: (token: string) =>
+    apiPost<{ verified: boolean; user: PublicUser }>("/auth/verify-email", { token }),
+  resendVerification: (token: string) =>
+    apiPost<{ sent: boolean; alreadyVerified: boolean }>(
+      "/auth/resend-verification",
+      {},
+      token,
+    ),
+  forgotPassword: (email: string) =>
+    apiPost<{ ok: true }>("/auth/forgot-password", { email }),
+  resetPassword: (token: string, password: string) =>
+    apiPost<AuthResponse>("/auth/reset-password", { token, password }),
 
   // Billing — localized Premium pricing + checkout (PayPal/Paystack/Flutterwave).
   plan: (hints?: { currency?: string; country?: string }) =>

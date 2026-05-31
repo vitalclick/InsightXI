@@ -8,7 +8,7 @@ The Adaptive Intelligence Engine (feature-flagged via ``ADAPTIVE_ENABLED``)
 adds an Experience Memory + feedback loop, per-league dynamic blend weighting,
 and confidence calibration on top of the static Poisson + Elo + ML blend.
 """
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
 from app.adaptive import config
 from app.adaptive.state import GLOBAL_BUCKET, get_adaptive_state, recompute_and_persist
@@ -29,6 +29,7 @@ from app.schemas import (
     PredictionResponse,
     RecomputeResponse,
 )
+from app.security import require_internal_key
 
 app = FastAPI(
     title="InsightXI AI Service",
@@ -47,13 +48,13 @@ def health() -> HealthResponse:
     )
 
 
-@app.post("/predict", response_model=PredictionResponse)
+@app.post("/predict", response_model=PredictionResponse, dependencies=[Depends(require_internal_key)])
 def predict(request: PredictionRequest) -> PredictionResponse:
     """Return a probabilistic, explainable match prediction with markets."""
     return predict_match(request)
 
 
-@app.post("/feedback", response_model=FeedbackResponse)
+@app.post("/feedback", response_model=FeedbackResponse, dependencies=[Depends(require_internal_key)])
 def feedback(request: FeedbackRequest) -> FeedbackResponse:
     """Record a finished match's actual result, completing its memory row.
 
@@ -72,13 +73,13 @@ def feedback(request: FeedbackRequest) -> FeedbackResponse:
     return FeedbackResponse(status="ok", match_id=request.match_id, counts=store.counts())
 
 
-@app.get("/feedback/pending", response_model=PendingResponse)
+@app.get("/feedback/pending", response_model=PendingResponse, dependencies=[Depends(require_internal_key)])
 def feedback_pending() -> PendingResponse:
     """Predicted-but-unresolved match ids for the backend to reconcile."""
     return PendingResponse(match_ids=store.pending_match_ids(), counts=store.counts())
 
 
-@app.get("/evaluation", response_model=EvaluationResponse)
+@app.get("/evaluation", response_model=EvaluationResponse, dependencies=[Depends(require_internal_key)])
 def evaluation() -> EvaluationResponse:
     """Training evaluation report, plus live experience metrics when available."""
     report = load_metrics()
@@ -100,7 +101,7 @@ def evaluation() -> EvaluationResponse:
     return EvaluationResponse(status="ok", report=merged)
 
 
-@app.post("/drift", response_model=DriftResponse)
+@app.post("/drift", response_model=DriftResponse, dependencies=[Depends(require_internal_key)])
 def drift(request: DriftRequest) -> DriftResponse:
     """PSI-based feature drift of recent fixtures vs the training distribution."""
     report = drift_against_reference(request.features)
@@ -126,7 +127,7 @@ def _league_summary(state) -> dict:
     return out
 
 
-@app.get("/adaptive/state", response_model=AdaptiveStateResponse)
+@app.get("/adaptive/state", response_model=AdaptiveStateResponse, dependencies=[Depends(require_internal_key)])
 def adaptive_state() -> AdaptiveStateResponse:
     """Introspect the current learned state: weights, calibration, personality."""
     enabled = config.adaptive_enabled()
@@ -145,7 +146,7 @@ def adaptive_state() -> AdaptiveStateResponse:
     )
 
 
-@app.post("/adaptive/recompute", response_model=RecomputeResponse)
+@app.post("/adaptive/recompute", response_model=RecomputeResponse, dependencies=[Depends(require_internal_key)])
 def adaptive_recompute() -> RecomputeResponse:
     """Rebuild adaptive state from Experience Memory (called by the retrain job)."""
     state = recompute_and_persist(store)
