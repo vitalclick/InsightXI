@@ -4,14 +4,20 @@ test.describe("auth & premium gating", () => {
   test("historical trends are gated behind Premium when logged out", async ({ page }) => {
     await page.goto("/historical");
     await expect(page.getByRole("heading", { name: "Premium analytics" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Upgrade Premium/i })).toBeVisible();
+    // Scope to the page body: the sidebar also has an "Upgrade Premium" link.
+    await expect(
+      page.locator("#main-content").getByRole("link", { name: /Upgrade Premium/i }),
+    ).toBeVisible();
   });
 
   test("signing in as premium unlocks season trends", async ({ page }) => {
     await page.goto("/account");
     // Demo premium credentials are prefilled; just submit.
     await page.getByRole("button", { name: /^Sign in$/ }).click();
-    await expect(page.getByText("PREMIUM")).toBeVisible();
+    // The account tier badge in the page body (sidebar "Premium" link also exists).
+    await expect(
+      page.locator("#main-content").getByText("PREMIUM", { exact: true }),
+    ).toBeVisible();
 
     // Navigate via the in-app sidebar link (client-side) so the Zustand auth
     // store is preserved — a full reload would race persist rehydration.
@@ -28,7 +34,7 @@ test.describe("auth & premium gating", () => {
     await page.getByLabel("Email").fill("free@insightxi.dev");
     await page.getByLabel("Password").fill("password");
     await page.getByRole("button", { name: /^Sign in$/ }).click();
-    await expect(page.getByText("FREE")).toBeVisible();
+    await expect(page.locator("#main-content").getByText("FREE", { exact: true })).toBeVisible();
 
     await page.getByRole("link", { name: "Historical" }).first().click();
     await expect(page).toHaveURL(/\/historical$/);

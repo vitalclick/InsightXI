@@ -25,9 +25,10 @@ test.describe("interactive features", () => {
     await dialog.getByRole("button", { name: "Top pick today" }).click();
 
     // Either a grounded answer (AI up) or a graceful note (AI offline) appears;
-    // in both cases the assistant responds rather than hanging.
+    // in both cases the assistant responds rather than hanging. Match the answer
+    // title only (".first()" keeps this strict-mode safe if copy overlaps).
     await expect(
-      dialog.getByText(/Top pick:|No model output yet|Predictions appear/i),
+      dialog.getByText(/Top pick:|No model output yet/i).first(),
     ).toBeVisible();
 
     // Escape closes the drawer.

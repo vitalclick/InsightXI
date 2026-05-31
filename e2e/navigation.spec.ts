@@ -19,7 +19,8 @@ test.describe("core navigation & data hub", () => {
 
   test("results list links through to a match detail page", async ({ page }) => {
     await page.goto("/results");
-    await expect(page.getByRole("heading", { name: "Results" })).toBeVisible();
+    // Exact match: the page <h1> is "Results"; the card header is "Latest results".
+    await expect(page.getByRole("heading", { name: "Results", exact: true })).toBeVisible();
     const firstMatch = page.locator('a[href^="/matches/"]').first();
     await expect(firstMatch).toBeVisible();
     await firstMatch.click();
