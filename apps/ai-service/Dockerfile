@@ -16,4 +16,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form so ${PORT} expands at runtime: honor the platform-assigned port
+# (Railway/Render/etc.) when present, else default to 8000 for local/compose.
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
