@@ -665,6 +665,41 @@ export function spark(target: HTMLElement, vals: number[], opts: SparkOpts = {})
   mount(target, s);
 }
 
+/**
+ * Pitch zone heatmap. `grid` is rows (top = attacking third) × cols of 0..1
+ * intensities; cell colour ramps blue → green → amber → red and is layered
+ * over a vertical pitch with screen blending.
+ */
+export function heatmap(target: HTMLElement, grid: number[][], opts: { w?: number; h?: number } = {}): void {
+  refreshC();
+  const w = opts.w || 300,
+    h = opts.h || 200,
+    rows = grid.length,
+    cols = grid[0].length;
+  const s = svg(w, h);
+  drawPitch(s, w, h, true);
+  const cw = w / cols,
+    ch = h / rows;
+  grid.forEach((row, r) =>
+    row.forEach((v, c) => {
+      const col = v > 0.66 ? C.red : v > 0.4 ? C.amber : v > 0.2 ? C.green : C.blue;
+      const rect = el("rect", {
+        x: c * cw,
+        y: r * ch,
+        width: cw,
+        height: ch,
+        fill: col,
+        opacity: 0,
+        rx: 2,
+        style: "mix-blend-mode:screen;transition:opacity .8s",
+      });
+      s.appendChild(rect);
+      animate(target, () => setTimeout(() => rect.setAttribute("opacity", (v * 0.7).toFixed(2)), (r * cols + c) * 12));
+    }),
+  );
+  mount(target, s);
+}
+
 export function formation(target: HTMLElement, players: FormationPlayer[], opts: { w?: number; h?: number; color?: string } = {}): void {
   refreshC();
   const w = opts.w || 300,
@@ -816,4 +851,4 @@ export function gauge(target: HTMLElement, value: number, opts: { size?: number;
   });
 }
 
-export const IXChart = { ring, donut, radar, line, momentum, bars, spark, formation, winprob, gauge, C, refreshC };
+export const IXChart = { ring, donut, radar, line, momentum, bars, spark, heatmap, formation, winprob, gauge, C, refreshC };

@@ -8,6 +8,7 @@ import { Icon } from "../ui/icon";
 import { FormDots } from "../ui/form-dots";
 import { ChartBox } from "../charts/chart-box";
 import { formationLayout } from "../../lib/formation";
+import { pressingGrid, attackGrid } from "../../lib/pitch-zones";
 import { clubCode } from "../../lib/club";
 import { ScoreMatrix } from "./score-matrix";
 import type { MarketProbability, MatchPrediction, MatchView, TacticalProfile } from "../../lib/types";
@@ -295,6 +296,50 @@ export function MatchIntel({ id }: { id: string }) {
                     </div>
                   </section>
                 </div>
+              </div>
+
+              {/* PITCH ZONE HEATMAPS */}
+              <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start", marginBottom: 18 }}>
+                <section className="card reveal">
+                  <div className="card-hd">
+                    <h3>{clubCode(tactical.home.name)} Pressing Zones</h3>
+                    <span className="badge red">PPDA projection</span>
+                  </div>
+                  <div className="card-bd flex gap-16 aic">
+                    <ChartBox
+                      style={{ width: 180, flexShrink: 0 }}
+                      label={`Projected pressing intensity map for ${tactical.home.name}`}
+                      deps={[id, tactical.home.pressingIntensity, tactical.home.defensiveLine]}
+                      draw={(el) => IX.heatmap(el, pressingGrid(tactical.home), { w: 180, h: 240 })}
+                    />
+                    <div style={{ flex: 1, fontSize: 12.5, color: "var(--text-2)", lineHeight: 1.55 }}>
+                      A <b style={{ color: "var(--text)" }}>{tactical.home.defensiveLine.toLowerCase()}</b> defensive line with{" "}
+                      <b style={{ color: "var(--text)" }}>{tactical.home.pressingIntensity}</b> pressing intensity concentrates
+                      ball recoveries {tactical.home.defensiveLine === "High" ? "high up the pitch" : tactical.home.defensiveLine === "Low" ? "in their own third" : "around midfield"}.
+                      <div className="dim" style={{ fontSize: 11, marginTop: 8 }}>Model projection from tactical profile — not tracked event data.</div>
+                    </div>
+                  </div>
+                </section>
+                <section className="card reveal">
+                  <div className="card-hd">
+                    <h3>{clubCode(tactical.away.name)} Attack Zones</h3>
+                    <span className="badge green">Build-up projection</span>
+                  </div>
+                  <div className="card-bd flex gap-16 aic">
+                    <ChartBox
+                      style={{ width: 180, flexShrink: 0 }}
+                      label={`Projected attacking zone map for ${tactical.away.name}`}
+                      deps={[id, tactical.away.possession, tactical.away.attackingFlow]}
+                      draw={(el) => IX.heatmap(el, attackGrid(tactical.away), { w: 180, h: 240 })}
+                    />
+                    <div style={{ flex: 1, fontSize: 12.5, color: "var(--text-2)", lineHeight: 1.55 }}>
+                      With <b style={{ color: "var(--text)" }}>{tactical.away.possession}%</b> possession and a{" "}
+                      <b style={{ color: "var(--text)" }}>{(tactical.away.attackingFlow ?? "balanced").toLowerCase()}</b> attacking flow,
+                      threat is projected to load the final third {/wing|flank|wide/.test((tactical.away.attackingFlow ?? "").toLowerCase()) ? "down the channels" : "through central areas"}.
+                      <div className="dim" style={{ fontSize: 11, marginTop: 8 }}>Model projection from tactical profile — not tracked event data.</div>
+                    </div>
+                  </div>
+                </section>
               </div>
             </>
           )}
