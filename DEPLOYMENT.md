@@ -153,9 +153,9 @@ Redis, and all three apps in the production topology.
 
 ## Alternative hosts
 
-- **Vercel (web):** import the repo, Root Directory `apps/web`
-  (`apps/web/vercel.json` handles the monorepo install/build); set
-  `NEXT_PUBLIC_API_URL` (baked at build time).
+- **Vercel (web):** an alternative host for the frontend — not used (the web
+  service runs on Railway). `apps/web/vercel.json` remains as a starting point
+  if you ever move the frontend there.
 - **Render (api + ai):** `render.yaml` is a Blueprint; set the `sync: false`
   secrets in the dashboard. Note `dockerContext` already encodes the per-service
   build-context difference described above.
