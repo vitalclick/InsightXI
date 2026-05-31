@@ -54,26 +54,69 @@ the file.
 
 ### Which variable goes where
 
-| Variable(s) | Used by | Notes |
+Every variable from [`.env.example`](./.env.example), grouped by area. **API** =
+NestJS backend, **Web** = Next.js frontend, **AI** = FastAPI service. "Secret"
+must never be exposed to the browser; `NEXT_PUBLIC_*` are inlined into the
+client bundle by design.
+
+**Core / infrastructure**
+
+| Variable | Used by | Default | Notes |
+| --- | --- | --- | --- |
+| `DATA_BACKEND` | API | `memory` | `memory` (deterministic seed) or `postgres` |
+| `DATABASE_URL` | API | — | Neon/Postgres connection; required when `DATA_BACKEND=postgres` (secret) |
+| `REDIS_URL` | API | `redis://localhost:6379` | BullMQ queues + cache |
+| `ENABLE_QUEUES` | API | unset | Set to enable BullMQ ingestion/retrain jobs (needs Redis) |
+| `API_PORT` | API | `4000` | Local HTTP port |
+| `PORT` | API | — | Platform-assigned port (Railway/Render); overrides `API_PORT` |
+| `JWT_SECRET` | API | `change-me-in-production` | JWT signing secret (secret) |
+| `JWT_EXPIRES_IN` | API | `7d` | Access-token lifetime |
+
+**Auth — social sign-in** (blank → sandbox/demo mode)
+
+| Variable | Used by | Notes |
 | --- | --- | --- |
-| `JWT_SECRET`, `JWT_EXPIRES_IN` | API | Auth token signing |
-| `DATA_BACKEND`, `DATABASE_URL` | API | `memory` (default) or `postgres` (Neon) |
-| `REDIS_URL`, `ENABLE_QUEUES` | API | BullMQ queues (optional) |
-| `FOOTBALL_API_KEY`, `FOOTBALL_*` | API | Live provider; mock seed used if unset |
-| `GOOGLE_CLIENT_ID` | API | Verifies Google sign-in tokens |
-| `APPLE_CLIENT_ID` | API | Verifies Apple sign-in tokens |
-| `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_ENV`, `PAYPAL_WEBHOOK_ID` | API | PayPal (Orders v2) |
-| `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY` | API | Paystack |
-| `FLUTTERWAVE_SECRET_KEY`, `FLUTTERWAVE_PUBLIC_KEY`, `FLUTTERWAVE_WEBHOOK_HASH` | API | Flutterwave |
-| `WEB_APP_URL`, `PAYMENTS_CALLBACK_URL` | API | Where hosted checkouts redirect back |
-| `CURRENCY_RATES_JSON` | API | Optional FX overrides for price display |
-| `GEO_IP_LOOKUP_URL` | API | IP→country lookup for currency auto-detect (see below) |
-| `AI_SERVICE_URL` | API | Base URL the API uses to reach the FastAPI AI service |
-| `AI_SERVICE_PORT`, `MODELS_DIR` | AI service | FastAPI port; where model + adaptive artifacts live |
-| `ADAPTIVE_*`, `EXPERIENCE_RETENTION_SEASONS` | AI service | Adaptive Intelligence Engine (see below) |
-| `NEXT_PUBLIC_API_URL` | Web | Backend base URL |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Web | Must match the API's `GOOGLE_CLIENT_ID` |
-| `NEXT_PUBLIC_APPLE_CLIENT_ID` | Web | Must match the API's `APPLE_CLIENT_ID` |
+| `GOOGLE_CLIENT_ID` | API | Google OAuth Web client id(s), comma-separated; verifies ID tokens |
+| `APPLE_CLIENT_ID` | API | Apple Services ID authorized for Sign in with Apple |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Web | Public; must match the API's `GOOGLE_CLIENT_ID` |
+| `NEXT_PUBLIC_APPLE_CLIENT_ID` | Web | Public; must match the API's `APPLE_CLIENT_ID` |
+
+**Premium billing** (blank gateway keys → sandbox mode)
+
+| Variable | Used by | Notes |
+| --- | --- | --- |
+| `WEB_APP_URL` | API | Web origin hosted checkouts redirect back to |
+| `PAYMENTS_CALLBACK_URL` | API | Optional explicit callback base (defaults to `WEB_APP_URL`) |
+| `CURRENCY_RATES_JSON` | API | Optional FX overrides for price display, e.g. `{"NGN":1600}` |
+| `GEO_IP_LOOKUP_URL` | API | Optional IP→country lookup for currency auto-detect (see below) |
+| `PAYPAL_CLIENT_ID` | API | PayPal client id (publishable; also served to the web app) |
+| `PAYPAL_CLIENT_SECRET` | API | PayPal secret |
+| `PAYPAL_ENV` | API | `sandbox` (default) or `live` |
+| `PAYPAL_WEBHOOK_ID` | API | Verifies PayPal webhook signatures |
+| `PAYSTACK_SECRET_KEY` | API | Paystack secret (NGN/GHS/ZAR/KES/USD) |
+| `PAYSTACK_PUBLIC_KEY` | API | Publishable key (reserved for future client use) |
+| `FLUTTERWAVE_SECRET_KEY` | API | Flutterwave secret |
+| `FLUTTERWAVE_PUBLIC_KEY` | API | Publishable key (reserved for future client use) |
+| `FLUTTERWAVE_WEBHOOK_HASH` | API | The `verif-hash` secret set on the Flutterwave webhook |
+
+**Web app**
+
+| Variable | Used by | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | Web | Backend base URL (default `http://localhost:4000`) |
+
+**AI service & football data**
+
+| Variable | Used by | Notes |
+| --- | --- | --- |
+| `AI_SERVICE_URL` | API | Base URL the API calls for predictions (default `http://localhost:8000`) |
+| `AI_SERVICE_PORT` | AI | FastAPI port used by the run scripts (default `8000`) |
+| `FOOTBALL_API_KEY` | API | API-Football key; blank → deterministic mock seed provider |
+| `FOOTBALL_API_BASE_URL` | API | API-Football base URL |
+| `FOOTBALL_LEAGUE_IDS` | API | Comma-separated league ids (default `39,140` = EPL, La Liga) |
+| `FOOTBALL_SEASON` | API | Season start year, e.g. `2025` → "2025/26" |
+| `MODELS_DIR` | AI | Where model + adaptive artifacts live (default `apps/ai-service/models`) |
+| `ADAPTIVE_*`, `EXPERIENCE_RETENTION_SEASONS` | AI | Adaptive Intelligence Engine — see the dedicated section below |
 
 > **Sandbox by default.** Every payment gateway and both OAuth providers run in
 > sandbox/demo mode automatically when their keys are absent, so the full flow
