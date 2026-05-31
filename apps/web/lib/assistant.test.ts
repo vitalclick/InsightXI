@@ -7,6 +7,7 @@ jest.mock("../services/api-client", () => ({
     fixtures: jest.fn(),
     prediction: jest.fn(),
     teamRatings: jest.fn(),
+    tacticalMatchup: jest.fn(),
   },
 }));
 
@@ -121,5 +122,62 @@ describe("answerQuery", () => {
 
     const a = await answerQuery("top pick today");
     expect(a.note).toMatch(/AI service/i);
+  });
+
+  it("compares two named teams and deep-links to /compare", async () => {
+    mockApi.fixtures.mockResolvedValue([]);
+    mockApi.teamRatings.mockImplementation(async (id: string) =>
+      id === "ars"
+        ? { ...ratings, teamId: "ars", name: "Arsenal", elo: 1600 }
+        : { ...ratings, teamId: "mci", name: "Manchester City", elo: 1500 },
+    );
+
+    const a = await answerQuery("compare Arsenal and Manchester City");
+    expect(a.title).toBe("Arsenal vs Manchester City");
+    expect(a.href).toBe("/compare?a=ars&b=mci");
+    // Does not fan out predictions for a comparison.
+    expect(mockApi.prediction).not.toHaveBeenCalled();
+  });
+
+  it("preserves query order when comparing (X vs Y)", async () => {
+    mockApi.fixtures.mockResolvedValue([]);
+    mockApi.teamRatings.mockImplementation(async (id: string) => ({ ...ratings, teamId: id, name: id }));
+
+    const a = await answerQuery("Manchester City vs Arsenal");
+    expect(a.href).toBe("/compare?a=mci&b=ars");
+  });
+
+  it("asks for two teams when a comparison names too few", async () => {
+    mockApi.fixtures.mockResolvedValue([]);
+
+    const a = await answerQuery("compare teams");
+    expect(a.href).toBe("/compare");
+    expect(a.note).toMatch(/name two teams/i);
+  });
+
+  it("answers a tactical matchup for two named teams", async () => {
+    mockApi.fixtures.mockResolvedValue([]);
+    mockApi.tacticalMatchup.mockResolvedValue({
+      home: { teamId: "ars", name: "Arsenal", formation: "4-3-3", possession: 58, pressingIntensity: 70, defensiveLine: "High", attackingFlow: "Wing-focused", transitionStyle: "Possession build-up" },
+      away: { teamId: "mci", name: "Manchester City", formation: "4-2-3-1", possession: 62, pressingIntensity: 66, defensiveLine: "High", attackingFlow: "Central", transitionStyle: "Possession build-up" },
+      tacticalEdge: 12,
+      insights: ["Arsenal's high press could disrupt City's build-up", "City should control possession"],
+    });
+
+    const a = await answerQuery("how do Arsenal and Manchester City match up tactically?");
+    expect(a.title).toBe("Arsenal vs Manchester City — tactical");
+    expect(a.href).toBe("/compare?a=ars&b=mci");
+    expect(a.lines.join(" ")).toMatch(/tactical edge|edge \(\+12\)|holds the tactical edge/i);
+    expect(mockApi.teamRatings).not.toHaveBeenCalled();
+  });
+
+  it("routes a single-team tactical query to the team answer", async () => {
+    mockApi.fixtures.mockResolvedValue([fixture("g1", "ars", "bur")]);
+    mockApi.prediction.mockResolvedValue(pred({}));
+    mockApi.teamRatings.mockResolvedValue(ratings);
+
+    const a = await answerQuery("what are Arsenal's tactics?");
+    expect(a.title).toBe("Arsenal");
+    expect(mockApi.tacticalMatchup).not.toHaveBeenCalled();
   });
 });

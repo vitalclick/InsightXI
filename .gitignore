@@ -46,6 +46,12 @@ coverage/
 
 # Trained model artifacts (regenerate via app.training.train)
 apps/ai-service/models/*.joblib
+apps/ai-service/models/*.npz
+apps/ai-service/models/metrics.json
+
+# Adaptive Intelligence Engine runtime artifacts (rebuilt from the feedback loop)
+apps/ai-service/models/experience.jsonl
+apps/ai-service/models/adaptive_state.json
 
 # Python editable-install metadata
 *.egg-info/

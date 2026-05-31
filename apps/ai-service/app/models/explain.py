@@ -4,6 +4,9 @@ Explainability is non-negotiable: every prediction must ship with the
 reasoning behind it. Explanations are derived from the same features that
 drive the model, so they are faithful rather than decorative.
 """
+from typing import Optional
+
+from app.adaptive.personality import personality_explanations
 from app.schemas import TeamRating
 
 
@@ -12,6 +15,7 @@ def build_explanations(
     away: TeamRating,
     lambda_home: float,
     lambda_away: float,
+    personality: Optional[dict] = None,
 ) -> list[str]:
     reasons: list[str] = []
 
@@ -45,4 +49,7 @@ def build_explanations(
         f"Model expects roughly {lambda_home:.1f}–{lambda_away:.1f} goals "
         "(home advantage applied)"
     )
+
+    # League-aware context learned from Experience Memory (descriptive only).
+    reasons.extend(personality_explanations(personality))
     return reasons

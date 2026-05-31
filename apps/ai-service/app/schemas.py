@@ -27,6 +27,10 @@ class TeamRating(BaseModel):
 
 class PredictionRequest(BaseModel):
     match_id: str = "unknown"
+    league_id: str = Field(
+        default="global",
+        description="League bucket for adaptive weighting / calibration / memory.",
+    )
     home: TeamRating
     away: TeamRating
     league_avg_goals: float = Field(default=1.4, gt=0)
@@ -63,6 +67,53 @@ class PredictionResponse(BaseModel):
     top_selection: TopSelection
     explanations: list[str]
     model_backend: str
+    adaptive: bool = Field(
+        default=False,
+        description="Whether the Adaptive Intelligence Engine was active for this prediction.",
+    )
+    adjustment_trace: list[str] = Field(
+        default_factory=list,
+        description="Human-readable record of any learned blend/calibration adjustments.",
+    )
+
+
+class FeedbackRequest(BaseModel):
+    """Actual result of a previously predicted match — completes its memory row."""
+
+    match_id: str
+    league_id: str = "global"
+    outcome: int = Field(ge=0, le=2, description="0 home win, 1 draw, 2 away win")
+    home_goals: int | None = Field(default=None, ge=0)
+    away_goals: int | None = Field(default=None, ge=0)
+
+
+class FeedbackResponse(BaseModel):
+    status: str
+    match_id: str
+    counts: dict
+
+
+class PendingResponse(BaseModel):
+    """Match ids predicted but not yet resolved — the backend's reconcile list."""
+
+    match_ids: list[str]
+    counts: dict
+
+
+class AdaptiveStateResponse(BaseModel):
+    status: str = Field(description="'ok' or 'unavailable' (engine off / no state yet)")
+    enabled: bool
+    updated_at: str | None = None
+    feature_version: str | None = None
+    leagues: dict | None = None
+    counts: dict | None = None
+
+
+class RecomputeResponse(BaseModel):
+    status: str
+    updated_at: str
+    leagues: dict
+    counts: dict
 
 
 class EvaluationResponse(BaseModel):

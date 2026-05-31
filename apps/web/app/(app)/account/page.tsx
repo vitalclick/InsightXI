@@ -50,7 +50,7 @@ export default function AccountPage() {
     return (
       <>
         <PageHead eyebrow="Account" title="Your account" sub="Profile, subscription tier and session." />
-        <section className="card reveal" style={{ maxWidth: 460 }}>
+        <section className="card reveal" style={{ maxWidth: 460, margin: "0 auto" }}>
           <div className="card-bd">
             <div className="flex aic gap-14" style={{ marginBottom: 18 }}>
               <div className="tb-avatar" style={{ width: 52, height: 52, fontSize: 18 }}>{initials}</div>
@@ -91,7 +91,7 @@ export default function AccountPage() {
         title={mode === "signin" ? "Sign in" : "Create your account"}
         sub="Access premium analytics and personalised football intelligence."
       />
-      <section className="card reveal" style={{ maxWidth: 460 }}>
+      <section className="card reveal" style={{ maxWidth: 460, margin: "0 auto" }}>
         <div className="card-bd">
           <div className="seg" style={{ marginBottom: 18 }}>
             <button

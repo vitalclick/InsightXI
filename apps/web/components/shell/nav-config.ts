@@ -30,6 +30,7 @@ export const SIDENAV: NavSection[] = [
       { label: "Results", href: "/results", icon: "results" },
       { label: "Leagues", href: "/leagues", icon: "leagues" },
       { label: "Teams", href: "/teams", icon: "teams" },
+      { label: "Compare", href: "/compare", icon: "analytics" },
       { label: "Players", href: "/players", icon: "players" },
     ],
   },

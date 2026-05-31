@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api-client";
 import { PageHead } from "../../../components/ui/page-head";
@@ -11,12 +12,25 @@ import { SkeletonRows } from "../../../components/ui/skeleton";
 
 export default function LeaguesPage() {
   const [league, setLeague] = useState("epl");
+  // Up to two teams picked for a head-to-head comparison (FIFO when full).
+  const [picked, setPicked] = useState<string[]>([]);
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["standings", league],
     queryFn: () => api.standings(league),
     enabled: Boolean(league),
   });
 
+  // Reset the comparison selection whenever the competition changes.
+  useEffect(() => setPicked([]), [league]);
+
+  const togglePick = (teamId: string) =>
+    setPicked((prev) =>
+      prev.includes(teamId)
+        ? prev.filter((id) => id !== teamId)
+        : [...prev, teamId].slice(-2),
+    );
+
+  const nameFor = (id: string) => rows.find((r) => r.teamId === id)?.teamName ?? id;
   const maxAbs = Math.max(1, ...rows.map((r) => Math.abs(r.goalDifference)));
 
   return (
@@ -30,10 +44,41 @@ export default function LeaguesPage() {
         <LeagueChips value={league} onChange={setLeague} includeAll={false} />
       </div>
 
+      {picked.length > 0 && (
+        <div className="card reveal flex aic jcb wrap gap-12" style={{ marginBottom: 14, padding: "10px 16px" }}>
+          <span className="flex aic gap-10 wrap" style={{ fontSize: 13 }}>
+            <span className="label-xs">Compare</span>
+            {picked.map((id) => (
+              <span key={id} className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                {nameFor(id)}
+                <button
+                  type="button"
+                  onClick={() => togglePick(id)}
+                  aria-label={`Remove ${nameFor(id)}`}
+                  style={{ background: "none", border: 0, color: "inherit", cursor: "pointer", fontSize: 14, lineHeight: 1 }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            {picked.length === 1 && <span className="dim" style={{ fontSize: 12 }}>pick one more…</span>}
+          </span>
+          {picked.length === 2 ? (
+            <Link href={`/compare?a=${picked[0]}&b=${picked[1]}`} className="btn btn-sm btn-primary">
+              Compare head-to-head →
+            </Link>
+          ) : (
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setPicked([])}>
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
       <section className="card reveal">
         <div className="card-hd">
           <h3>League table</h3>
-          <span className="badge">Current season</span>
+          <span className="badge">Select two teams to compare</span>
         </div>
         <div className="card-bd" style={{ padding: 0, overflowX: "auto" }}>
           {isLoading ? (
@@ -42,6 +87,7 @@ export default function LeaguesPage() {
             <table className="tbl">
               <thead>
                 <tr>
+                  <th style={{ width: 34 }} aria-label="Select for comparison" />
                   <th style={{ width: 40 }}>#</th>
                   <th>Team</th>
                   <th style={{ textAlign: "center" }}>P</th>
@@ -57,8 +103,19 @@ export default function LeaguesPage() {
                 {rows.map((r) => {
                   const pos = r.position;
                   const accent = pos <= 4 ? "var(--green)" : pos >= rows.length - 1 ? "var(--red)" : "transparent";
+                  const isPicked = picked.includes(r.teamId);
                   return (
-                    <tr key={r.teamId}>
+                    <tr key={r.teamId} style={isPicked ? { background: "color-mix(in srgb, var(--blue) 10%, transparent)" } : undefined}>
+                      <td style={{ textAlign: "center" }}>
+                        <input
+                          type="checkbox"
+                          checked={isPicked}
+                          onChange={() => togglePick(r.teamId)}
+                          disabled={!isPicked && picked.length >= 2}
+                          aria-label={`Compare ${r.teamName}`}
+                          style={{ cursor: "pointer", accentColor: "var(--blue)" }}
+                        />
+                      </td>
                       <td>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                           <span style={{ width: 3, height: 16, borderRadius: 2, background: accent }} />

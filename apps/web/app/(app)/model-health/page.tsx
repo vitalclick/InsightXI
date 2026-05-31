@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "../../../services/api-client";
 import { useAuthStore } from "../../../store/auth-store";
 import { PageHead } from "../../../components/ui/page-head";
+import { ChartBox } from "../../../components/charts/chart-box";
+import * as IX from "../../../lib/ix-charts";
 import type { ModelMetrics } from "../../../lib/types";
 
 function MetricCard({ label, value, hint, good }: { label: string; value: string; hint: string; good?: boolean }) {
@@ -17,6 +19,56 @@ function MetricCard({ label, value, hint, good }: { label: string; value: string
       <div className="stat-val" style={{ margin: "8px 0 2px" }}>{value}</div>
       <div className="dim" style={{ fontSize: 11 }}>{hint}</div>
     </div>
+  );
+}
+
+function ReliabilityCard({ m }: { m: ModelMetrics }) {
+  const bins = m.reliability ?? [];
+  if (bins.length < 2) return null;
+  return (
+    <section className="card reveal" style={{ marginTop: 18 }}>
+      <div className="card-hd">
+        <h3>Calibration reliability</h3>
+        <span className="dim" style={{ fontSize: 11.5 }}>predicted confidence vs observed accuracy</span>
+      </div>
+      <div className="card-bd flex jcc">
+        <ChartBox
+          style={{ width: 460, maxWidth: "100%" }}
+          label="Reliability curve: predicted confidence on the x-axis, observed accuracy on the y-axis. The dashed line is perfect calibration."
+          deps={[bins.length, m.feature_version ?? ""]}
+          draw={(el) =>
+            IX.line(el, {
+              w: 460,
+              h: 240,
+              xMax: 1,
+              yMin: 0,
+              yMax: 1,
+              gy: 5,
+              yLabels: true,
+              yDec: 1,
+              xLabels: ["0", "0.25", "0.5", "0.75", "1"],
+              smooth: false,
+              series: [
+                // Perfect-calibration diagonal (confidence == accuracy).
+                { color: IX.C.dim, dash: true, data: [{ x: 0, y: 0 }, { x: 1, y: 1 }] },
+                // Observed reliability points.
+                {
+                  color: IX.C.blue,
+                  dots: true,
+                  data: bins.map((b) => ({ x: b.confidence, y: b.accuracy })),
+                },
+              ],
+            })
+          }
+        />
+      </div>
+      <div className="card-bd" style={{ paddingTop: 0 }}>
+        <p className="dim" style={{ fontSize: 12, lineHeight: 1.6, margin: 0 }}>
+          Points on the dashed line are perfectly calibrated. Points below it mean the model is
+          over-confident in that band; above means under-confident. The aggregate gap is the ECE above.
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -40,6 +92,7 @@ function Report({ m }: { m: ModelMetrics }) {
           {m.features && <div className="dim" style={{ fontSize: 12, marginTop: 10 }}>Features: {m.features.join(", ")}</div>}
         </div>
       </section>
+      <ReliabilityCard m={m} />
     </>
   );
 }

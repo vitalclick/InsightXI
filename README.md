@@ -115,6 +115,8 @@ client bundle by design.
 | `FOOTBALL_API_BASE_URL` | API | API-Football base URL |
 | `FOOTBALL_LEAGUE_IDS` | API | Comma-separated league ids (default `39,140` = EPL, La Liga) |
 | `FOOTBALL_SEASON` | API | Season start year, e.g. `2025` → "2025/26" |
+| `MODELS_DIR` | AI | Where model + adaptive artifacts live (default `apps/ai-service/models`) |
+| `ADAPTIVE_*`, `EXPERIENCE_RETENTION_SEASONS` | AI | Adaptive Intelligence Engine — see the dedicated section below |
 
 > **Sandbox by default.** Every payment gateway and both OAuth providers run in
 > sandbox/demo mode automatically when their keys are absent, so the full flow
@@ -138,6 +140,25 @@ Regardless of detection, the plan card always shows a **currency selector**, so 
 viewer can pick their currency manually. African gateways (Paystack/Flutterwave)
 charge in the local currency; PayPal settles in USD.
 
+#### Adaptive Intelligence Engine
+
+OFF by default → the AI service behaves exactly like the static Poisson + Elo +
+ML blend. See [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intelligence-engine.md).
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `ADAPTIVE_ENABLED` | `false` | Master switch for the self-improving engine. |
+| `ADAPTIVE_CALIBRATION` | `true` | Per-league confidence calibration (temperature scaling). |
+| `ADAPTIVE_MIN_SAMPLES` | `50` | Resolved predictions a bucket needs before it adapts. |
+| `ADAPTIVE_WEIGHT_DRIFT_CAP` | `0.20` | Max deviation of any model weight from its baseline. |
+| `ADAPTIVE_WEIGHT_STEP` | `0.30` | EMA step for weight updates across recompute cycles. |
+| `ADAPTIVE_RECENCY_HALFLIFE_DAYS` | `180` | Recency half-life for weighting evidence. |
+| `EXPERIENCE_RETENTION_SEASONS` | `3` | Experience retention window before rollup. |
+
+> To run the **full continuous-learning loop**, set both `ENABLE_QUEUES=true`
+> (so the jobs reconcile outcomes + recompute) and `ADAPTIVE_ENABLED=true` (so
+> the AI service learns and applies the adjustments).
+
 ### Production
 
 - **Backend → Railway:** project → **Variables**. Add all API-side variables.
@@ -155,4 +176,11 @@ charge in the local currency; PayPal settles in USD.
 2. **OAuth origins** — add your web origin to the Google OAuth client's
    *Authorized JavaScript origins*, and your domain/return URLs to the Apple
    *Services ID*. The `*_CLIENT_ID` and `NEXT_PUBLIC_*_CLIENT_ID` pairs must match.
+
+## Design docs
+
+* [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intelligence-engine.md)
+  — architecture & phased plan for the continuously self-improving
+  **Adaptive Intelligence Engine** (Experience Memory, Self-Evaluation,
+  Dynamic Weighting, Confidence Calibration, League Personality).
 

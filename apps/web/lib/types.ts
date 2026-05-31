@@ -82,6 +82,10 @@ export interface MatchPrediction {
   topSelection: { label: string; probability: number };
   explanations: string[];
   modelBackend: string;
+  /** Whether the Adaptive Intelligence Engine shaped this prediction. */
+  adaptive?: boolean;
+  /** Human-readable record of any learned blend/calibration adjustments. */
+  adjustmentTrace?: string[];
 }
 
 export interface TacticalProfile {
@@ -201,6 +205,16 @@ export interface ModelMetrics {
   brier?: number;
   accuracy?: number;
   ece?: number;
+  reliability?: ReliabilityBin[];
+}
+
+export interface ReliabilityBin {
+  /** Mean predicted (top-class) confidence in the bin. */
+  confidence: number;
+  /** Empirical accuracy of predictions in the bin. */
+  accuracy: number;
+  /** Number of predictions in the bin. */
+  count: number;
 }
 
 export interface EvaluationReport {
@@ -224,6 +238,8 @@ export interface LiveSnapshot {
   minute: number;
   homeGoals: number;
   awayGoals: number;
+  homeXg: number;
+  awayXg: number;
   momentum: number;
   status: "LIVE" | "FINISHED";
   events: LiveEvent[];

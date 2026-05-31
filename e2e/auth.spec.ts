@@ -13,7 +13,7 @@ test.describe("auth & premium gating", () => {
   test("signing in as premium unlocks season trends", async ({ page }) => {
     await page.goto("/account");
     // Demo premium credentials are prefilled; just submit.
-    await page.getByRole("button", { name: /^Sign in$/ }).click();
+    await page.locator("form").getByRole("button", { name: /^Sign in$/ }).click();
     // The account tier badge in the page body (sidebar "Premium" link also exists).
     await expect(
       page.locator("#main-content").getByText("PREMIUM", { exact: true }),
@@ -33,7 +33,7 @@ test.describe("auth & premium gating", () => {
     await page.goto("/account");
     await page.getByLabel("Email").fill("free@insightxi.dev");
     await page.getByLabel("Password").fill("password");
-    await page.getByRole("button", { name: /^Sign in$/ }).click();
+    await page.locator("form").getByRole("button", { name: /^Sign in$/ }).click();
     await expect(page.locator("#main-content").getByText("FREE", { exact: true })).toBeVisible();
 
     await page.getByRole("link", { name: "Historical" }).first().click();

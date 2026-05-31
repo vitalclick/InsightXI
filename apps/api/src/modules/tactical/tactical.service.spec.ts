@@ -29,4 +29,12 @@ describe("TacticalService", () => {
     expect(m.tacticalEdge).toBeGreaterThan(0);
     expect(m.insights.length).toBeGreaterThan(0);
   });
+
+  it("inverts the tactical edge when the teams are swapped", () => {
+    const a = service.matchup("mci", "bur");
+    const b = service.matchup("bur", "mci");
+    expect(b.tacticalEdge).toBeLessThan(0);
+    // Symmetric up to integer rounding of the half-weighted blend.
+    expect(Math.abs(a.tacticalEdge + b.tacticalEdge)).toBeLessThanOrEqual(1);
+  });
 });
