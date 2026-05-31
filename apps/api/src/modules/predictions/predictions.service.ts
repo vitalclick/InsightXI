@@ -24,6 +24,10 @@ export interface MatchPrediction {
   topSelection: { label: string; probability: number };
   explanations: string[];
   modelBackend: string;
+  /** Whether the Adaptive Intelligence Engine shaped this prediction. */
+  adaptive: boolean;
+  /** Human-readable record of any learned blend/calibration adjustments. */
+  adjustmentTrace: string[];
 }
 
 @Injectable()
@@ -46,6 +50,7 @@ export class PredictionsService {
     try {
       ai = await this.ai.predict({
         match_id: matchId,
+        league_id: match.leagueId,
         league_avg_goals: this.analytics.leagueAvgGoals(match.leagueId),
         home: toAiRating(home),
         away: toAiRating(away),
@@ -71,6 +76,8 @@ export class PredictionsService {
       topSelection: ai.top_selection,
       explanations: ai.explanations,
       modelBackend: ai.model_backend,
+      adaptive: ai.adaptive ?? false,
+      adjustmentTrace: ai.adjustment_trace ?? [],
     };
   }
 }

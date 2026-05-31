@@ -243,6 +243,45 @@ export function MatchIntel({ id }: { id: string }) {
             </div>
           </section>
 
+          {/* ADAPTIVE INTELLIGENCE — transparency on what the engine learned */}
+          {pred.adaptive && (
+            <section className="card reveal" style={{ marginBottom: 18 }}>
+              <div className="card-hd">
+                <h3>
+                  <span className="ic"><Icon name="analytics" size={16} /></span> Adaptive
+                  Intelligence — what the engine learned
+                </h3>
+                <span className="badge green">Self-improving</span>
+              </div>
+              <div className="card-bd">
+                {pred.adjustmentTrace && pred.adjustmentTrace.length > 0 ? (
+                  <>
+                    <div className="label-xs" style={{ marginBottom: 12 }}>
+                      Adjustments applied to this read (vs. the static blend)
+                    </div>
+                    {pred.adjustmentTrace.map((line, i) => (
+                      <div className="xai-row" key={i}>
+                        <span className="xai-ic neu"><Icon name="bolt" size={15} /></span>
+                        <span className="xai-txt">{line}</span>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <div style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.55 }}>
+                    The engine is recording this prediction and will recalibrate from the
+                    result. This league is still on the static baseline blend until it has
+                    gathered enough resolved matches to adapt with confidence.
+                  </div>
+                )}
+                <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 14, lineHeight: 1.5 }}>
+                  Adaptation is bounded and evidence-gated: weights only tilt within safe
+                  caps, confidence is calibrated toward observed frequencies, and every
+                  adjustment is logged — never opaque, never a claim of certainty.
+                </p>
+              </div>
+            </section>
+          )}
+
           {/* TACTICAL */}
           {tactical && (
             <>

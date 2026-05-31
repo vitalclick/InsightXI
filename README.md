@@ -68,6 +68,9 @@ the file.
 | `WEB_APP_URL`, `PAYMENTS_CALLBACK_URL` | API | Where hosted checkouts redirect back |
 | `CURRENCY_RATES_JSON` | API | Optional FX overrides for price display |
 | `GEO_IP_LOOKUP_URL` | API | IP→country lookup for currency auto-detect (see below) |
+| `AI_SERVICE_URL` | API | Base URL the API uses to reach the FastAPI AI service |
+| `AI_SERVICE_PORT`, `MODELS_DIR` | AI service | FastAPI port; where model + adaptive artifacts live |
+| `ADAPTIVE_*`, `EXPERIENCE_RETENTION_SEASONS` | AI service | Adaptive Intelligence Engine (see below) |
 | `NEXT_PUBLIC_API_URL` | Web | Backend base URL |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Web | Must match the API's `GOOGLE_CLIENT_ID` |
 | `NEXT_PUBLIC_APPLE_CLIENT_ID` | Web | Must match the API's `APPLE_CLIENT_ID` |
@@ -94,6 +97,25 @@ Regardless of detection, the plan card always shows a **currency selector**, so 
 viewer can pick their currency manually. African gateways (Paystack/Flutterwave)
 charge in the local currency; PayPal settles in USD.
 
+#### Adaptive Intelligence Engine
+
+OFF by default → the AI service behaves exactly like the static Poisson + Elo +
+ML blend. See [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intelligence-engine.md).
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `ADAPTIVE_ENABLED` | `false` | Master switch for the self-improving engine. |
+| `ADAPTIVE_CALIBRATION` | `true` | Per-league confidence calibration (temperature scaling). |
+| `ADAPTIVE_MIN_SAMPLES` | `50` | Resolved predictions a bucket needs before it adapts. |
+| `ADAPTIVE_WEIGHT_DRIFT_CAP` | `0.20` | Max deviation of any model weight from its baseline. |
+| `ADAPTIVE_WEIGHT_STEP` | `0.30` | EMA step for weight updates across recompute cycles. |
+| `ADAPTIVE_RECENCY_HALFLIFE_DAYS` | `180` | Recency half-life for weighting evidence. |
+| `EXPERIENCE_RETENTION_SEASONS` | `3` | Experience retention window before rollup. |
+
+> To run the **full continuous-learning loop**, set both `ENABLE_QUEUES=true`
+> (so the jobs reconcile outcomes + recompute) and `ADAPTIVE_ENABLED=true` (so
+> the AI service learns and applies the adjustments).
+
 ### Production
 
 - **Backend → Railway:** project → **Variables**. Add all API-side variables.
@@ -111,4 +133,11 @@ charge in the local currency; PayPal settles in USD.
 2. **OAuth origins** — add your web origin to the Google OAuth client's
    *Authorized JavaScript origins*, and your domain/return URLs to the Apple
    *Services ID*. The `*_CLIENT_ID` and `NEXT_PUBLIC_*_CLIENT_ID` pairs must match.
+
+## Design docs
+
+* [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intelligence-engine.md)
+  — architecture & phased plan for the continuously self-improving
+  **Adaptive Intelligence Engine** (Experience Memory, Self-Evaluation,
+  Dynamic Weighting, Confidence Calibration, League Personality).
 

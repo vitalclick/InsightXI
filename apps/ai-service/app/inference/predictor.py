@@ -6,10 +6,24 @@ Blends three football models into one explainable, probabilistic output:
   * ML ensemble (LogReg+XGB) -> data-driven 1X2 view, when trained artifacts exist
 
 The 1X2 views are combined into an ensemble; goal markets come from Poisson.
+
+When the **Adaptive Intelligence Engine** is enabled (``ADAPTIVE_ENABLED``), the
+blend weights and a confidence-calibration temperature are looked up per league
+from learned state, every prediction is recorded to Experience Memory for the
+feedback loop, and the response carries an ``adjustment_trace`` explaining any
+tilt. When it is disabled (default) — or when a league lacks enough resolved
+evidence — the blend is exactly the static baseline below.
 """
 import math
+from typing import Optional
 
-from app.features.engineering import build_features
+from app.adaptive import config
+from app.adaptive.calibration import apply_temperature
+from app.adaptive.state import AdaptiveState, get_adaptive_state
+from app.adaptive.weighting import baseline_weights, blend
+from app.features.engineering import FEATURE_VERSION, build_features
+from app.memory.schema import ExperienceRecord
+from app.memory.store import ExperienceStore, store as default_store
 from app.models import elo, poisson
 from app.models.explain import build_explanations
 from app.models.ml_ensemble import ensemble as ml_ensemble
@@ -44,8 +58,14 @@ def _r(x: float) -> float:
     return round(x, 3)
 
 
-def predict_match(req: PredictionRequest) -> PredictionResponse:
+def predict_match(
+    req: PredictionRequest,
+    *,
+    state: Optional[AdaptiveState] = None,
+    store: Optional[ExperienceStore] = None,
+) -> PredictionResponse:
     home, away = req.home, req.away
+    adaptive_on = config.adaptive_enabled()
 
     # 1) Expected goals -> Poisson scoreline matrix -> goal markets + 1X2.
     lambda_home, lambda_away = poisson.expected_goals(
@@ -78,17 +98,35 @@ def predict_match(req: PredictionRequest) -> PredictionResponse:
     )
     ml_1x2 = ml_ensemble.predict_proba(features)
 
-    # 4) Ensemble the 1X2 views.
+    # 4) Assemble the per-model views and choose blend weights.
+    model_probs: dict[str, tuple[float, float, float]] = {
+        "poisson": poisson_1x2,
+        "elo": elo_1x2,
+    }
     if ml_1x2 is not None:
-        backend = "ensemble"
-        weights = [(ml_1x2, 0.5), (poisson_1x2, 0.3), (elo_1x2, 0.2)]
-    else:
-        backend = "analytical"
-        weights = [(poisson_1x2, 0.6), (elo_1x2, 0.4)]
+        model_probs["ml"] = ml_1x2
 
-    home_p = sum(view[0] * w for view, w in weights)
-    draw_p = sum(view[1] * w for view, w in weights)
-    away_p = sum(view[2] * w for view, w in weights)
+    backend = "ensemble" if ml_1x2 is not None else "analytical"
+    baseline = baseline_weights(model_probs.keys())
+
+    adjustment_trace: list[str] = []
+    temperature = 1.0
+    personality = None
+    weights = baseline
+
+    if adaptive_on:
+        active_state = state if state is not None else get_adaptive_state()
+        if active_state is not None:
+            resolved = active_state.resolve(req.league_id, model_probs.keys(), baseline)
+            weights = resolved.weights
+            personality = resolved.personality
+            if resolved.adapted:
+                temperature = resolved.temperature if config.calibration_enabled() else 1.0
+                adjustment_trace = list(resolved.adjustments)
+
+    home_p, draw_p, away_p = blend(model_probs, weights)
+    if temperature != 1.0:
+        home_p, draw_p, away_p = apply_temperature((home_p, draw_p, away_p), temperature)
     home_p, draw_p, away_p = _normalize((home_p, draw_p, away_p))
 
     outcome = OutcomeProbabilities(
@@ -130,7 +168,25 @@ def predict_match(req: PredictionRequest) -> PredictionResponse:
     labels = [("Home Win", home_p), ("Draw", draw_p), ("Away Win", away_p)]
     top_label, top_prob = max(labels, key=lambda kv: kv[1])
 
-    explanations = build_explanations(home, away, lambda_home, lambda_away)
+    explanations = build_explanations(
+        home, away, lambda_home, lambda_away, personality=personality
+    )
+
+    # 7) Record this prediction to Experience Memory (feedback loop) when enabled.
+    if adaptive_on:
+        active_store = store if store is not None else default_store
+        active_store.record_prediction(
+            ExperienceRecord(
+                match_id=req.match_id,
+                league_id=req.league_id,
+                feature_version=FEATURE_VERSION,
+                features=[round(float(f), 6) for f in features],
+                submodel_probs={k: [round(p, 6) for p in v] for k, v in model_probs.items()},
+                blended_probs=[_r(home_p), _r(draw_p), _r(away_p)],
+                weights_used={k: round(v, 4) for k, v in weights.items()},
+                confidence_published=_r(top_prob),
+            )
+        )
 
     return PredictionResponse(
         match_id=req.match_id,
@@ -141,4 +197,6 @@ def predict_match(req: PredictionRequest) -> PredictionResponse:
         top_selection=TopSelection(label=top_label, probability=_r(top_prob)),
         explanations=explanations,
         model_backend=backend,
+        adaptive=adaptive_on,
+        adjustment_trace=adjustment_trace,
     )

@@ -1,6 +1,7 @@
 import { BullModule } from "@nestjs/bullmq";
 import { DynamicModule, Logger, Module } from "@nestjs/common";
 import { AnalyticsModule } from "../analytics/analytics.module";
+import { PredictionsModule } from "../predictions/predictions.module";
 import { IntelligenceProcessor } from "./intelligence.processor";
 import { JobsService } from "./jobs.service";
 import { INTELLIGENCE_QUEUE, parseRedisConnection } from "./jobs.constants";
@@ -32,6 +33,7 @@ export class JobsModule {
         BullModule.forRoot({ connection }),
         BullModule.registerQueue({ name: INTELLIGENCE_QUEUE }),
         AnalyticsModule,
+        PredictionsModule,
       ],
       providers: [JobsService, IntelligenceProcessor],
       exports: [JobsService],

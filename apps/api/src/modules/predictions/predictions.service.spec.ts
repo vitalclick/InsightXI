@@ -4,6 +4,7 @@ import { AnalyticsService } from "../analytics/analytics.service";
 import { PredictionsService } from "./predictions.service";
 import {
   AI_PREDICTION_CLIENT,
+  AiFeedbackRequest,
   AiPredictionClient,
   AiPredictionRequest,
 } from "./ai-prediction.client";
@@ -11,6 +12,10 @@ import {
 /** Fake AI client: echoes a deterministic response and captures the request. */
 class FakeAiClient implements AiPredictionClient {
   lastRequest?: AiPredictionRequest;
+  feedbacks: AiFeedbackRequest[] = [];
+  pending: string[] = [];
+  recomputed = 0;
+
   async predict(req: AiPredictionRequest) {
     this.lastRequest = req;
     return {
@@ -22,7 +27,21 @@ class FakeAiClient implements AiPredictionClient {
       top_selection: { label: "Home Win", probability: 0.55 },
       explanations: ["test reason"],
       model_backend: "analytical",
+      adaptive: true,
+      adjustment_trace: ["EPL: blend tilted — elo 0.40→0.50 (+0.10)"],
     };
+  }
+
+  async feedback(req: AiFeedbackRequest) {
+    this.feedbacks.push(req);
+  }
+
+  async getPendingMatchIds() {
+    return this.pending;
+  }
+
+  async recompute() {
+    this.recomputed++;
   }
 }
 
@@ -59,10 +78,17 @@ describe("PredictionsService", () => {
     expect(fake.lastRequest?.home.attack_strength).toBeGreaterThan(0);
     expect(fake.lastRequest?.league_avg_goals).toBeGreaterThan(0);
 
+    // League id is forwarded for adaptive bucketing.
+    expect(fake.lastRequest?.league_id).toBeTruthy();
+
     // Response mapped correctly.
     expect(result.outcome.homeWin).toBe(0.55);
     expect(result.confidenceLevel).toBe("Medium");
     expect(result.modelBackend).toBe("analytical");
     expect(result.explanations).toContain("test reason");
+
+    // Adaptive fields surface through to the web shape.
+    expect(result.adaptive).toBe(true);
+    expect(result.adjustmentTrace.length).toBeGreaterThan(0);
   });
 });
