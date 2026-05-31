@@ -34,42 +34,70 @@ Full command reference lives in `CLAUDE.md` → **Setup, Commands & MVP Phasing*
 
 ## Environment variables
 
-[`.env.example`](./.env.example) is the full template (copy it to `.env`).
-The operationally important variables are summarised below; everything works
-out of the box with the defaults (deterministic seed data, queues off, adaptive
-engine off). **Never commit a real `.env`.**
+All configuration is driven by environment variables. A complete template lives
+in [`.env.example`](./.env.example).
 
-### Core / data
+### Local development
 
-| Variable | Default | Purpose |
+```bash
+cp .env.example .env   # at the repo root, then fill in values
+```
+
+The **repo-root `.env`** is the single source of truth in dev — it now feeds
+**both** the API (NestJS) and the web app (Next.js), regardless of the process
+working directory. It is git-ignored; never commit a real `.env`. Real
+environment variables (and `apps/web/.env.local`) always take precedence over
+the file.
+
+> `NEXT_PUBLIC_*` values are inlined into the browser bundle at build time —
+> only put **publishable** client IDs there, never secret keys.
+
+### Which variable goes where
+
+| Variable(s) | Used by | Notes |
 | --- | --- | --- |
-| `DATA_BACKEND` | `memory` | `memory` (deterministic seed) or `postgres`. |
-| `DATABASE_URL` | — | Neon/Postgres connection (required when `DATA_BACKEND=postgres`). |
+| `JWT_SECRET`, `JWT_EXPIRES_IN` | API | Auth token signing |
+| `DATA_BACKEND`, `DATABASE_URL` | API | `memory` (default) or `postgres` (Neon) |
+| `REDIS_URL`, `ENABLE_QUEUES` | API | BullMQ queues (optional) |
+| `FOOTBALL_API_KEY`, `FOOTBALL_*` | API | Live provider; mock seed used if unset |
+| `GOOGLE_CLIENT_ID` | API | Verifies Google sign-in tokens |
+| `APPLE_CLIENT_ID` | API | Verifies Apple sign-in tokens |
+| `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_ENV`, `PAYPAL_WEBHOOK_ID` | API | PayPal (Orders v2) |
+| `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY` | API | Paystack |
+| `FLUTTERWAVE_SECRET_KEY`, `FLUTTERWAVE_PUBLIC_KEY`, `FLUTTERWAVE_WEBHOOK_HASH` | API | Flutterwave |
+| `WEB_APP_URL`, `PAYMENTS_CALLBACK_URL` | API | Where hosted checkouts redirect back |
+| `CURRENCY_RATES_JSON` | API | Optional FX overrides for price display |
+| `GEO_IP_LOOKUP_URL` | API | IP→country lookup for currency auto-detect (see below) |
+| `AI_SERVICE_URL` | API | Base URL the API uses to reach the FastAPI AI service |
+| `AI_SERVICE_PORT`, `MODELS_DIR` | AI service | FastAPI port; where model + adaptive artifacts live |
+| `ADAPTIVE_*`, `EXPERIENCE_RETENTION_SEASONS` | AI service | Adaptive Intelligence Engine (see below) |
+| `NEXT_PUBLIC_API_URL` | Web | Backend base URL |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Web | Must match the API's `GOOGLE_CLIENT_ID` |
+| `NEXT_PUBLIC_APPLE_CLIENT_ID` | Web | Must match the API's `APPLE_CLIENT_ID` |
 
-### Background jobs (BullMQ + Redis)
+> **Sandbox by default.** Every payment gateway and both OAuth providers run in
+> sandbox/demo mode automatically when their keys are absent, so the full flow
+> (sign-in, localized pricing, checkout, premium activation) stays testable
+> offline. Adding real keys switches them to live with no code changes.
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `ENABLE_QUEUES` | `false` | **Set `true`** to run BullMQ jobs: hourly data refresh **+ adaptive reconcile/recompute**, and the daily retrain. Requires a reachable `REDIS_URL`; otherwise the API boots without Redis and jobs stay disabled. |
-| `REDIS_URL` | `redis://localhost:6379` | Redis for BullMQ + cache. |
+#### Currency / geolocation
 
-### API / auth
+The Premium price is anchored in USD ($2.49/mo) and **localized for display**.
+The viewer's country is detected in this order:
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `API_PORT` | `4000` | NestJS port. |
-| `JWT_SECRET` | — | JWT signing secret (change in production). |
-| `JWT_EXPIRES_IN` | `7d` | Access-token lifetime. |
+1. **Cloudflare `cf-ipcountry`** header — automatic and zero-latency when the
+   app is served through Cloudflare (the production setup). **No variable needed.**
+2. **`GEO_IP_LOOKUP_URL`** — an IP→country endpoint (`{ip}` is substituted), used
+   only when there is no Cloudflare header. Set this if you are **not** behind
+   Cloudflare (e.g. local dev or a direct Railway URL), for example
+   `https://ipapi.co/{ip}/country/`. Private/localhost IPs are skipped.
+3. **Browser locale** hint, then **USD** default.
 
-### AI service
+Regardless of detection, the plan card always shows a **currency selector**, so a
+viewer can pick their currency manually. African gateways (Paystack/Flutterwave)
+charge in the local currency; PayPal settles in USD.
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `AI_SERVICE_URL` | `http://localhost:8000` | Base URL the API uses to reach the FastAPI service. |
-| `AI_SERVICE_PORT` | `8000` | FastAPI port. |
-| `MODELS_DIR` | `apps/ai-service/models` | Where model + adaptive artifacts are read/written. |
-
-### Adaptive Intelligence Engine
+#### Adaptive Intelligence Engine
 
 OFF by default → the AI service behaves exactly like the static Poisson + Elo +
 ML blend. See [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intelligence-engine.md).
@@ -88,23 +116,23 @@ ML blend. See [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intellige
 > (so the jobs reconcile outcomes + recompute) and `ADAPTIVE_ENABLED=true` (so
 > the AI service learns and applies the adjustments).
 
-### Football data provider
+### Production
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `FOOTBALL_API_KEY` | — | When set, use live API-Football; otherwise the deterministic mock seed. |
-| `FOOTBALL_LEAGUE_IDS` | `39,140` | Comma-separated API-Football league ids (EPL, La Liga). |
-| `FOOTBALL_SEASON` | current year | Season start year (e.g. `2025` → `2025/26`). |
+- **Backend → Railway:** project → **Variables**. Add all API-side variables.
+- **Frontend → Vercel:** project → **Settings → Environment Variables**. Add the
+  three `NEXT_PUBLIC_*` variables, then redeploy so they are rebuilt in.
+- **Claude Code on the web:** set them in the environment configuration when
+  creating/editing the cloud environment — see the
+  [docs](https://code.claude.com/docs/en/claude-code-on-the-web).
 
-### Web
+### Provider-side setup (once keys are added)
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:4000` | API base URL exposed to the browser. |
-
-Auth (`GOOGLE_CLIENT_ID`, `APPLE_CLIENT_ID`) and billing (PayPal / Paystack /
-Flutterwave) keys are documented in `.env.example`; leave them blank to run those
-flows in offline sandbox mode.
+1. **Webhooks** — point each provider dashboard at
+   `https://<your-api>/payments/webhook/{paypal|paystack|flutterwave}`. For
+   Flutterwave, the dashboard's secret hash must equal `FLUTTERWAVE_WEBHOOK_HASH`.
+2. **OAuth origins** — add your web origin to the Google OAuth client's
+   *Authorized JavaScript origins*, and your domain/return URLs to the Apple
+   *Services ID*. The `*_CLIENT_ID` and `NEXT_PUBLIC_*_CLIENT_ID` pairs must match.
 
 ## Design docs
 
@@ -112,3 +140,4 @@ flows in offline sandbox mode.
   — architecture & phased plan for the continuously self-improving
   **Adaptive Intelligence Engine** (Experience Memory, Self-Evaluation,
   Dynamic Weighting, Confidence Calibration, League Personality).
+

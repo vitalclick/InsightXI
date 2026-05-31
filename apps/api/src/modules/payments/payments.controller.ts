@@ -23,21 +23,30 @@ interface HttpRequest {
   headers: Record<string, string | string[] | undefined>;
   body?: unknown;
   rawBody?: Buffer;
+  socket?: { remoteAddress?: string };
+}
+
+function header(req: HttpRequest, name: string): string | undefined {
+  const v = req.headers[name];
+  return Array.isArray(v) ? v[0] : v;
 }
 
 function hintsFrom(
   req: HttpRequest,
   query: { currency?: string; country?: string },
 ): RequestGeoHints {
-  const header = (name: string): string | undefined => {
-    const v = req.headers[name];
-    return Array.isArray(v) ? v[0] : v;
-  };
   return {
-    cfCountry: header("cf-ipcountry"),
-    country: query.country ?? header("x-country"),
+    cfCountry: header(req, "cf-ipcountry"),
+    country: query.country ?? header(req, "x-country"),
     currency: query.currency,
   };
+}
+
+/** Best-effort client IP for the optional IP-geolocation fallback. */
+function clientIp(req: HttpRequest): string | undefined {
+  const fwd = header(req, "x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return header(req, "x-real-ip") ?? req.socket?.remoteAddress;
 }
 
 @Controller("payments")
@@ -50,13 +59,13 @@ export class PaymentsController {
 
   /** Public — localized plan pricing + gateway availability + PayPal client id. */
   @Get("plan")
-  plan(
+  async plan(
     @Req() req: HttpRequest,
     @Query("currency") currency?: string,
     @Query("country") country?: string,
   ) {
     return {
-      plan: this.geo.localizePlan(hintsFrom(req, { currency, country })),
+      plan: await this.geo.resolvePlan(hintsFrom(req, { currency, country }), clientIp(req)),
       providers: this.payments.availability(),
       paypalClientId: process.env.PAYPAL_CLIENT_ID ?? null,
     };
