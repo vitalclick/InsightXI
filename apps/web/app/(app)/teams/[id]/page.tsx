@@ -32,8 +32,9 @@ export default function TeamProfilePage({ params }: { params: { id: string } }) 
           <div style={{ flex: 1, minWidth: 200 }}>
             <h1 className="page-title">{team.name}</h1>
             <div className="page-sub">{team.played} matches played · current season</div>
-            <div style={{ marginTop: 10 }}>
+            <div className="flex aic gap-12 wrap" style={{ marginTop: 10 }}>
               <FormDots form={team.recentForm} />
+              <Link href={`/compare?a=${team.id}`} className="btn btn-sm btn-ghost">Compare →</Link>
             </div>
           </div>
           <div className="flex gap-24 wrap">
