@@ -1,4 +1,5 @@
 import { api } from "../services/api-client";
+import { compareRows } from "./team-strength";
 import type { MatchView, Team } from "./types";
 
 export interface AssistantAnswer {
@@ -19,12 +20,41 @@ export const SUGGESTIONS: Suggestion[] = [
   { label: "Top pick today", query: "top pick today" },
   { label: "Most likely upset", query: "biggest upset" },
   { label: "Highest-scoring fixture", query: "most goals expected" },
+  { label: "Compare two teams", query: "compare teams" },
 ];
 
 /** Find a team mentioned in the query. */
 function matchTeam(query: string, teams: Team[]): Team | undefined {
   const q = query.toLowerCase();
   return teams.find((t) => q.includes(t.name.toLowerCase()) || q.includes(t.shortName.toLowerCase()));
+}
+
+/**
+ * Find up to `limit` distinct teams named in the query, in the order they
+ * appear, so "compare Arsenal and Spurs" resolves both sides deterministically.
+ */
+function matchTeams(query: string, teams: Team[], limit = 2): Team[] {
+  const q = query.toLowerCase();
+  const hits = teams
+    .map((t) => {
+      const idx = Math.min(
+        ...[t.name.toLowerCase(), t.shortName.toLowerCase()]
+          .map((token) => q.indexOf(token))
+          .filter((i) => i >= 0),
+      );
+      return { t, idx };
+    })
+    .filter((h) => Number.isFinite(h.idx))
+    .sort((a, b) => a.idx - b.idx);
+  const seen = new Set<string>();
+  const out: Team[] = [];
+  for (const h of hits) {
+    if (seen.has(h.t.id)) continue;
+    seen.add(h.t.id);
+    out.push(h.t);
+    if (out.length === limit) break;
+  }
+  return out;
 }
 
 function pct(n: number): string {
@@ -41,6 +71,48 @@ export async function answerQuery(query: string): Promise<AssistantAnswer> {
   if (!q) return { title: "Ask about a team, fixture or today's picks.", lines: [] };
 
   const [teams, fixtures] = await Promise.all([api.teams(), api.fixtures()]);
+
+  // --- Comparison ("compare X and Y", "X vs Y") --------------------------
+  // Runs before the single-team branch so a two-team query isn't swallowed by
+  // the first team it matches. Built from ratings only (no prediction slate).
+  const isCompare = /\b(compare|versus|vs\.?)\b/.test(q);
+  if (isCompare) {
+    const pair = matchTeams(query, teams, 2);
+    if (pair.length === 2) {
+      const [ta, tb] = pair;
+      try {
+        const [ra, rb] = await Promise.all([api.teamRatings(ta.id), api.teamRatings(tb.id)]);
+        const rows = compareRows(ra, rb);
+        let aWins = 0;
+        let bWins = 0;
+        rows.forEach((row) => (row.better === "a" ? aWins++ : row.better === "b" ? bWins++ : null));
+        const verdict =
+          aWins === bWins
+            ? `Level on the rating metrics (${aWins}-${bWins}).`
+            : `${aWins > bWins ? ta.name : tb.name} leads the rating metrics ${Math.max(aWins, bWins)}-${Math.min(aWins, bWins)}.`;
+        return {
+          title: `${ta.name} vs ${tb.name}`,
+          lines: [
+            verdict,
+            `Elo ${Math.round(ra.elo)} vs ${Math.round(rb.elo)} · form ${ra.recentFormPoints}/15 vs ${rb.recentFormPoints}/15`,
+            `Attack ${ra.attackStrength.toFixed(2)} vs ${rb.attackStrength.toFixed(2)} · xG against ${ra.avgXgAgainst.toFixed(2)} vs ${rb.avgXgAgainst.toFixed(2)}`,
+          ],
+          href: `/compare?a=${ta.id}&b=${tb.id}`,
+          hrefLabel: "Open full comparison →",
+        };
+      } catch {
+        return { title: `${ta.name} vs ${tb.name}`, lines: [], note: "Ratings are temporarily unavailable." };
+      }
+    }
+    // Asked to compare but we couldn't pin down two teams.
+    return {
+      title: "Comparison",
+      lines: [],
+      href: "/compare",
+      hrefLabel: "Open Team Comparison →",
+      note: "Name two teams to compare, e.g. “compare Arsenal and Manchester City”.",
+    };
+  }
 
   // --- Team-specific question --------------------------------------------
   // Resolve this path from ratings first and only the team's next-fixture

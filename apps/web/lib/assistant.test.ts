@@ -122,4 +122,35 @@ describe("answerQuery", () => {
     const a = await answerQuery("top pick today");
     expect(a.note).toMatch(/AI service/i);
   });
+
+  it("compares two named teams and deep-links to /compare", async () => {
+    mockApi.fixtures.mockResolvedValue([]);
+    mockApi.teamRatings.mockImplementation(async (id: string) =>
+      id === "ars"
+        ? { ...ratings, teamId: "ars", name: "Arsenal", elo: 1600 }
+        : { ...ratings, teamId: "mci", name: "Manchester City", elo: 1500 },
+    );
+
+    const a = await answerQuery("compare Arsenal and Manchester City");
+    expect(a.title).toBe("Arsenal vs Manchester City");
+    expect(a.href).toBe("/compare?a=ars&b=mci");
+    // Does not fan out predictions for a comparison.
+    expect(mockApi.prediction).not.toHaveBeenCalled();
+  });
+
+  it("preserves query order when comparing (X vs Y)", async () => {
+    mockApi.fixtures.mockResolvedValue([]);
+    mockApi.teamRatings.mockImplementation(async (id: string) => ({ ...ratings, teamId: id, name: id }));
+
+    const a = await answerQuery("Manchester City vs Arsenal");
+    expect(a.href).toBe("/compare?a=mci&b=ars");
+  });
+
+  it("asks for two teams when a comparison names too few", async () => {
+    mockApi.fixtures.mockResolvedValue([]);
+
+    const a = await answerQuery("compare teams");
+    expect(a.href).toBe("/compare");
+    expect(a.note).toMatch(/name two teams/i);
+  });
 });
