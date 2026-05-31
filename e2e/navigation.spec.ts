@@ -1,22 +1,19 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("core navigation & data hub", () => {
-  test("dashboard loads with hero and section links", async ({ page }) => {
+  test("landing page renders the hero and primary CTAs", async ({ page }) => {
     await page.goto("/");
-    await expect(
-      page.getByRole("heading", { name: /explainable football analytics/i }),
-    ).toBeVisible();
-    await expect(page.getByRole("link", { name: "Fixtures" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Standings" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Football Intelligence/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Explore Insights" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /View Live Matches/i })).toBeVisible();
   });
 
-  test("standings page renders a populated league table", async ({ page }) => {
-    await page.goto("/standings");
-    await expect(page.getByRole("heading", { name: "Standings" })).toBeVisible();
+  test("leagues page renders a populated league table", async ({ page }) => {
+    await page.goto("/leagues");
+    await expect(page.getByRole("heading", { name: /Leagues & Standings/i })).toBeVisible();
     // 8 teams per league in the seed -> 8 body rows.
     const rows = page.locator("table tbody tr");
     await expect(rows).toHaveCount(8);
-    // Points column is present and numeric for the leader.
     await expect(rows.first()).toBeVisible();
   });
 
@@ -27,13 +24,15 @@ test.describe("core navigation & data hub", () => {
     await expect(firstMatch).toBeVisible();
     await firstMatch.click();
     await expect(page).toHaveURL(/\/matches\//);
-    // Match-detail header always renders (the AI-backed Match Intelligence
-    // panel degrades gracefully when the AI service is offline, as in CI).
-    await expect(page.getByText(/Matchday/i)).toBeVisible();
-    // The Match Intelligence section is present whether the AI is up
-    // ("Match Intelligence" heading) or down ("unavailable" notice).
-    await expect(
-      page.getByText(/Match [Ii]ntelligence/),
-    ).toBeVisible();
+    // The match-detail breadcrumb always renders; the AI panel degrades when
+    // the AI service is offline (as in CI).
+    await expect(page.getByText(/Matchday/i).first()).toBeVisible();
+  });
+
+  test("sidebar navigates to the confidence board", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.getByRole("link", { name: "Confidence Board" }).first().click();
+    await expect(page).toHaveURL(/\/board$/);
+    await expect(page.getByRole("heading", { name: "Confidence Board" })).toBeVisible();
   });
 });

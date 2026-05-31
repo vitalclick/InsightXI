@@ -3,6 +3,7 @@
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 import { Ticker } from "./ticker";
+import { Assistant } from "./assistant";
 import { useUiStore } from "../../store/ui-store";
 
 /** App chrome: collapsible sidebar + topbar + live ticker wrapping the page. */
@@ -32,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           }}
         />
       )}
+      <Assistant />
     </div>
   );
 }

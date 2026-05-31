@@ -1,0 +1,125 @@
+import type { MatchPrediction, MatchView, Team, TeamRatings } from "./types";
+
+// Mock the api client so answerQuery is tested in isolation.
+jest.mock("../services/api-client", () => ({
+  api: {
+    teams: jest.fn(),
+    fixtures: jest.fn(),
+    prediction: jest.fn(),
+    teamRatings: jest.fn(),
+  },
+}));
+
+import { answerQuery } from "./assistant";
+import { api } from "../services/api-client";
+
+const mockApi = api as jest.Mocked<typeof api>;
+
+const teams: Team[] = [
+  { id: "ars", name: "Arsenal", shortName: "ARS", leagueId: "epl" },
+  { id: "bur", name: "Burnley", shortName: "BUR", leagueId: "epl" },
+  { id: "mci", name: "Manchester City", shortName: "MCI", leagueId: "epl" },
+];
+
+function fixture(id: string, home: string, away: string): MatchView {
+  const t = (x: string) => teams.find((tm) => tm.id === x)!;
+  return {
+    id,
+    leagueId: "epl",
+    season: "2025/26",
+    matchday: 1,
+    utcDate: "2026-06-20T00:00:00.000Z",
+    status: "SCHEDULED",
+    homeTeamId: home,
+    awayTeamId: away,
+    homeTeamName: t(home).name,
+    awayTeamName: t(away).name,
+    homeGoals: null,
+    awayGoals: null,
+    homeXg: null,
+    awayXg: null,
+  };
+}
+
+function pred(over: Partial<MatchPrediction>): MatchPrediction {
+  return {
+    matchId: "m",
+    outcome: { homeWin: 0.5, draw: 0.25, awayWin: 0.25 },
+    expectedGoals: { home: 1.5, away: 1.1 },
+    markets: [
+      { market: "o25", label: "Over 2.5 Goals", probability: 0.55 },
+      { market: "btts", label: "Both Teams To Score", probability: 0.5 },
+    ],
+    confidenceLevel: "Medium",
+    topSelection: { label: "Home Win", probability: 0.5 },
+    explanations: ["Stronger recent xG", "Home advantage"],
+    modelBackend: "analytical",
+    ...over,
+  };
+}
+
+const ratings: TeamRatings = {
+  teamId: "ars",
+  name: "Arsenal",
+  elo: 1540,
+  attackStrength: 1.3,
+  defenseStrength: 0.8,
+  recentFormPoints: 12,
+  avgXgFor: 1.9,
+  avgXgAgainst: 0.9,
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockApi.teams.mockResolvedValue(teams);
+});
+
+describe("answerQuery", () => {
+  it("prompts when empty", async () => {
+    const a = await answerQuery("   ");
+    expect(a.title).toMatch(/ask about/i);
+  });
+
+  it("answers a team question from real ratings + next fixture", async () => {
+    mockApi.fixtures.mockResolvedValue([fixture("g1", "ars", "bur")]);
+    mockApi.prediction.mockResolvedValue(pred({ outcome: { homeWin: 0.7, draw: 0.2, awayWin: 0.1 } }));
+    mockApi.teamRatings.mockResolvedValue(ratings);
+
+    const a = await answerQuery("how are Arsenal doing?");
+    expect(a.title).toBe("Arsenal");
+    expect(a.lines.join(" ")).toMatch(/Elo 1540/);
+    expect(a.lines.join(" ")).toMatch(/70% win probability/);
+    expect(a.href).toBe("/matches/g1");
+  });
+
+  it("returns the top confidence pick by default", async () => {
+    mockApi.fixtures.mockResolvedValue([fixture("g1", "ars", "bur"), fixture("g2", "mci", "ars")]);
+    mockApi.prediction
+      .mockResolvedValueOnce(pred({ topSelection: { label: "Home Win", probability: 0.55 } }))
+      .mockResolvedValueOnce(pred({ topSelection: { label: "Home Win", probability: 0.78 } }));
+
+    const a = await answerQuery("top pick today");
+    expect(a.title).toMatch(/Top pick/);
+    expect(a.lines[0]).toMatch(/78%/);
+    expect(a.href).toBe("/matches/g2");
+  });
+
+  it("finds the highest-scoring projection", async () => {
+    mockApi.fixtures.mockResolvedValue([fixture("g1", "ars", "bur"), fixture("g2", "mci", "ars")]);
+    mockApi.prediction
+      .mockResolvedValueOnce(pred({ expectedGoals: { home: 1.0, away: 0.8 } }))
+      .mockResolvedValueOnce(pred({ expectedGoals: { home: 2.4, away: 1.6 } }));
+
+    const a = await answerQuery("which game has the most goals expected?");
+    expect(a.title).toMatch(/Highest-scoring/);
+    expect(a.href).toBe("/matches/g2");
+  });
+
+  it("degrades gracefully when no predictions are available", async () => {
+    mockApi.fixtures.mockResolvedValue([fixture("g1", "ars", "bur")]);
+    mockApi.prediction.mockRejectedValue(new Error("AI offline"));
+
+    const a = await answerQuery("top pick today");
+    expect(a.note).toMatch(/AI service/i);
+  });
+});
