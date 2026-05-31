@@ -142,6 +142,7 @@ export default function AccountPage() {
   return (
     <>
       <PageHead
+        center
         eyebrow="Account"
         title={mode === "signin" ? "Sign in" : "Create your account"}
         sub="Access premium analytics and personalised football intelligence."
