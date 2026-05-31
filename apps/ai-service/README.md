@@ -6,15 +6,20 @@ FastAPI service for explainable, probabilistic football predictions.
 
 ```txt
 app/
-  main.py        FastAPI app + routes (/health, /predict, /evaluation, /drift)
+  main.py        FastAPI app + routes (/health, /predict, /feedback,
+                 /evaluation, /drift, /adaptive/state, /adaptive/recompute)
   schemas.py     Pydantic request/response models
   features/      shared feature engineering (training + inference)
   inference/     prediction orchestration (Poisson + Elo + ML ensemble blend)
   models/        Elo, Poisson, ML ensemble loader, explanations
   training/      reproducible training pipeline + historical data generator
   evaluation/    metrics (log loss, Brier, ECE), PSI drift, report loading
+  memory/        Experience Memory (L3): append-only prediction↔outcome log
+  adaptive/      Adaptive Intelligence Engine: self-evaluation (L4),
+                 dynamic weighting + confidence calibration (L5), personality
 models/          serialized artifacts: *.joblib + metrics.json + drift_reference.npz
-                 (git-ignored; regenerate with the training command)
+                 + experience.jsonl + adaptive_state.json
+                 (git-ignored; regenerate with training / the feedback loop)
 tests/           pytest suite
 ```
 
@@ -57,3 +62,36 @@ matches how fixtures are scored in production. Probabilities are calibrated
   retraining on major shift.
 
 Both degrade gracefully to `unavailable` before the first training run.
+
+## Adaptive Intelligence Engine
+
+A continuously self-improving layer on top of the static blend. **Off by
+default** (`ADAPTIVE_ENABLED=false`) — when off, predictions are byte-compatible
+with the static Poisson + Elo + ML blend. Turn it on and the service starts
+learning from outcomes under a *conservative & explainable* contract.
+
+The loop:
+
+1. **Experience Memory (L3)** — every `/predict` appends the prediction, the
+   per-model 1X2 views, the published blend, and the weights used to an
+   append-only log (`models/experience.jsonl`).
+2. **Feedback** — `POST /feedback` (`{match_id, league_id, outcome, home_goals,
+   away_goals}`) records the actual result, completing the row. Idempotent.
+3. **Recompute** — `POST /adaptive/recompute` rebuilds `adaptive_state.json`
+   from memory: per-league blend **weights** (Dynamic Weighting, L5a) and a
+   confidence **temperature** (Calibration, L5b), plus a **League Personality**
+   profile and a **Self-Evaluation** report (L4) of which models are working.
+4. **Adapt** — subsequent predictions in a league use its learned weights +
+   calibration, and the response carries an `adjustment_trace` explaining the
+   tilt. `GET /adaptive/state` introspects everything learned.
+
+Guardrails (all configurable — see `.env.example`): a bucket only adapts after
+`ADAPTIVE_MIN_SAMPLES` resolved predictions **and** only if the learned blend
+beats the static baseline on that bucket's own evidence; each weight stays
+within `ADAPTIVE_WEIGHT_DRIFT_CAP` of baseline; updates are EMA-smoothed;
+evidence is recency-weighted (`ADAPTIVE_RECENCY_HALFLIFE_DAYS`); calibration can
+only correct confidence *toward* observed frequency, never inflate it. Deleting
+`adaptive_state.json` instantly reverts to the static blend.
+
+See [`docs/adaptive-intelligence-engine.md`](../../docs/adaptive-intelligence-engine.md)
+for the full design.
