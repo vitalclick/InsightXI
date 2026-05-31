@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixtures · InsightXI</title>
+<link rel="stylesheet" href="../assets/css/insightxi.css">
+</head>
+<body data-page="fixtures">
+<main class="page" data-screen-label="Fixtures">
+
+  <div class="page-head reveal">
+    <div>
+      <div class="eyebrow" style="margin-bottom:8px">Fixtures & predictions</div>
+      <h1 class="page-title">Upcoming Fixtures</h1>
+      <div class="page-sub">AI confidence and match-importance signals across every fixture</div>
+    </div>
+    <div class="flex gap-10 aic">
+      <div class="tabs" id="statusTabs"><div class="tab active" data-f="all">All</div><div class="tab" data-f="live">Live</div><div class="tab" data-f="upcoming">Upcoming</div></div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card reveal" style="padding:14px 18px;margin-bottom:18px">
+    <div class="flex jcb aic wrap gap-12">
+      <div class="chip-row" id="leagueChips">
+        <div class="chip active">All competitions</div>
+        <div class="chip">Premier League</div>
+        <div class="chip">Continental Cup</div>
+        <div class="chip">Domestic Cup</div>
+      </div>
+      <div class="chip-row">
+        <div class="chip" id="confSort"><span class="ico" data-icon="analytics"></span> Sort: Confidence</div>
+        <div class="chip"><span class="ico" data-icon="fixtures"></span> This week</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fixtureGroups"></div>
+
+</main>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/charts.js"></script>
+<script src="../assets/js/shell.js"></script>
+<script src="../assets/js/fixtures.js"></script>
+</body>
+</html>

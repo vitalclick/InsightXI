@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InsightXI · True Football Intelligence Platform</title>
+<link rel="stylesheet" href="assets/css/insightxi.css">
+<style>
+  .lp-nav { position: sticky; top: 0; z-index: 50; height: 66px; display: flex; align-items: center; gap: 22px; padding: 0 38px; background: rgba(8,12,22,.7); backdrop-filter: blur(18px); border-bottom: 1px solid var(--line); }
+  .lp-nav .links { display: flex; gap: 2px; margin-left: 18px; }
+  .lp-nav .links a { padding: 8px 11px; border-radius: 9px; font-size: 13px; color: var(--text-2); font-weight: 500; transition: .15s; white-space: nowrap; }
+  .lp-nav .links a:hover { background: var(--surface-2); color: #fff; }
+  .lp-brand { display: flex; align-items: center; gap: 11px; }
+  .lp-brand .sb-logo { width: 34px; height: 34px; }
+  .lp-brand b { font-family: var(--font-display); font-weight: 800; font-size: 19px; letter-spacing: -.03em; }
+  .lp-brand b span { color: var(--blue-2); }
+  .hero { position: relative; padding: 70px 38px 50px; max-width: 1320px; margin: 0 auto; }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 50px; align-items: center; }
+  .hero h1 { font-size: 58px; line-height: 1.02; letter-spacing: -.035em; font-weight: 800; }
+  .hero h1 .grad { background: linear-gradient(120deg, var(--blue-2), var(--green-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p.sub { font-size: 18px; color: var(--text-2); line-height: 1.55; margin: 22px 0 30px; max-width: 540px; }
+  .glow-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
+  .glow-bg::before { content:''; position: absolute; top: -120px; right: -80px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(46,125,255,.16), transparent 65%); }
+  .glow-bg::after { content:''; position: absolute; bottom: -160px; left: -120px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(39,224,138,.10), transparent 65%); }
+  .sect { max-width: 1320px; margin: 0 auto; padding: 60px 38px; }
+  .sect-head { text-align: center; max-width: 680px; margin: 0 auto 42px; }
+  .sect-head h2 { font-size: 38px; letter-spacing: -.03em; font-weight: 800; }
+  .sect-head p { color: var(--muted); font-size: 16px; margin-top: 14px; line-height: 1.55; }
+  .feat-card { background: linear-gradient(180deg, var(--surface-1), rgba(10,15,26,.6)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; position: relative; overflow: hidden; transition: transform .25s, border-color .25s; }
+  .feat-card:hover { transform: translateY(-4px); border-color: var(--line-2); }
+  .feat-ic { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; margin-bottom: 18px; }
+  .feat-ic svg { width: 22px; height: 22px; stroke-width: 1.8; }
+  .feat-card h3 { font-size: 19px; margin-bottom: 9px; }
+  .feat-card p { color: var(--muted); font-size: 14px; line-height: 1.55; }
+  /* Today's intelligence board */
+  .day-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+  .day-pill { padding:11px 22px; border-radius:13px; background:var(--surface-1); border:1px solid var(--line); font-weight:600; font-size:14px; color:var(--text-2); cursor:pointer; transition:.15s; text-align:center; line-height:1.1; }
+  .day-pill:hover { border-color:var(--line-2); color:#fff; }
+  .day-pill.active { background:linear-gradient(135deg,var(--blue),#1d57cf); border-color:transparent; color:#fff; box-shadow:0 6px 22px var(--glow-blue); }
+  .day-pill small { display:block; font-family:var(--font-mono); font-size:10px; font-weight:500; opacity:.7; margin-top:2px; }
+  .board-hd { padding:15px; text-align:center; font-family:var(--font-display); font-weight:700; font-size:14px; letter-spacing:.08em; text-transform:uppercase; background:linear-gradient(180deg,var(--surface-3),rgba(18,26,44,.5)); border-bottom:1px solid var(--line); position:relative; }
+  .board-hd::after { content:''; position:absolute; left:50%; bottom:-1px; transform:translateX(-50%); width:58px; height:2px; background:var(--blue); box-shadow:0 0 12px var(--glow-blue); }
+  .board-ft { display:flex; align-items:center; gap:12px; padding:14px 18px; border-top:1px solid var(--line); background:var(--surface-1); }
+  .prob-pill { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 8px; border-radius:13px; background:var(--surface-1); border:1px solid var(--line); transition:.15s; }
+  .prob-pill.fav { border-color:rgba(46,125,255,.4); background:rgba(46,125,255,.08); box-shadow:0 0 0 3px rgba(46,125,255,.06); }
+  .prob-pill b { font-family:var(--font-mono); font-size:16px; font-weight:700; }
+  .prob-pill .lbl { font-size:11px; color:var(--muted); }
+  .league-row { display:flex; align-items:center; gap:10px; padding:14px 4px 8px; font-size:13px; font-weight:700; color:var(--blue-2); }
+  .board-row { display:flex; align-items:center; gap:12px; padding:11px 8px; border-top:1px solid var(--line); transition:background .15s; border-radius:9px; }
+  .board-row:hover { background:var(--surface-1); }
+  .pick-badge { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; font-family:var(--font-mono); font-weight:700; font-size:13px; flex-shrink:0; }
+  .pick-badge.h { background:rgba(46,125,255,.16); color:var(--blue-2); border:1px solid rgba(46,125,255,.32); }
+  .pick-badge.a { background:rgba(39,224,138,.16); color:var(--green-2); border:1px solid rgba(39,224,138,.3); }
+  .pick-badge.d { background:var(--surface-3); color:var(--text-2); border:1px solid var(--line-2); }
+  .lock-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:9px; font-size:12px; font-weight:600; color:var(--gold); background:rgba(232,194,112,.08); border:1px solid rgba(232,194,112,.25); transition:.15s; flex-shrink:0; }
+  .lock-btn:hover { background:rgba(232,194,112,.16); }
+  @media (max-width: 820px) { #board .board-grid { grid-template-columns:1fr !important; } }
+  @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } .hero h1 { font-size: 42px; } .lp-nav .links { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="lp-nav">
+  <div class="lp-brand">
+    <div class="sb-logo"></div><b>Insight<span>XI</span></b>
+  </div>
+  <div class="links">
+    <a href="index.html">Home</a>
+    <a href="app/board.html">Today Confidence Board</a>
+    <a href="app/predictions.html">Sure Win Prediction</a>
+    <a href="app/fixtures.html">Fixtures</a>
+    <a href="app/results.html">Results</a>
+    <a href="app/leagues.html">Leagues</a>
+    <a href="app/blog.html">Blog</a>
+  </div>
+  <div class="flex aic gap-10" style="margin-left:auto">
+    <button class="tb-icon" data-theme-toggle aria-label="Toggle theme" style="width:40px;height:40px"></button>
+    <a href="app/dashboard.html" class="btn btn-sm btn-ghost">Sign in</a>
+    <a href="app/dashboard.html" class="btn btn-sm btn-primary">Launch Platform</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="glow-bg"></div>
+  <div class="hero-grid">
+    <div class="reveal">
+      <div class="badge blue" style="margin-bottom:22px;height:auto;padding:6px 12px;white-space:nowrap"><span class="badge-dot" style="background:var(--blue);box-shadow:0 0 8px var(--glow-blue)"></span> True Football Intelligence Platform</div>
+      <h1>Football Intelligence<br><span class="grad">Beyond Predictions</span></h1>
+      <p class="sub">AI-powered football analytics, tactical insights, historical trends, and real-time match intelligence — engineered for people who read the game deeper.</p>
+      <div class="flex gap-12 wrap">
+        <a href="app/dashboard.html" class="btn btn-lg btn-primary">Explore Insights</a>
+        <a href="app/live.html" class="btn btn-lg btn-ghost"><span class="ico" id="i-live"></span> View Live Matches</a>
+        <a href="app/premium.html" class="btn btn-lg btn-gold">Upgrade Premium</a>
+      </div>
+      <div class="flex gap-24 wrap" style="margin-top:34px">
+        <div><div class="mono" style="font-size:24px;font-weight:800">2.4M</div><div class="stat-lab">matches modelled</div></div>
+        <div><div class="mono" style="font-size:24px;font-weight:800;color:var(--green)">73%</div><div class="stat-lab">model accuracy</div></div>
+        <div><div class="mono" style="font-size:24px;font-weight:800;color:var(--blue-2)">120+</div><div class="stat-lab">competitions</div></div>
+      </div>
+    </div>
+
+    <!-- Hero product mock -->
+    <div class="reveal float" style="position:relative">
+      <div class="card glass" style="padding:20px;box-shadow:var(--shadow-3)">
+        <div class="flex jcb aic" style="margin-bottom:16px">
+          <div class="flex aic gap-8"><span class="live-pill"><span class="pulse"></span>LIVE 67'</span><span class="dim" style="font-size:11px">Premier League</span></div>
+          <span class="badge blue">AI 78%</span>
+        </div>
+        <div class="flex jcb aic" style="margin-bottom:18px">
+          <div class="flex aic gap-10"><div class="crest md" style="background:linear-gradient(150deg,#c8102e,#7a0a1d)">RVS</div><div><div style="font-weight:700">Riverside</div><div class="dim" style="font-size:11px">1st</div></div></div>
+          <div class="mono" style="font-size:30px;font-weight:800">2 – 1</div>
+          <div class="flex aic gap-10"><div><div style="font-weight:700;text-align:right">Hartwell</div><div class="dim" style="font-size:11px;text-align:right">4th</div></div><div class="crest md" style="background:linear-gradient(150deg,#6a1b9a,#3d0f59)">HRT</div></div>
+        </div>
+        <div class="flex gap-16 aic" style="padding:14px;background:var(--surface-1);border-radius:14px;border:1px solid var(--line)">
+          <div style="width:96px;flex-shrink:0" id="heroRing"></div>
+          <div style="flex:1">
+            <div class="label-xs" style="margin-bottom:8px">Win probability</div>
+            <div id="heroBars"></div>
+          </div>
+        </div>
+        <div style="margin-top:14px" id="heroXg"></div>
+        <div class="flex aic gap-8" style="margin-top:12px;padding:11px;border-radius:11px;background:rgba(39,224,138,.06);border:1px solid rgba(39,224,138,.18)">
+          <span class="xai-ic" style="width:26px;height:26px">↑</span>
+          <span style="font-size:12px;color:var(--text-2)">Riverside's press is forcing <b style="color:#fff">2.1× more</b> high turnovers since the 55th minute.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- TODAY'S INTELLIGENCE BOARD -->
+<section class="sect" id="board" style="padding-top:26px">
+  <div class="flex jcb aic wrap gap-16" style="margin-bottom:24px">
+    <div>
+      <div class="eyebrow" style="margin-bottom:10px">Today's intelligence board</div>
+      <h2 style="font-size:32px;letter-spacing:-.03em">Football matches by date <span class="mono" id="boardDate" style="color:var(--blue-2);font-weight:700">2026.05.30</span></h2>
+    </div>
+    <div class="day-tabs" id="dayTabs"></div>
+  </div>
+  <div class="grid board-grid" style="grid-template-columns:1fr 1.35fr;gap:22px;align-items:start">
+    <div class="card reveal">
+      <div class="board-hd">Match of the Day</div>
+      <div class="card-bd" id="motd"></div>
+    </div>
+    <div class="card reveal">
+      <div class="board-hd">AI Picks · Confidence Board</div>
+      <div class="card-bd" id="boardList" style="padding-top:4px"></div>
+      <div class="board-ft" style="justify-content:flex-end">
+        <span class="muted" style="font-size:12px;margin-right:auto">Confidence-ranked · model updated 2 min ago</span>
+        <a href="app/fixtures.html" class="btn btn-sm" style="background:linear-gradient(135deg,#16324f,#0e2238);border-color:rgba(46,125,255,.3)">View all fixtures →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI MATCH INTELLIGENCE -->
+<section class="sect" id="intelligence">
+  <div class="sect-head">
+    <div class="eyebrow" style="justify-content:center;display:flex;margin-bottom:10px">01 — Intelligence first</div>
+    <h2>AI Match Intelligence</h2>
+    <p>Every fixture, decoded. Confidence levels, tactical edges and momentum indicators — surfaced the moment they matter.</p>
+  </div>
+  <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="feat-card reveal"><div class="feat-ic" style="background:rgba(46,125,255,.12);color:var(--blue-2)" id="f1"></div><h3>Top Match Picks</h3><p>The model surfaces the day's highest-confidence reads with full factor breakdowns — never a number without a reason.</p></div>
+    <div class="feat-card reveal"><div class="feat-ic" style="background:rgba(39,224,138,.12);color:var(--green-2)" id="f2"></div><h3>Confidence Levels</h3><p>Six sub-models vote on every outcome. Agreement becomes a calibrated confidence score you can actually trust.</p></div>
+    <div class="feat-card reveal"><div class="feat-ic" style="background:rgba(25,211,227,.12);color:var(--cyan)" id="f3"></div><h3>Momentum Indicators</h3><p>Live momentum waves track who's winning the game beyond the scoreline — pressure, territory and xG race.</p></div>
+  </div>
+</section>
+
+<!-- TACTICAL + HISTORICAL split showcase -->
+<section class="sect" id="tactical" style="padding-top:20px">
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:28px;align-items:stretch">
+    <div class="card pad reveal" style="padding:30px">
+      <div class="eyebrow" style="margin-bottom:10px">02 — Tactical Intelligence</div>
+      <h2 style="font-size:28px;margin-bottom:10px">See the shape of the game</h2>
+      <p class="muted" style="font-size:14.5px;margin-bottom:20px">Formations, pressing maps, attack zones and momentum visuals — the tactical layer most platforms never show.</p>
+      <div class="flex gap-16 aic"><div style="width:200px" id="tRadar"></div>
+        <div style="flex:1" id="tList"></div></div>
+    </div>
+    <div class="card pad reveal" id="historical" style="padding:30px">
+      <div class="eyebrow" style="margin-bottom:10px">03 — Historical Analytics</div>
+      <h2 style="font-size:28px;margin-bottom:10px">A decade of context</h2>
+      <p class="muted" style="font-size:14.5px;margin-bottom:20px">Five-year trend analysis, home-vs-away splits and seasonal evolution — turn history into an edge.</p>
+      <div id="hLine"></div>
+      <div class="flex jcb" style="margin-top:18px">
+        <div class="stat"><div class="stat-val" style="font-size:20px">+0.34</div><div class="stat-lab">xG/game vs 5y avg</div></div>
+        <div class="stat"><div class="stat-val" style="font-size:20px;color:var(--green)">61%</div><div class="stat-lab">home win rate</div></div>
+        <div class="stat"><div class="stat-val" style="font-size:20px;color:var(--gold)">2.81</div><div class="stat-lab">goals/game</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE INTELLIGENCE -->
+<section class="sect">
+  <div class="sect-head">
+    <div class="eyebrow" style="justify-content:center;display:flex;margin-bottom:10px">04 — Live intelligence</div>
+    <h2>A football command center</h2>
+    <p>Live momentum, possession quality, xG race and win-probability tracking — the match as it actually unfolds.</p>
+  </div>
+  <div class="grid" id="liveCards" style="grid-template-columns:repeat(3,1fr)"></div>
+</section>
+
+<!-- PREMIUM -->
+<section class="sect" id="premium">
+  <div class="card reveal premium-cta" style="padding:46px;text-align:center;background:
+    radial-gradient(600px 300px at 50% 0%, rgba(232,194,112,.10), transparent 65%), linear-gradient(180deg,var(--surface-1),var(--card-grad-2));border-color:rgba(232,194,112,.2)">
+    <div class="badge gold" style="margin-bottom:18px;height:28px;padding:0 12px">Premium Intelligence</div>
+    <h2 style="font-size:38px;max-width:640px;margin:0 auto 14px">Unlock the elite analytics layer</h2>
+    <p class="muted" style="font-size:16px;max-width:560px;margin:0 auto 26px">Tactical AI reports, fatigue analysis, lineup-impact modelling and hidden-trend detection — the tools the pros use.</p>
+    <div class="flex gap-12 jcc wrap" style="margin-bottom:30px">
+      <a href="app/premium.html" class="btn btn-lg btn-gold">Upgrade Premium</a>
+      <a href="app/dashboard.html" class="btn btn-lg btn-ghost">Open Dashboard</a>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:16px;max-width:820px;margin:0 auto;text-align:left">
+      <div class="flex aic gap-8" style="font-size:13px;color:var(--text-2)"><span class="up">✓</span> Tactical AI reports</div>
+      <div class="flex aic gap-8" style="font-size:13px;color:var(--text-2)"><span class="up">✓</span> Fatigue analysis</div>
+      <div class="flex aic gap-8" style="font-size:13px;color:var(--text-2)"><span class="up">✓</span> Lineup impact</div>
+      <div class="flex aic gap-8" style="font-size:13px;color:var(--text-2)"><span class="up">✓</span> Hidden trend detection</div>
+    </div>
+  </div>
+</section>
+
+<footer style="border-top:1px solid var(--line);padding:34px 38px;max-width:1320px;margin:0 auto">
+  <div class="flex jcb aic wrap gap-16">
+    <div class="lp-brand"><div class="sb-logo" id="footLogo"></div><b>Insight<span>XI</span></b></div>
+    <div class="muted" style="font-size:13px">True Football Intelligence Platform · For analytical use only — not a betting service.</div>
+    <div class="flex gap-16" style="font-size:13px;color:var(--muted)"><a href="app/dashboard.html">Platform</a><a href="app/premium.html">Premium</a><a href="app/historical.html">Analytics</a></div>
+  </div>
+</footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/charts.js"></script>
+<script>
+// Theme: apply saved theme immediately to avoid flash
+(function(){
+  var sun='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  var moon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  window.__setTheme=function(t){
+    var root=document.documentElement;
+    root.setAttribute('data-theme',t);
+    root.style.display='none'; void root.offsetHeight; root.style.display='';
+    localStorage.setItem('ix-theme',t);
+    document.querySelectorAll('[data-theme-toggle]').forEach(function(b){ b.innerHTML = t==='light'?moon:sun; b.title = t==='light'?'Switch to dark':'Switch to light'; });
+    if(window.IXChart&&IXChart.redrawAll) IXChart.redrawAll();
+  };
+  document.documentElement.setAttribute('data-theme', localStorage.getItem('ix-theme')||'dark');
+})();
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') document.body.classList.add('anim-on'); });
+if(document.visibilityState==='visible') document.body.classList.add('anim-on');
+window.addEventListener('DOMContentLoaded', function () {
+  const D = IXData, X = IXChart, C = IXChart.C;
+  // Bind theme toggle + set icon
+  window.__setTheme(localStorage.getItem('ix-theme')||'dark');
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(b){ b.addEventListener('click', function(){ window.__setTheme((localStorage.getItem('ix-theme')||'dark')==='dark'?'light':'dark'); }); });
+  const LOGO = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 2 3 6.5v6C3 18 7 21.5 12 23c5-1.5 9-5 9-10.5v-6z" fill="rgba(255,255,255,.18)"/><path d="M8.5 12.5 11 15l5-5.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  document.querySelectorAll('.sb-logo').forEach(e=>e.innerHTML=LOGO);
+  const ICN = {
+    live:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></svg>',
+    pick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 2 2.4 6.9H22l-6 4.4 2.3 7-6.3-4.6L5.7 20 8 13.3 2 8.9h7.6z"/></svg>',
+    conf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
+    mom:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12c3 0 3-5 6-5s3 10 6 10 3-5 6-5"/></svg>',
+  };
+  document.getElementById('i-live').innerHTML = ICN.live;
+  document.getElementById('f1').innerHTML = ICN.pick;
+  document.getElementById('f2').innerHTML = ICN.conf;
+  document.getElementById('f3').innerHTML = ICN.mom;
+
+  // Hero card
+  X.ring('#heroRing', 78, { size: 96, color: C.blue, label: 'win' });
+  X.bars('#heroBars', [
+    { label: 'RVS', v: 64, disp: '64%', color: 'linear-gradient(90deg,var(--blue),var(--blue-2))' },
+    { label: 'Draw', v: 22, disp: '22%', color: 'linear-gradient(90deg,#54607a,#6b7689)' },
+    { label: 'HRT', v: 14, disp: '14%', color: 'linear-gradient(90deg,var(--green),var(--green-2))' },
+  ], { horiz: true, labelW: 40, valW: 38, max: 100 });
+  X.line('#heroXg', { w: 380, h: 70, pad:{t:8,r:6,b:6,l:6}, gy:2, series: [
+    { color: C.blue, area: true, endDot: true, data: [0,.3,.5,.9,1.1,1.5,1.7,1.84].map((y,x)=>({x,y})) },
+    { color: C.green, dash:true, data: [0,.2,.35,.45,.6,.7,.85,.91].map((y,x)=>({x,y})) },
+  ], xMax:7, yMax:2 });
+
+  // Tactical radar
+  X.radar('#tRadar', { size: 200, axes:['Press','Tempo','Width','Direct','Poss','Trans'], series:[
+    { color: C.blue, values:[88,72,65,58,84,70] }, { color: C.green, values:[64,80,78,82,55,86] },
+  ]});
+  document.getElementById('tList').innerHTML = `
+    <div class="flex aic gap-8" style="margin-bottom:8px"><span style="width:9px;height:9px;border-radius:3px;background:var(--blue)"></span><b style="font-size:13px">Riverside</b></div>
+    <div class="flex aic gap-8" style="margin-bottom:14px"><span style="width:9px;height:9px;border-radius:3px;background:var(--green)"></span><b style="font-size:13px">Kingsgate</b></div>
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.5">Two contrasting identities — possession press vs direct transition — visualised across six tactical dimensions.</div>`;
+
+  // Historical line
+  X.line('#hLine', { w: 440, h: 130, yLabels: true, yDec:1, yMax:2, gy:3,
+    xLabels:['S20','S21','S22','S23','S24','S25','S26'], xMax:6,
+    series:[{ color: C.gold, area:true, endDot:true, data:[1.48,1.55,1.61,1.58,1.66,1.72,1.81].map((y,x)=>({x,y})) }] });
+
+  // Live cards
+  const lc = document.getElementById('liveCards');
+  D.NOW_LIVE.forEach(m => {
+    const momCol = m.momentum==='home'?'var(--blue)':'var(--green)';
+    const el = document.createElement('div');
+    el.className = 'feat-card reveal';
+    el.innerHTML = `
+      <div class="flex jcb aic" style="margin-bottom:14px"><span class="live-pill"><span class="pulse"></span>${m.min}'</span><span class="badge blue">AI ${m.conf}%</span></div>
+      <div class="flex jcb aic" style="margin-bottom:14px">
+        <div class="flex aic gap-9">${D.crest(m.home,'sm')}<span style="font-weight:700">${m.home}</span></div>
+        <span class="mono" style="font-size:24px;font-weight:800">${m.hs} – ${m.as}</span>
+        <div class="flex aic gap-9"><span style="font-weight:700">${m.away}</span>${D.crest(m.away,'sm')}</div>
+      </div>
+      <div class="label-xs" style="margin-bottom:6px">xG race</div>
+      <div data-xgline='${JSON.stringify(D.xgRace(m.home.charCodeAt(0), m.min))}'></div>
+      <div style="display:flex;height:5px;border-radius:20px;overflow:hidden;background:var(--surface-3);margin-top:12px"><i style="width:${m.momentum==='home'?64:40}%;background:${momCol}"></i></div>
+      <div class="flex jcb" style="margin-top:6px;font-size:11px;color:var(--muted)"><span>xG ${m.hxg.toFixed(2)}</span><span style="color:${momCol}">${m.momentum} momentum</span><span>xG ${m.axg.toFixed(2)}</span></div>`;
+    lc.appendChild(el);
+  });
+  document.querySelectorAll('[data-xgline]').forEach(el => {
+    const r = JSON.parse(el.dataset.xgline);
+    X.line(el, { w: 320, h: 56, pad:{t:6,r:4,b:4,l:4}, gy:2, series:[
+      { color: C.blue, area:true, data: r.a.map(p=>({x:p.m,y:p.v})) },
+      { color: C.green, data: r.b.map(p=>({x:p.m,y:p.v})) },
+    ], xMax: r.a[r.a.length-1].m, yMax: Math.max(...r.a.map(p=>p.v), ...r.b.map(p=>p.v))*1.1 });
+  });
+});
+</script>
+
+<script>
+(function(){
+  function boot(){
+    if(!window.IXData||!window.IXChart) return setTimeout(boot,40);
+    const D=IXData;
+    const LOCK='<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+    const days=[ {k:'Thu',d:'2026.05.28',s:11,dow:'28 May'}, {k:'Fri',d:'2026.05.29',s:23,dow:'29 May'}, {k:'Today',d:'2026.05.30',s:7,dow:'30 May'}, {k:'Sun',d:'2026.05.31',s:41,dow:'31 May'}, {k:'Mon',d:'2026.06.01',s:59,dow:'1 Jun'} ];
+    const times=['12:30','14:00','15:00','17:30','19:45','20:00'];
+    function pick(seed){ return D.list[Math.floor(D.rnd(seed)*D.list.length)]; }
+    function makeDay(seed){
+      const used=new Set(), fx=[]; let s=seed, guard=0;
+      while(fx.length<6 && guard++<300){ const h=pick(s*3.1+1), a=pick(s*7.3+13); s++; if(h===a||used.has(h+'-'+a)||used.has(a+'-'+h)) continue; used.add(h+'-'+a);
+        const hp=28+Math.floor(D.rnd(s*5+2)*44); const conf=55+Math.floor(D.rnd(s*9+4)*31);
+        const pk = hp>46?'h':(hp<34?'a':(D.rnd(s*2+1)>.5?'a':'d'));
+        fx.push({h,a,conf,pk,t:times[fx.length]}); }
+      return fx;
+    }
+    function makeToday(){
+      return [ {h:'CLF',a:'FNL',conf:73,pk:'h',t:'12:30'}, {h:'MRD',a:'STG',conf:61,pk:'h',t:'14:00'}, {h:'NTH',a:'BRK',conf:58,pk:'a',t:'15:00'}, {h:'RVS',a:'KGT',conf:74,pk:'h',t:'17:30'}, {h:'HRT',a:'ASH',conf:64,pk:'h',t:'19:45'}, {h:'WLM',a:'PRT',conf:60,pk:'h',t:'20:00'} ];
+    }
+    function probs(pk, conf){
+      let hp = pk==='h'? 40+Math.round(conf*0.18) : pk==='a'? 22 : 32;
+      let ap = pk==='a'? 40+Math.round(conf*0.18) : pk==='h'? 24 : 30;
+      let dp = 100-hp-ap; if(dp<14){ dp=14; const ov=hp+ap+dp-100; if(pk==='h') hp-=ov; else ap-=ov; }
+      return {hp,dp,ap};
+    }
+    function render(day){
+      const fx = day.k==='Today' ? makeToday() : makeDay(day.s);
+      document.getElementById('boardDate').textContent=day.d;
+      const top = fx.slice().sort((a,b)=>b.conf-a.conf)[0];
+      const m = day.k==='Today' ? {h:'RVS',a:'KGT',conf:74,pk:'h'} : top;
+      const pr = day.k==='Today' ? {hp:47,dp:27,ap:26} : probs(m.pk, m.conf);
+      const fav = pr.hp>=pr.dp&&pr.hp>=pr.ap?'h':pr.ap>=pr.dp?'a':'d';
+      document.getElementById('motd').innerHTML = `
+        <div class="flex jcb aic" style="margin:6px 0 20px">
+          <div class="flex col aic gap-10" style="flex:1">${D.crest(m.h,'lg')}<div style="font-weight:700;text-align:center;font-size:14px">${D.CLUBS[m.h].name}</div></div>
+          <div class="flex col aic" style="flex-shrink:0;padding:0 10px"><span class="dim mono" style="font-size:12px;letter-spacing:.1em">VS</span><span class="badge blue" style="margin-top:8px">AI ${m.conf}%</span></div>
+          <div class="flex col aic gap-10" style="flex:1">${D.crest(m.a,'lg')}<div style="font-weight:700;text-align:center;font-size:14px">${D.CLUBS[m.a].name}</div></div>
+        </div>
+        <div class="flex gap-8">
+          <div class="prob-pill ${fav==='h'?'fav':''}">${D.crest(m.h,'xs')}<b>${pr.hp}%</b><span class="lbl">Home</span></div>
+          <div class="prob-pill ${fav==='d'?'fav':''}"><span class="pick-badge d" style="width:22px;height:22px;font-size:10px;border-radius:6px">X</span><b>${pr.dp}%</b><span class="lbl">Draw</span></div>
+          <div class="prob-pill ${fav==='a'?'fav':''}">${D.crest(m.a,'xs')}<b>${pr.ap}%</b><span class="lbl">Away</span></div>
+        </div>
+        <div class="flex jcb aic" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line)">
+          <div class="flex aic gap-9"><div class="tb-avatar" style="width:30px;height:30px;font-size:11px;border-radius:9px">IX</div><div style="font-size:12px"><span class="dim">Analysis by</span> <b>InsightXI Model v4.2</b></div></div>
+          <a href="app/match.html" class="btn btn-sm btn-primary">View Intel →</a>
+        </div>`;
+      const leagues=[ {name:'Premier League',code:'PL',rows:fx.slice(0,3),locked:false}, {name:'Continental Cup',code:'CC',rows:fx.slice(3),locked:true} ];
+      document.getElementById('boardList').innerHTML = leagues.map(lg=>`
+        <div class="league-row"><span class="badge blue" style="font-size:9px">${lg.code}</span>${lg.name}</div>
+        ${lg.rows.map(r=>`
+          <div class="board-row">
+            <span class="mono dim" style="width:46px;font-size:12px;flex-shrink:0">${r.t}</span>
+            <div class="flex aic gap-7" style="flex:1;justify-content:flex-end;font-size:13px;font-weight:600;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${D.CLUBS[r.h].name}</span>${D.crest(r.h,'xs')}</div>
+            <span class="dim" style="font-size:11px;flex-shrink:0">:</span>
+            <div class="flex aic gap-7" style="flex:1;font-size:13px;font-weight:600;min-width:0">${D.crest(r.a,'xs')}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${D.CLUBS[r.a].name}</span></div>
+            ${lg.locked
+              ? `<a href="app/premium.html" class="lock-btn">Premium ${LOCK}</a>`
+              : `<span class="mono" style="font-size:11px;color:${r.conf>=70?'var(--green)':'var(--muted)'};width:34px;text-align:right;flex-shrink:0">${r.conf}%</span><span class="pick-badge ${r.pk}" title="AI predicted outcome">${r.pk==='h'?'1':r.pk==='a'?'2':'X'}</span>`}
+          </div>`).join('')}
+      `).join('');
+    }
+    const dt=document.getElementById('dayTabs');
+    dt.innerHTML=days.map((d,i)=>`<div class="day-pill ${d.k==='Today'?'active':''}" data-i="${i}">${d.k}<small>${d.dow}</small></div>`).join('');
+    dt.querySelectorAll('.day-pill').forEach(p=>p.addEventListener('click',()=>{ dt.querySelectorAll('.day-pill').forEach(x=>x.classList.remove('active')); p.classList.add('active'); render(days[+p.dataset.i]); }));
+    render(days[2]);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
+</body>
+</html>

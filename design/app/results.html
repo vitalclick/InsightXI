@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Results · InsightXI</title>
+<link rel="stylesheet" href="../assets/css/insightxi.css">
+</head>
+<body data-page="results">
+<main class="page" data-screen-label="Results">
+
+  <div class="page-head reveal">
+    <div>
+      <div class="eyebrow" style="margin-bottom:8px">Results & post-match</div>
+      <h1 class="page-title">Results</h1>
+      <div class="page-sub">Every result, scored against our prediction — with xG summaries and form impact</div>
+    </div>
+    <div class="tb-search" style="margin-left:0;width:260px"><span class="ico" data-icon="search"></span><input placeholder="Search results, teams…"></div>
+  </div>
+
+  <!-- Analytics snapshot -->
+  <div class="grid reveal" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+    <div class="kpi"><div class="stat-lab">Results analysed</div><div class="stat-val" style="font-size:24px;margin:6px 0 2px" id="r1">0</div><div class="stat-delta" style="color:var(--muted)">last 7 days</div></div>
+    <div class="kpi"><div class="stat-lab">Prediction hit rate</div><div class="stat-val" style="font-size:24px;margin:6px 0 2px;color:var(--green)" id="r2">0%</div><div class="stat-delta up">▲ 4.2pts vs avg</div></div>
+    <div class="kpi"><div class="stat-lab">xG accuracy</div><div class="stat-val" style="font-size:24px;margin:6px 0 2px;color:var(--blue-2)" id="r3">0%</div><div class="stat-delta" style="color:var(--muted)">model calibration</div></div>
+    <div class="kpi"><div class="stat-lab">Upsets detected</div><div class="stat-val" style="font-size:24px;margin:6px 0 2px;color:var(--gold)" id="r4">0</div><div class="stat-delta" style="color:var(--muted)">value spots hit</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card reveal" style="padding:14px 18px;margin-bottom:18px">
+    <div class="chip-row">
+      <div class="chip active">All results</div>
+      <div class="chip">Predicted correctly</div>
+      <div class="chip">Upsets</div>
+      <div class="chip">High xG games</div>
+      <div class="chip">Premier League</div>
+      <div class="chip" style="margin-left:auto">Last 7 days ▾</div>
+    </div>
+  </div>
+
+  <section class="card reveal">
+    <div class="card-hd"><h3>Recent Results</h3><span class="badge green" id="hitTag">— hit rate</span></div>
+    <div id="resultsList"></div>
+  </section>
+
+</main>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/charts.js"></script>
+<script src="../assets/js/shell.js"></script>
+<script src="../assets/js/results.js"></script>
+</body>
+</html>

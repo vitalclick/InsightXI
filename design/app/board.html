@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today · Confidence Board · InsightXI</title>
+<link rel="stylesheet" href="../assets/css/insightxi.css">
+</head>
+<body data-page="board">
+<main class="page" data-screen-label="Confidence Board">
+
+  <div class="page-head reveal">
+    <div>
+      <div class="eyebrow" style="margin-bottom:8px">Today's intelligence board</div>
+      <h1 class="page-title">Confidence Board <span class="mono" id="boardDate" style="color:var(--blue-2);font-size:19px;font-weight:700">2026.05.30</span></h1>
+      <div class="page-sub">Every fixture, confidence-ranked by the InsightXI model — pick badges show the predicted 1 · X · 2 outcome</div>
+    </div>
+    <div class="day-tabs" id="dayTabs"></div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.6fr 1fr;align-items:start">
+    <!-- Main board -->
+    <section class="card reveal">
+      <div class="board-hd">AI Picks · Confidence Board</div>
+      <div class="card-bd" id="boardList" style="padding-top:6px"></div>
+      <div class="board-ft">
+        <span class="muted" style="font-size:12px;margin-right:auto">Confidence-ranked · model v4.2 · updated 2 min ago</span>
+        <a href="fixtures.html" class="btn btn-sm btn-ghost">All fixtures →</a>
+      </div>
+    </section>
+
+    <!-- Rail -->
+    <div class="grid" style="gap:18px">
+      <section class="card reveal">
+        <div class="board-hd">Match of the Day</div>
+        <div class="card-bd" id="motd"></div>
+      </section>
+      <section class="card reveal">
+        <div class="card-hd"><h3><span class="ic" data-icon="target"></span> Top Confidence Today</h3><span class="badge green">ranked</span></div>
+        <div class="card-bd" id="topConf" style="padding:10px 18px"></div>
+      </section>
+    </div>
+  </div>
+
+</main>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/charts.js"></script>
+<script src="../assets/js/shell.js"></script>
+<script src="../assets/js/board.js"></script>
+</body>
+</html>

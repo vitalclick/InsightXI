@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sure Win Prediction · InsightXI</title>
+<link rel="stylesheet" href="../assets/css/insightxi.css">
+</head>
+<body data-page="predictions">
+<main class="page" data-screen-label="Sure Win Prediction">
+
+  <div class="page-head reveal">
+    <div>
+      <div class="eyebrow" style="margin-bottom:8px">Highest-conviction model picks</div>
+      <h1 class="page-title">Sure Win Predictions</h1>
+      <div class="page-sub">The model's strongest reads of the day — each one fully explained, never a number without a reason</div>
+    </div>
+    <div class="tabs" id="marketTabs">
+      <div class="tab active" data-m="all">All markets</div>
+      <div class="tab" data-m="1x2">Match result</div>
+      <div class="tab" data-m="ou">Over / Under</div>
+      <div class="tab" data-m="btts">BTTS</div>
+    </div>
+  </div>
+
+  <!-- Banker of the day -->
+  <section class="card reveal" style="overflow:hidden;margin-bottom:18px;border-color:rgba(39,224,138,.22)">
+    <div style="padding:24px 28px;background:radial-gradient(700px 320px at 15% 0%,rgba(39,224,138,.12),transparent 62%)">
+      <div class="flex jcb aic wrap gap-20">
+        <div style="flex:1;min-width:280px">
+          <div class="flex aic gap-10" style="margin-bottom:14px"><span class="badge green">★ Banker of the Day</span><span class="badge blue">Match result</span></div>
+          <div class="flex aic gap-16" style="margin-bottom:18px">
+            <div class="crest lg" style="background:linear-gradient(150deg,#c8102e,#7a0a1d)">RVS</div>
+            <div><div style="font-weight:700;font-size:17px">Riverside FC</div><div class="dim" style="font-size:12px">v Kingsgate United · 17:30</div></div>
+          </div>
+          <div class="flex aic gap-10" style="margin-bottom:6px"><span class="label-xs">Model pick</span></div>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-.02em">Riverside to win <span class="dim" style="font-weight:600;font-size:15px">· exp. 2–1</span></div>
+          <div id="bankerReasons" style="margin-top:16px"></div>
+        </div>
+        <div class="flex col aic" style="flex-shrink:0">
+          <div style="width:200px" id="bankerGauge"></div>
+          <div class="badge green" style="margin-top:8px">Elite confidence</div>
+          <a href="match.html" class="btn btn-sm btn-green" style="margin-top:14px">Full intel →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-title reveal"><h2>High-Confidence Board</h2><div class="ln"></div><span class="badge" id="countTag">6 picks</span></div>
+  <div class="grid" id="predGrid" style="grid-template-columns:repeat(3,1fr)"></div>
+
+  <div class="card reveal" style="margin-top:18px;padding:16px 20px;display:flex;align-items:center;gap:12px;background:var(--surface-1)">
+    <span class="ico" data-icon="bolt" style="color:var(--blue-2)"></span>
+    <span class="muted" style="font-size:12.5px">Predictions reflect <b style="color:var(--text-2)">model confidence</b>, not guaranteed outcomes. InsightXI is an analytics platform — every pick is a probability with supporting evidence, for informational use.</span>
+  </div>
+
+</main>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/charts.js"></script>
+<script src="../assets/js/shell.js"></script>
+<script src="../assets/js/predictions.js"></script>
+</body>
+</html>

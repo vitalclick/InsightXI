@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leagues · InsightXI</title>
+<link rel="stylesheet" href="../assets/css/insightxi.css">
+</head>
+<body data-page="leagues">
+<main class="page" data-screen-label="Leagues">
+
+  <div class="page-head reveal">
+    <div>
+      <div class="eyebrow" style="margin-bottom:8px">League intelligence</div>
+      <h1 class="page-title">Premier League</h1>
+      <div class="page-sub">2025/26 season · Matchday 30 · table powered by InsightXI ratings</div>
+    </div>
+    <div class="tabs"><div class="tab active">Table</div><div class="tab">Form</div><div class="tab">xG table</div></div>
+  </div>
+
+  <!-- League selector -->
+  <div class="card reveal" style="padding:14px 18px;margin-bottom:18px">
+    <div class="chip-row">
+      <div class="chip active">⚽ Premier League</div>
+      <div class="chip">Continental Cup</div>
+      <div class="chip">Domestic Cup</div>
+      <div class="chip">Championship</div>
+      <div class="chip" style="margin-left:auto">2025/26 ▾</div>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.7fr 1fr;align-items:start">
+    <!-- Standings -->
+    <section class="card reveal" style="overflow:hidden">
+      <div class="card-hd"><h3><span class="ic" data-icon="leagues"></span> Standings</h3><span class="badge blue">live ratings</span></div>
+      <div style="overflow-x:auto"><table class="tbl" style="min-width:640px">
+        <thead><tr><th style="width:34px">#</th><th>Club</th><th class="num">Pld</th><th class="num">W</th><th class="num">D</th><th class="num">L</th><th class="num">GF</th><th class="num">GA</th><th class="num">GD</th><th>Form</th><th class="num">Pts</th></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table></div>
+      <div class="flex gap-16 wrap" style="padding:12px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)">
+        <span class="flex aic gap-6"><span style="width:8px;height:8px;border-radius:2px;background:var(--green)"></span>Continental places</span>
+        <span class="flex aic gap-6"><span style="width:8px;height:8px;border-radius:2px;background:var(--blue)"></span>European play-off</span>
+        <span class="flex aic gap-6"><span style="width:8px;height:8px;border-radius:2px;background:var(--red)"></span>Relegation</span>
+      </div>
+    </section>
+
+    <!-- Side: leaders -->
+    <div class="grid" style="gap:18px">
+      <section class="card reveal">
+        <div class="card-hd"><h3>Title Race</h3><span class="badge gold">AI projection</span></div>
+        <div class="card-bd" id="titleRace"></div>
+      </section>
+      <section class="card reveal">
+        <div class="card-hd"><h3>Top Scorers</h3><span class="badge green">goals</span></div>
+        <div class="card-bd" id="topScorers" style="padding:8px 18px"></div>
+      </section>
+      <section class="card reveal">
+        <div class="card-hd"><h3>Form Table</h3><span class="badge">last 5</span></div>
+        <div class="card-bd" id="formTable" style="padding:8px 18px"></div>
+      </section>
+    </div>
+  </div>
+
+</main>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/charts.js"></script>
+<script src="../assets/js/shell.js"></script>
+<script src="../assets/js/leagues.js"></script>
+</body>
+</html>

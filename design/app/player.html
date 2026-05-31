@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player Intelligence · InsightXI</title>
+<link rel="stylesheet" href="../assets/css/insightxi.css">
+</head>
+<body data-page="player">
+<main class="page" data-screen-label="Player Intelligence">
+
+  <!-- PLAYER HEADER -->
+  <section class="card reveal" style="overflow:hidden;margin-bottom:18px">
+    <div style="padding:26px 30px;background:radial-gradient(700px 320px at 14% 0%,rgba(46,125,255,.16),transparent 60%)">
+      <div class="flex jcb aic wrap gap-20">
+        <div class="flex aic gap-20">
+          <div class="crest xl" style="width:96px;height:96px;font-size:30px;background:linear-gradient(150deg,#c8102e,#7a0a1d)">MV</div>
+          <div>
+            <div class="flex aic gap-10" style="margin-bottom:6px"><span class="badge blue">#9 · Striker</span><span class="badge gold">Form ⭐ Elite</span></div>
+            <h1 style="font-size:32px">Marcus Vance</h1>
+            <div class="muted" style="font-size:13px;margin-top:6px">Riverside FC · Age 26 · 188cm · Right-footed · 14 caps</div>
+          </div>
+        </div>
+        <div class="flex gap-22">
+          <div class="center"><div class="mono" style="font-size:30px;font-weight:800;color:var(--green)">18</div><div class="stat-lab">Goals</div></div>
+          <div class="center"><div class="mono" style="font-size:30px;font-weight:800;color:var(--blue-2)">7</div><div class="stat-lab">Assists</div></div>
+          <div class="center"><div class="mono" style="font-size:30px;font-weight:800">7.84</div><div class="stat-lab">Avg rating</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-8" style="border-top:1px solid var(--line);padding:10px 30px">
+      <div class="tab active">Overview</div><div class="tab">Shooting</div><div class="tab">Creativity</div><div class="tab">Physical</div><div class="tab">Matches</div>
+    </div>
+  </section>
+
+  <!-- Row: radar + trends + influence/fitness -->
+  <div class="grid" style="grid-template-columns:1fr 1.4fr 1fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>Attribute Profile</h3><span class="badge blue">percentile</span></div>
+      <div class="card-bd flex col aic"><div style="width:260px" id="playerRadar"></div>
+        <div class="flex gap-16" style="margin-top:4px;font-size:11.5px"><span class="flex aic gap-6"><span style="width:9px;height:9px;border-radius:3px;background:var(--green)"></span>Vance</span><span class="flex aic gap-6"><span style="width:9px;height:9px;border-radius:3px;background:#54607a"></span>Top strikers</span></div>
+      </div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Goals vs Expected Goals</h3>
+        <div class="flex gap-12" style="font-size:11.5px"><span class="flex aic gap-6"><span style="width:9px;height:9px;border-radius:3px;background:var(--green)"></span>Goals</span><span class="flex aic gap-6"><span style="width:9px;height:9px;border-radius:3px;background:var(--blue)"></span>xG</span></div>
+      </div>
+      <div class="card-bd"><div id="goalTrend"></div>
+        <div class="flex jcb" style="margin-top:14px">
+          <div class="stat"><div class="stat-val" style="font-size:18px;color:var(--green)">18</div><div class="stat-lab">Goals</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:18px;color:var(--blue-2)">14.2</div><div class="stat-lab">xG</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:18px;color:var(--gold)">+3.8</div><div class="stat-lab">Over-perf</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:18px">24%</div><div class="stat-lab">Conversion</div></div>
+        </div>
+      </div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Influence & Fitness</h3></div>
+      <div class="card-bd">
+        <div class="flex aic gap-16" style="margin-bottom:18px">
+          <div style="width:96px;flex-shrink:0" id="influenceRing"></div>
+          <div><div class="mono" style="font-size:13px;color:var(--text-2);line-height:1.5">Top <b style="color:var(--text)">4%</b> influence score across the league — drives <b style="color:var(--green-2)">38%</b> of team xG.</div></div>
+        </div>
+        <div class="flex aic gap-16">
+          <div style="width:96px;flex-shrink:0" id="fitnessRing"></div>
+          <div><div class="badge green" style="margin-bottom:6px">Match fit</div><div class="mono" style="font-size:12px;color:var(--muted)">0 days missed · 91% load</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Per-90 + shot map + recent -->
+  <div class="grid" style="grid-template-columns:1fr 1fr 1.3fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>Per 90 Stats</h3><span class="badge">vs position</span></div>
+      <div class="card-bd" id="per90"></div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Shot Map</h3><span class="badge green">18 goals</span></div>
+      <div class="card-bd flex jcc"><div style="width:220px" id="shotMap"></div></div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Recent Matches</h3></div>
+      <div class="card-bd" style="padding:0"><table class="tbl"><thead><tr><th>Opp</th><th class="num">Min</th><th class="num">G</th><th class="num">A</th><th class="num">xG</th><th class="num">Rating</th></tr></thead><tbody id="recentBody"></tbody></table></div>
+    </section>
+  </div>
+
+</main>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/charts.js"></script>
+<script src="../assets/js/shell.js"></script>
+<script src="../assets/js/player.js"></script>
+</body>
+</html>

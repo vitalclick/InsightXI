@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Intelligence · InsightXI</title>
+<link rel="stylesheet" href="../assets/css/insightxi.css">
+</head>
+<body data-page="team">
+<main class="page" data-screen-label="Team Intelligence">
+
+  <!-- TEAM HEADER -->
+  <section class="card reveal" style="overflow:hidden;margin-bottom:18px">
+    <div style="padding:26px 30px;background:radial-gradient(700px 320px at 12% 0%,rgba(200,16,46,.18),transparent 60%)">
+      <div class="flex jcb aic wrap gap-20">
+        <div class="flex aic gap-18">
+          <div class="crest xl" style="background:linear-gradient(150deg,#c8102e,#7a0a1d)">RVS</div>
+          <div>
+            <div class="flex aic gap-10" style="margin-bottom:4px"><span class="badge gold">Premier League</span><span class="badge blue">1st place</span></div>
+            <h1 style="font-size:30px">Riverside FC</h1>
+            <div class="muted" style="font-size:13px;margin-top:4px">Founded 1894 · Riverside Park · Possession press · Manager: T. Holloway</div>
+            <div class="form-row" id="teamForm" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div class="flex gap-24">
+          <div class="center"><div class="mono" style="font-size:30px;font-weight:800;color:var(--green)">88</div><div class="stat-lab">Attack</div></div>
+          <div class="center"><div class="mono" style="font-size:30px;font-weight:800;color:var(--blue-2)">81</div><div class="stat-lab">Defense</div></div>
+          <div class="center"><div class="mono" style="font-size:30px;font-weight:800">85</div><div class="stat-lab">Overall</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-8" style="border-top:1px solid var(--line);padding:10px 30px">
+      <div class="tab active">Overview</div><div class="tab">Squad</div><div class="tab">Tactics</div><div class="tab">Fixtures</div><div class="tab">History</div>
+    </div>
+  </section>
+
+  <!-- KPIs -->
+  <div class="grid reveal" style="grid-template-columns:repeat(6,1fr);margin-bottom:18px">
+    <div class="kpi"><div class="stat-lab">Points</div><div class="stat-val" style="font-size:22px;margin-top:5px">67</div></div>
+    <div class="kpi"><div class="stat-lab">Goals For</div><div class="stat-val" style="font-size:22px;margin-top:5px">64</div></div>
+    <div class="kpi"><div class="stat-lab">xG / game</div><div class="stat-val" style="font-size:22px;margin-top:5px;color:var(--green)">2.14</div></div>
+    <div class="kpi"><div class="stat-lab">xGA / game</div><div class="stat-val" style="font-size:22px;margin-top:5px;color:var(--blue-2)">0.92</div></div>
+    <div class="kpi"><div class="stat-lab">Possession</div><div class="stat-val" style="font-size:22px;margin-top:5px">61%</div></div>
+    <div class="kpi"><div class="stat-lab">Clean sheets</div><div class="stat-val" style="font-size:22px;margin-top:5px">13</div></div>
+  </div>
+
+  <!-- Row: radar + season trend -->
+  <div class="grid" style="grid-template-columns:1fr 1.5fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>Team Profile</h3><span class="badge blue">vs league avg</span></div>
+      <div class="card-bd flex col aic"><div style="width:280px" id="teamRadar"></div>
+        <div class="flex gap-16" style="margin-top:6px;font-size:11.5px"><span class="flex aic gap-6"><span style="width:9px;height:9px;border-radius:3px;background:var(--blue)"></span>Riverside</span><span class="flex aic gap-6"><span style="width:9px;height:9px;border-radius:3px;background:#54607a"></span>League avg</span></div>
+      </div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Season Performance</h3>
+        <div class="tabs" style="padding:3px"><div class="tab active" style="padding:5px 11px;font-size:12px">xG</div><div class="tab" style="padding:5px 11px;font-size:12px">Points</div></div>
+      </div>
+      <div class="card-bd"><div id="seasonTrend"></div>
+        <div class="flex jcb" style="margin-top:14px">
+          <div class="stat"><div class="stat-val" style="font-size:18px;color:var(--green)">W21</div><div class="stat-lab">Won</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:18px">D4</div><div class="stat-lab">Drawn</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:18px;color:var(--red)">L5</div><div class="stat-lab">Lost</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:18px;color:var(--blue-2)">+0.34</div><div class="stat-lab">xG over-perf</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Squad / lineup -->
+  <div class="grid" style="grid-template-columns:1fr 1.6fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>Lineup Strength</h3><span class="badge green">4-3-3</span></div>
+      <div class="card-bd flex jcc"><div style="width:280px" id="teamForm433"></div></div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Squad Depth</h3><span class="badge">18 players · avg rating</span></div>
+      <div class="card-bd" style="padding:0"><div style="max-height:420px;overflow-y:auto"><table class="tbl"><thead><tr><th>#</th><th>Player</th><th>Pos</th><th>Age</th><th class="num">Goals</th><th class="num">xG</th><th class="num">Rating</th></tr></thead><tbody id="squadBody"></tbody></table></div></div>
+    </section>
+  </div>
+
+  <!-- Style metrics + heatmap + timeline -->
+  <div class="grid" style="grid-template-columns:1fr 1fr 1.2fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>Possession Metrics</h3></div>
+      <div class="card-bd" id="possMetrics"></div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Touch Heatmap</h3><span class="badge red">Final third focus</span></div>
+      <div class="card-bd flex jcc"><div style="width:200px" id="touchHeat"></div></div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Performance Timeline</h3><span class="badge blue">form rating</span></div>
+      <div class="card-bd"><div id="perfTimeline"></div>
+        <div class="muted" style="font-size:12.5px;margin-top:12px;line-height:1.5">Riverside's form rating has climbed <b style="color:var(--green)">+18%</b> since matchday 22, coinciding with a shift to a higher defensive line and aggressive pressing triggers.</div>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/charts.js"></script>
+<script src="../assets/js/shell.js"></script>
+<script src="../assets/js/team.js"></script>
+</body>
+</html>

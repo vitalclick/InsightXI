@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Match Intelligence · InsightXI</title>
+<link rel="stylesheet" href="../assets/css/insightxi.css">
+</head>
+<body data-page="match">
+<main class="page" data-screen-label="Match Intelligence">
+
+  <!-- breadcrumb -->
+  <div class="flex aic gap-8 reveal" style="font-size:12.5px;color:var(--muted);margin-bottom:14px">
+    <a href="fixtures.html" style="color:var(--blue-2)">Fixtures</a><span>›</span>
+    <span>Premier League · Matchday 31</span><span>›</span>
+    <span style="color:var(--text)">Riverside FC vs Kingsgate United</span>
+  </div>
+
+  <!-- MATCH HEADER -->
+  <section class="card reveal" style="overflow:hidden;margin-bottom:18px">
+    <div style="position:relative;padding:26px 30px;background:
+      radial-gradient(700px 300px at 18% 0%, rgba(200,16,46,.16), transparent 60%),
+      radial-gradient(700px 300px at 82% 0%, rgba(11,61,145,.20), transparent 60%);">
+      <div class="flex jcb aic wrap gap-12" style="margin-bottom:22px">
+        <div class="flex aic gap-10">
+          <span class="badge gold">Premier League</span>
+          <span class="badge">Matchday 31</span>
+          <span class="dim" style="font-size:12.5px;font-family:var(--font-mono)">Sat 1 June · 17:30</span>
+        </div>
+        <div class="flex aic gap-8">
+          <span class="badge blue">$ICON:bolt AI confidence 74%</span>
+          <button class="btn btn-sm btn-ghost">$ICON:bell Notify</button>
+          <button class="btn btn-sm btn-primary">$ICON:bolt Full report</button>
+        </div>
+      </div>
+
+      <div class="flex jcb aic" style="max-width:780px;margin:0 auto">
+        <!-- Home -->
+        <div class="flex col aic gap-10" style="flex:1">
+          <div class="crest xl" style="background:linear-gradient(150deg,#c8102e,#7a0a1d)">RVS</div>
+          <div style="text-align:center">
+            <div style="font-weight:700;font-size:18px">Riverside FC</div>
+            <div class="dim" style="font-size:12px">Home · 1st</div>
+          </div>
+          <div class="form-row" id="hForm"></div>
+        </div>
+        <!-- Center -->
+        <div class="flex col aic" style="flex-shrink:0;padding:0 18px">
+          <div class="dim" style="font-size:11px;letter-spacing:.1em;font-family:var(--font-mono)">PREDICTED</div>
+          <div class="mono" style="font-size:42px;font-weight:800;letter-spacing:-.03em;line-height:1;margin:4px 0;white-space:nowrap">1.8<span class="dim" style="font-size:24px">–</span>1.1</div>
+          <div class="dim" style="font-size:11px">expected goals</div>
+          <div class="badge green" style="margin-top:10px">$ICON:bolt RVS 47% favoured</div>
+        </div>
+        <!-- Away -->
+        <div class="flex col aic gap-10" style="flex:1">
+          <div class="crest xl" style="background:linear-gradient(150deg,#0b3d91,#06224f)">KGT</div>
+          <div style="text-align:center">
+            <div style="font-weight:700;font-size:18px">Kingsgate United</div>
+            <div class="dim" style="font-size:12px">Away · 2nd</div>
+          </div>
+          <div class="form-row" id="aForm"></div>
+        </div>
+      </div>
+    </div>
+    <!-- meta bar -->
+    <div class="flex jcb wrap" style="border-top:1px solid var(--line);padding:14px 30px;gap:18px;font-size:12.5px">
+      <div class="flex aic gap-8"><span class="dim">$ICON:teams</span><span class="muted">Riverside Park</span></div>
+      <div class="flex aic gap-8"><span class="dim">$ICON:players</span><span class="muted">41,200 expected</span></div>
+      <div class="flex aic gap-8"><span class="dim">☀</span><span class="muted">18°C · Clear · 11km/h wind</span></div>
+      <div class="flex aic gap-8"><span class="dim">$ICON:results</span><span class="muted">Ref: M. Atkins</span></div>
+      <div class="flex aic gap-8"><span class="dim">$ICON:history</span><span class="muted">H2H: 4W · 3D · 3L</span></div>
+    </div>
+  </section>
+
+  <!-- Sticky sub-nav -->
+  <div class="flex gap-8 reveal" style="position:sticky;top:calc(var(--topbar-h) + var(--ticker-h));z-index:20;padding:6px 0;margin-bottom:6px;background:linear-gradient(180deg,var(--bg-grad-1),transparent)">
+    <div class="tabs">
+      <a class="tab active" href="#prediction">Prediction</a>
+      <a class="tab" href="#explain">Why</a>
+      <a class="tab" href="#tactical">Tactical</a>
+      <a class="tab" href="#momentum">Momentum</a>
+      <a class="tab" href="#history">History</a>
+    </div>
+  </div>
+
+  <!-- PREDICTION + EXPLAINABLE -->
+  <div id="prediction" class="grid" style="grid-template-columns:1.05fr 1fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3><span class="ic" data-icon="analytics"></span> AI Prediction Engine</h3><span class="badge blue">v4.2 model</span></div>
+      <div class="card-bd">
+        <div class="flex aic gap-24" style="margin-bottom:8px">
+          <div style="width:160px;flex-shrink:0" id="wdlDonut"></div>
+          <div style="flex:1">
+            <div id="wdlLegend"></div>
+          </div>
+        </div>
+        <div style="height:1px;background:var(--line);margin:16px 0"></div>
+        <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
+          <div><div style="width:96px;margin:0 auto" id="ringO15"></div><div class="stat-lab" style="margin-top:4px">Over 1.5</div></div>
+          <div><div style="width:96px;margin:0 auto" id="ringO25"></div><div class="stat-lab" style="margin-top:4px">Over 2.5</div></div>
+          <div><div style="width:96px;margin:0 auto" id="ringBTTS"></div><div class="stat-lab" style="margin-top:4px">BTTS</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card reveal">
+      <div class="card-hd"><h3><span class="ic" data-icon="bolt"></span> Confidence Meter</h3><span class="badge green">High</span></div>
+      <div class="card-bd">
+        <div class="flex aic gap-20">
+          <div style="width:180px;flex-shrink:0" id="confGauge"></div>
+          <div style="flex:1">
+            <div style="font-size:13px;color:var(--text-2);line-height:1.55;margin-bottom:14px">Model agreement across <b style="color:var(--text)">6 sub-models</b> is strong. Form, xG and tactical signals all point to a Riverside edge.</div>
+            <div id="subModels"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- EXPLAINABLE AI -->
+  <section id="explain" class="card reveal" style="margin-bottom:18px">
+    <div class="card-hd">
+      <h3><span class="ic" data-icon="bolt"></span> Explainable AI — Why Riverside are favoured</h3>
+      <span class="badge violet">Factor breakdown</span>
+    </div>
+    <div class="card-bd grid" style="grid-template-columns:1.3fr 1fr;gap:24px">
+      <div id="xaiList"></div>
+      <div>
+        <div class="label-xs" style="margin-bottom:12px">Factor contribution to home win %</div>
+        <div id="factorBars"></div>
+        <div style="margin-top:16px;padding:13px;border-radius:11px;background:rgba(39,224,138,.06);border:1px solid rgba(39,224,138,.18);font-size:12.5px;color:var(--text-2);line-height:1.5">
+          <b style="color:var(--green-2)">Net read:</b> Riverside's pressing structure exploits Kingsgate's slower build-up. The model upweights this matchup by <b style="color:var(--text)">+8%</b> over baseline.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TACTICAL -->
+  <section id="tactical" class="section-title reveal"><h2><span class="ic" data-icon="teams" style="color:var(--blue-2)"></span> Tactical Analysis</h2><div class="ln"></div></section>
+  <div class="grid" style="grid-template-columns:1fr 1fr 1.1fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>Riverside · 4-3-3</h3><span class="badge blue">Possession press</span></div>
+      <div class="card-bd flex jcc"><div style="width:260px" id="formHome"></div></div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Kingsgate · 4-2-3-1</h3><span class="badge green">Direct transition</span></div>
+      <div class="card-bd flex jcc"><div style="width:260px" id="formAway"></div></div>
+    </section>
+    <div class="grid" style="gap:18px">
+      <section class="card reveal">
+        <div class="card-hd"><h3>Pressing Intensity</h3><span class="badge red">PPDA map</span></div>
+        <div class="card-bd flex gap-16 aic">
+          <div style="width:170px" id="pressHeat"></div>
+          <div style="flex:1" id="pressStats"></div>
+        </div>
+      </section>
+      <section class="card reveal">
+        <div class="card-hd"><h3>Attacking Zones</h3><span class="badge">Shot origin %</span></div>
+        <div class="card-bd" id="attackZones"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- MOMENTUM -->
+  <section id="momentum" class="section-title reveal"><h2><span class="ic" data-icon="results" style="color:var(--blue-2)"></span> Team Momentum</h2><div class="ln"></div></section>
+  <div class="grid" style="grid-template-columns:1.4fr 1fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>xG Trend · last 8 matches</h3>
+        <div class="flex gap-12" style="font-size:11.5px"><span class="flex aic gap-6"><span style="width:9px;height:9px;border-radius:3px;background:var(--blue)"></span>Riverside</span><span class="flex aic gap-6"><span style="width:9px;height:9px;border-radius:3px;background:var(--green)"></span>Kingsgate</span></div>
+      </div>
+      <div class="card-bd"><div id="xgTrend"></div></div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Momentum Index</h3><span class="badge green">Form-weighted</span></div>
+      <div class="card-bd" id="momStats"></div>
+    </section>
+  </div>
+
+  <!-- HISTORY -->
+  <section id="history" class="section-title reveal"><h2><span class="ic" data-icon="history" style="color:var(--blue-2)"></span> Historical Analysis</h2><div class="ln"></div></section>
+  <div class="grid" style="grid-template-columns:1fr 1.5fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>Head to Head</h3><span class="badge">Last 10</span></div>
+      <div class="card-bd">
+        <div class="flex jcb aic" style="margin-bottom:16px">
+          <div class="center"><div class="stat-val" style="color:var(--blue-2)">4</div><div class="stat-lab">RVS wins</div></div>
+          <div class="center"><div class="stat-val" style="color:var(--muted)">3</div><div class="stat-lab">Draws</div></div>
+          <div class="center"><div class="stat-val" style="color:var(--green)">3</div><div class="stat-lab">KGT wins</div></div>
+        </div>
+        <div class="meter" style="height:9px;display:flex"><i style="width:40%;background:var(--blue);border-radius:0"></i><i style="width:30%;background:#54607a;border-radius:0"></i><i style="width:30%;background:var(--green);border-radius:0"></i></div>
+        <div id="h2hList" style="margin-top:16px"></div>
+      </div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Goals History · this fixture</h3><span class="badge gold">Avg 2.7 goals</span></div>
+      <div class="card-bd"><div id="goalsHist"></div>
+        <div class="flex jcb" style="margin-top:14px">
+          <div class="stat"><div class="stat-val" style="font-size:19px">68%</div><div class="stat-lab">Over 1.5 hit rate</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:19px;color:var(--green)">61%</div><div class="stat-lab">BTTS rate</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:19px">2.7</div><div class="stat-lab">Avg total goals</div></div>
+          <div class="stat"><div class="stat-val" style="font-size:19px;color:var(--blue-2)">+9</div><div class="stat-lab">RVS goal diff (H2H)</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/charts.js"></script>
+<script src="../assets/js/shell.js"></script>
+<script src="../assets/js/match.js"></script>
+</body>
+</html>

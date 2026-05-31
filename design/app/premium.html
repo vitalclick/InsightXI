@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Premium Intelligence · InsightXI</title>
+<link rel="stylesheet" href="../assets/css/insightxi.css">
+<style>
+  .prem-glow { background: radial-gradient(700px 320px at 18% 0%, rgba(232,194,112,.16), transparent 62%), radial-gradient(600px 300px at 88% 0%, rgba(46,125,255,.12), transparent 60%); }
+  .gold-edge { border-color: rgba(232,194,112,.22) !important; }
+  .score-cell { aspect-ratio:1; border-radius:7px; display:grid; place-items:center; font-family:var(--font-mono); font-size:11px; font-weight:600; border:1px solid var(--line); transition:transform .15s; cursor:default; }
+  .score-cell:hover { transform:scale(1.08); }
+</style>
+</head>
+<body data-page="premium">
+<main class="page" data-screen-label="Premium Intelligence">
+
+  <!-- PREMIUM HERO -->
+  <section class="card reveal gold-edge prem-glow" style="overflow:hidden;margin-bottom:18px">
+    <div style="padding:28px 32px">
+      <div class="flex jcb aic wrap gap-16">
+        <div>
+          <div class="badge gold" style="margin-bottom:14px;height:26px;padding:0 12px">⭐ Premium Intelligence</div>
+          <h1 style="font-size:30px;letter-spacing:-.03em">The elite analytics layer</h1>
+          <div class="muted" style="font-size:14px;margin-top:8px;max-width:520px">Tactical AI reports, fatigue modelling, lineup-impact and hidden-trend detection — the deepest read available on any fixture.</div>
+        </div>
+        <div class="flex gap-24">
+          <div class="center"><div class="mono" style="font-size:28px;font-weight:800;color:var(--gold)">94%</div><div class="stat-lab">elite hit rate</div></div>
+          <div class="center"><div class="mono" style="font-size:28px;font-weight:800;color:var(--green)">+12</div><div class="stat-lab">edge pts</div></div>
+          <div class="center"><div class="mono" style="font-size:28px;font-weight:800;color:var(--blue-2)">6</div><div class="stat-lab">value spots</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Elite confidence + tactical report -->
+  <div class="grid" style="grid-template-columns:1fr 1.3fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal gold-edge">
+      <div class="card-hd"><h3><span class="ic" style="color:var(--gold)" data-icon="premium"></span> Elite Confidence Insights</h3><span class="badge gold">Top 3</span></div>
+      <div class="card-bd" id="eliteList"></div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3><span class="ic" data-icon="bolt"></span> Tactical AI Report</h3><span class="badge violet">Auto-written · Riverside v Kingsgate</span></div>
+      <div class="card-bd" id="tacticalReport"></div>
+    </section>
+  </div>
+
+  <!-- Advanced probability + lineup impact -->
+  <div class="grid" style="grid-template-columns:1fr 1.1fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>Advanced Probability</h3><span class="badge">correct score matrix</span></div>
+      <div class="card-bd">
+        <div class="flex gap-10">
+          <div style="display:flex;flex-direction:column;justify-content:space-around;padding:20px 0 4px;font-family:var(--font-mono);font-size:10px;color:var(--dim)" id="scoreRowLabels"></div>
+          <div style="flex:1">
+            <div id="scoreMatrix" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px"></div>
+            <div class="flex jcb" style="margin-top:6px;font-family:var(--font-mono);font-size:10px;color:var(--dim)"><span>KGT 0</span><span>1</span><span>2</span><span>3</span><span>4</span></div>
+          </div>
+        </div>
+        <div class="flex aic gap-8" style="margin-top:14px;font-size:11.5px;color:var(--muted)"><span class="dim">Most likely:</span> <span class="badge blue">2-1 RVS · 11.4%</span><span class="badge">1-1 · 9.1%</span></div>
+      </div>
+    </section>
+    <section class="card reveal">
+      <div class="card-hd"><h3>Lineup Impact Intelligence</h3><span class="badge green">±xG swing</span></div>
+      <div class="card-bd" id="lineupImpact"></div>
+    </section>
+  </div>
+
+  <!-- Fatigue + hidden trends -->
+  <div class="grid" style="grid-template-columns:1fr 1.1fr;align-items:start;margin-bottom:18px">
+    <section class="card reveal">
+      <div class="card-hd"><h3>Fatigue Analysis</h3><span class="badge amber">load index</span></div>
+      <div class="card-bd" id="fatigue"></div>
+    </section>
+    <section class="card reveal gold-edge">
+      <div class="card-hd"><h3><span class="ic" style="color:var(--violet)" data-icon="bolt"></span> Hidden Trend Detection</h3><span class="badge violet">anomalies</span></div>
+      <div class="card-bd" id="hiddenTrends"></div>
+    </section>
+  </div>
+
+</main>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/charts.js"></script>
+<script src="../assets/js/shell.js"></script>
+<script src="../assets/js/premium.js"></script>
+</body>
+</html>

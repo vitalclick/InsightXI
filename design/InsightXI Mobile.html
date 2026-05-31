@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>InsightXI — Football Intelligence</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#070b14">
+<meta name="color-scheme" content="dark light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="InsightXI">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+
+<link rel="stylesheet" href="assets/css/insightxi.css">
+<link rel="stylesheet" href="assets/css/mobile.css">
+</head>
+<body>
+
+<div class="app-frame">
+  <div class="app" id="app">
+
+    <!-- Header -->
+    <header class="app-header" id="appHeader">
+      <button class="icon-btn-m hdr-back" data-ic="back" aria-label="Back" style="display:none"></button>
+      <div class="hdr-brand">
+        <div class="m-logo" data-logo></div>
+        <b>Insight<span>XI</span></b>
+      </div>
+      <div class="hdr-title"></div>
+      <div class="hdr-actions">
+        <button class="icon-btn-m" data-ic="search" id="btnSearch" aria-label="Search"></button>
+        <button class="icon-btn-m" data-ic="bell" id="btnBell" aria-label="Notifications"><span class="dot-n"></span></button>
+      </div>
+    </header>
+
+    <!-- Pull-to-refresh -->
+    <div class="ptr" id="ptr"><div class="ptr-spin"></div></div>
+
+    <!-- Screens -->
+    <div class="screens" id="screens">
+      <section class="screen" id="scr-home" data-screen-label="Home"></section>
+      <section class="screen" id="scr-live" data-screen-label="Live"></section>
+      <section class="screen" id="scr-predictions" data-screen-label="Predictions"></section>
+      <section class="screen" id="scr-fixtures" data-screen-label="Fixtures"></section>
+      <section class="screen" id="scr-more" data-screen-label="More"></section>
+      <section class="screen detail" id="scr-match" data-screen-label="Match Intel"></section>
+      <section class="screen detail" id="scr-board" data-screen-label="Confidence Board"></section>
+      <section class="screen detail" id="scr-premium" data-screen-label="Premium"></section>
+    </div>
+
+    <!-- Bottom nav -->
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="nav-tab" data-tab="home" data-icon="homeF"><span class="ic"></span><span>Home</span></button>
+      <button class="nav-tab" data-tab="live" data-icon="live"><span class="ic"></span><span class="nbadge"></span><span>Live</span></button>
+      <button class="nav-tab" data-tab="predictions" data-icon="target"><span class="ic"></span><span>Predict</span></button>
+      <button class="nav-tab" data-tab="fixtures" data-icon="fixtures"><span class="ic"></span><span>Fixtures</span></button>
+      <button class="nav-tab" data-tab="more" data-icon="more"><span class="ic"></span><span>More</span></button>
+    </nav>
+
+  </div>
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="22" fill="#0d1322"/>
+    <rect x="30" y="30" width="40" height="40" rx="11" fill="#2e7dff"/>
+    <path d="M41 50.5 47 56 60 43" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>
+</template>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/charts.js"></script>
+<script src="assets/js/mobile-screens.js"></script>
+<script src="assets/js/mobile-detail.js"></script>
+<script src="assets/js/mobile-shell.js"></script>
+<script>
+// Best-effort PWA service worker (silent on failure in sandboxed previews)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () { /* ignore */ });
+  });
+}
+</script>
+</body>
+</html>
