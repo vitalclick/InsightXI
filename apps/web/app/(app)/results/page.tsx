@@ -6,6 +6,7 @@ import { api } from "../../../services/api-client";
 import { PageHead } from "../../../components/ui/page-head";
 import { LeagueChips } from "../../../components/ui/league-chips";
 import { MatchRow } from "../../../components/match/match-row";
+import { SkeletonRows } from "../../../components/ui/skeleton";
 
 export default function ResultsPage() {
   const [league, setLeague] = useState("");
@@ -32,7 +33,7 @@ export default function ResultsPage() {
         </div>
         <div className="card-bd" style={{ padding: "4px 12px 8px" }}>
           {isLoading ? (
-            <div className="empty">Loading results…</div>
+            <SkeletonRows />
           ) : results.length === 0 ? (
             <div className="empty">
               <h4>No results yet</h4>

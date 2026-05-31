@@ -1,29 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
-import { API_URL_PUBLIC } from "../../../services/api-client";
-import type { LiveSnapshot } from "../../../lib/types";
 import { PageHead } from "../../../components/ui/page-head";
 import { Crest } from "../../../components/ui/crest";
+import { useLive } from "../../../hooks/use-live";
 
 export default function LivePage() {
-  const [snap, setSnap] = useState<LiveSnapshot | null>(null);
-  const [connected, setConnected] = useState(false);
-
-  useEffect(() => {
-    const socket: Socket = io(API_URL_PUBLIC, { transports: ["websocket"] });
-    socket.on("connect", () => {
-      setConnected(true);
-      socket.emit("subscribe");
-    });
-    socket.on("disconnect", () => setConnected(false));
-    socket.on("live:update", (s: LiveSnapshot) => setSnap(s));
-    return () => {
-      socket.close();
-    };
-  }, []);
-
+  const { snapshot: snap, connected } = useLive();
   const homePct = snap ? Math.round(50 + snap.momentum / 2) : 50;
 
   return (

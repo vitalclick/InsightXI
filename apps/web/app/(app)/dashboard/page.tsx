@@ -11,6 +11,7 @@ import { CountUp } from "../../../components/charts/count-up";
 import { ChartBox } from "../../../components/charts/chart-box";
 import { ProbSplit } from "../../../components/match/prob-split";
 import { usePredictions, confColor } from "../../../hooks/use-predictions";
+import { useLive } from "../../../hooks/use-live";
 import { clubCode } from "../../../lib/club";
 import * as IX from "../../../lib/ix-charts";
 
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const { data: fixtures = [] } = useQuery({ queryKey: ["fixtures", ""], queryFn: () => api.fixtures() });
   const { data: results = [] } = useQuery({ queryKey: ["results", ""], queryFn: () => api.results() });
   const { data: ratings = [] } = useQuery({ queryKey: ["ratings", "epl"], queryFn: () => api.ratings("epl") });
+  const { snapshot: live, connected } = useLive();
 
   const top = fixtures.slice(0, 8);
   const preds = usePredictions(top.map((m) => m.id));
@@ -250,6 +252,50 @@ export default function DashboardPage() {
                 );
               })}
               {ranked.length === 0 && <div className="dim" style={{ fontSize: 13 }}>Predictions load when the AI service is reachable.</div>}
+            </div>
+          </section>
+
+          <section className="card reveal">
+            <div className="card-hd">
+              <h3>
+                <span className="ic" style={{ color: "var(--red)" }}>
+                  <Icon name="live" size={16} />
+                </span>{" "}
+                Live Intelligence
+              </h3>
+              <Link href="/live" className={`badge ${live ? "red" : ""}`}>
+                {live ? "1 live" : connected ? "standby" : "offline"}
+              </Link>
+            </div>
+            <div className="card-bd" style={{ padding: "12px 16px" }}>
+              {live ? (
+                <Link href="/live" style={{ display: "block", color: "inherit" }}>
+                  <div className="flex jcb aic" style={{ marginBottom: 8 }}>
+                    <span className="live-pill">
+                      <span className="pulse" />
+                      {live.status === "LIVE" ? `${live.minute}'` : "FT"}
+                    </span>
+                    <span className="dim" style={{ fontSize: 10 }}>momentum {live.momentum > 0 ? "+" : ""}{live.momentum}</span>
+                  </div>
+                  <div className="flex jcb aic">
+                    <div className="flex aic gap-8" style={{ fontSize: 13, fontWeight: 600 }}>
+                      <Crest name={live.homeTeamName} seed={live.homeTeamId} size="xs" /> {clubCode(live.homeTeamName)}
+                    </div>
+                    <span className="mono" style={{ fontSize: 18, fontWeight: 800 }}>{live.homeGoals} – {live.awayGoals}</span>
+                    <div className="flex aic gap-8" style={{ fontSize: 13, fontWeight: 600 }}>
+                      {clubCode(live.awayTeamName)} <Crest name={live.awayTeamName} seed={live.awayTeamId} size="xs" />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", height: 5, borderRadius: 20, overflow: "hidden", background: "var(--surface-3)", marginTop: 10 }}>
+                    <i style={{ width: `${Math.round(50 + live.momentum / 2)}%`, background: "var(--blue)" }} />
+                    <i style={{ width: `${100 - Math.round(50 + live.momentum / 2)}%`, background: "var(--green)" }} />
+                  </div>
+                </Link>
+              ) : (
+                <div className="dim" style={{ fontSize: 13, padding: "6px 0" }}>
+                  {connected ? "Waiting for the next live kickoff…" : "Live feed offline — start the API to stream matches."}
+                </div>
+              )}
             </div>
           </section>
 
