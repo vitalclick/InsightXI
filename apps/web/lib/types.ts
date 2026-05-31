@@ -103,16 +103,69 @@ export interface TacticalMatchup {
 }
 
 export type SubscriptionTier = "FREE" | "PREMIUM";
+export type AuthProvider = "email" | "google" | "apple";
+export type SubscriptionStatus = "none" | "active" | "expired" | "canceled";
 
 export interface PublicUser {
   id: string;
   email: string;
   tier: SubscriptionTier;
+  name: string | null;
+  avatarUrl: string | null;
+  provider: AuthProvider;
+  subscriptionStatus: SubscriptionStatus;
+  currentPeriodEnd: string | null;
 }
 
 export interface AuthResponse {
   accessToken: string;
   user: PublicUser;
+}
+
+export type PaymentProvider = "paypal" | "paystack" | "flutterwave";
+
+export interface LocalizedPrice {
+  amount: number;
+  currency: string;
+  symbol: string;
+  display: string;
+  estimated: boolean;
+}
+
+export interface LocalizedPlan {
+  id: string;
+  name: string;
+  badge: string;
+  tagline: string;
+  interval: string;
+  periodDays: number;
+  features: string[];
+  capabilities: string[];
+  country: string;
+  base: LocalizedPrice;
+  local: LocalizedPrice;
+}
+
+export interface PlanResponse {
+  plan: LocalizedPlan;
+  providers: Record<PaymentProvider, boolean>;
+  paypalClientId: string | null;
+}
+
+export interface CheckoutSession {
+  provider: PaymentProvider;
+  reference: string;
+  authorizationUrl: string | null;
+  providerReference?: string;
+  amount: number;
+  currency: string;
+  sandbox: boolean;
+  display: string;
+}
+
+export interface ConfirmResult {
+  status: "active" | "pending";
+  auth?: AuthResponse;
 }
 
 export interface H2HSummary {

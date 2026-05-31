@@ -2,6 +2,7 @@ import { Global, Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
+import { OAuthService } from "./oauth.service";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { PremiumGuard } from "./premium.guard";
@@ -22,6 +23,7 @@ const usePostgres = process.env.DATA_BACKEND === "postgres";
   controllers: [AuthController],
   providers: [
     AuthService,
+    OAuthService,
     UsersService,
     JwtAuthGuard,
     PremiumGuard,

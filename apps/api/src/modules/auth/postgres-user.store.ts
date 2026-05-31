@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { PgService } from "../../db/pg.service";
 import {
+  AuthProvider,
+  SubscriptionStatus,
   SubscriptionTier,
   UserRecord,
   UserStore,
@@ -9,9 +11,20 @@ import {
 interface UserRow {
   id: string;
   email: string;
-  password_hash: string;
+  password_hash: string | null;
   tier: SubscriptionTier;
+  name: string | null;
+  avatar_url: string | null;
+  provider: AuthProvider;
+  subscription_status: SubscriptionStatus;
+  subscription_provider: string | null;
+  subscription_ref: string | null;
+  current_period_end: string | null;
 }
+
+const COLUMNS =
+  "id, email, password_hash, tier, name, avatar_url, provider, " +
+  "subscription_status, subscription_provider, subscription_ref, current_period_end";
 
 function toRecord(row: UserRow): UserRecord {
   return {
@@ -19,6 +32,13 @@ function toRecord(row: UserRow): UserRecord {
     email: row.email,
     passwordHash: row.password_hash,
     tier: row.tier,
+    name: row.name,
+    avatarUrl: row.avatar_url,
+    provider: row.provider,
+    subscriptionStatus: row.subscription_status,
+    subscriptionProvider: row.subscription_provider,
+    subscriptionRef: row.subscription_ref,
+    currentPeriodEnd: row.current_period_end,
   };
 }
 
@@ -31,19 +51,63 @@ export class PostgresUserStore extends UserStore {
 
   async findByEmail(email: string): Promise<UserRecord | undefined> {
     const rows = await this.pg.query<UserRow>(
-      "SELECT id, email, password_hash, tier FROM users WHERE email = $1",
-      [email],
+      `SELECT ${COLUMNS} FROM users WHERE email = $1`,
+      [email.toLowerCase()],
+    );
+    return rows[0] ? toRecord(rows[0]) : undefined;
+  }
+
+  async findById(id: string): Promise<UserRecord | undefined> {
+    const rows = await this.pg.query<UserRow>(
+      `SELECT ${COLUMNS} FROM users WHERE id = $1`,
+      [id],
     );
     return rows[0] ? toRecord(rows[0]) : undefined;
   }
 
   async insert(user: UserRecord): Promise<void> {
     await this.pg.query(
-      `INSERT INTO users (id, email, password_hash, tier)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO users (${COLUMNS})
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        ON CONFLICT (email) DO NOTHING`,
-      [user.id, user.email, user.passwordHash, user.tier],
+      [
+        user.id,
+        user.email.toLowerCase(),
+        user.passwordHash,
+        user.tier,
+        user.name,
+        user.avatarUrl,
+        user.provider,
+        user.subscriptionStatus,
+        user.subscriptionProvider,
+        user.subscriptionRef,
+        user.currentPeriodEnd,
+      ],
     );
+  }
+
+  async update(user: UserRecord): Promise<UserRecord> {
+    const rows = await this.pg.query<UserRow>(
+      `UPDATE users SET
+         password_hash = $2, tier = $3, name = $4, avatar_url = $5,
+         provider = $6, subscription_status = $7, subscription_provider = $8,
+         subscription_ref = $9, current_period_end = $10
+       WHERE id = $1
+       RETURNING ${COLUMNS}`,
+      [
+        user.id,
+        user.passwordHash,
+        user.tier,
+        user.name,
+        user.avatarUrl,
+        user.provider,
+        user.subscriptionStatus,
+        user.subscriptionProvider,
+        user.subscriptionRef,
+        user.currentPeriodEnd,
+      ],
+    );
+    return rows[0] ? toRecord(rows[0]) : user;
   }
 
   async updateTier(
@@ -51,9 +115,8 @@ export class PostgresUserStore extends UserStore {
     tier: SubscriptionTier,
   ): Promise<UserRecord | undefined> {
     const rows = await this.pg.query<UserRow>(
-      `UPDATE users SET tier = $2 WHERE email = $1
-       RETURNING id, email, password_hash, tier`,
-      [email, tier],
+      `UPDATE users SET tier = $2 WHERE email = $1 RETURNING ${COLUMNS}`,
+      [email.toLowerCase(), tier],
     );
     return rows[0] ? toRecord(rows[0]) : undefined;
   }

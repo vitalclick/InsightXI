@@ -12,6 +12,7 @@ import { TacticalModule } from "./modules/tactical/tactical.module";
 import { LiveModule } from "./modules/live/live.module";
 import { JobsModule } from "./modules/jobs/jobs.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { PaymentsModule } from "./modules/payments/payments.module";
 import { HistoricalModule } from "./modules/historical/historical.module";
 import { IngestionModule } from "./modules/ingestion/ingestion.module";
 import { ModelHealthModule } from "./modules/model-health/model-health.module";
@@ -41,6 +42,7 @@ import { ModelHealthModule } from "./modules/model-health/model-health.module";
     JobsModule.register(),
     // Phase 4 — Historical & Premium
     AuthModule,
+    PaymentsModule,
     HistoricalModule,
     ModelHealthModule,
   ],

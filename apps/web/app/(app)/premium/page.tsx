@@ -6,16 +6,21 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api-client";
 import { useAuthStore } from "../../../store/auth-store";
 import { PageHead } from "../../../components/ui/page-head";
+import { PlanCard } from "../../../components/billing/plan-card";
 import { Crest } from "../../../components/ui/crest";
 import { Icon } from "../../../components/ui/icon";
 import { usePredictions, confColor } from "../../../hooks/use-predictions";
 import { ScoreMatrix } from "../../../components/match/score-matrix";
 import { clubCode } from "../../../lib/club";
-import type { MatchPrediction, MatchView } from "../../../lib/types";
+import type { AuthResponse, MatchPrediction, MatchView } from "../../../lib/types";
 
 export default function PremiumPage() {
-  const { user } = useAuthStore();
+  const { user, token, setAuth } = useAuthStore();
   const isPremium = user?.tier === "PREMIUM";
+
+  function onActivated(auth: AuthResponse) {
+    setAuth(auth.accessToken, auth.user);
+  }
 
   const { data: fixtures = [] } = useQuery({ queryKey: ["fixtures", ""], queryFn: () => api.fixtures() });
   const preds = usePredictions(fixtures.map((m) => m.id));
@@ -52,9 +57,9 @@ export default function PremiumPage() {
                 Tactical AI reports, correct-score modelling, lineup-impact and hidden-trend detection.
               </div>
               {!isPremium && (
-                <Link href="/account" className="btn btn-gold" style={{ marginTop: 16 }}>
-                  Upgrade Premium
-                </Link>
+                <a href="#upgrade" className="btn btn-gold" style={{ marginTop: 16 }}>
+                  Upgrade to VIP Now!
+                </a>
               )}
               {isPremium && (
                 <span className="badge green" style={{ marginTop: 16, display: "inline-flex" }}>
@@ -70,6 +75,42 @@ export default function PremiumPage() {
           </div>
         </div>
       </section>
+
+      {/* Plan + checkout (PayPal / Paystack / Flutterwave, localized currency) */}
+      <div
+        id="upgrade"
+        className="grid"
+        style={{ gridTemplateColumns: "minmax(0,460px) 1fr", alignItems: "start", gap: 18, marginBottom: 18, scrollMarginTop: 80 }}
+      >
+        <PlanCard
+          token={token}
+          isPremium={isPremium}
+          currentPeriodEnd={user?.currentPeriodEnd}
+          onActivated={onActivated}
+        />
+        <section className="card reveal">
+          <div className="card-hd"><h3>Everything in VIP</h3><span className="badge gold">30 days access</span></div>
+          <div className="card-bd">
+            {[
+              "Elite confidence insights & probability rings",
+              "Tactical AI reports and matchup edge",
+              "Correct-score modelling & expected-goals matrix",
+              "Hidden-trend detection and season trends",
+              "Daily & mega odds analysis (1.50–2.50, 5.00–15.00)",
+              "High-confidence picks, refreshed daily",
+            ].map((c) => (
+              <div className="xai-row" key={c}>
+                <span className="xai-ic"><Icon name="check" size={15} /></span>
+                <span className="xai-txt" style={{ fontSize: 13.5 }}>{c}</span>
+              </div>
+            ))}
+            <p className="dim" style={{ fontSize: 11.5, marginTop: 12 }}>
+              InsightXI presents statistical probabilities and football intelligence,
+              not guaranteed outcomes or betting advice.
+            </p>
+          </div>
+        </section>
+      </div>
 
       <div className="grid" style={{ gridTemplateColumns: "1fr 1.3fr", alignItems: "start", marginBottom: 18 }}>
         {/* Elite confidence */}

@@ -1,13 +1,19 @@
 import { ConflictException, Injectable, OnModuleInit } from "@nestjs/common";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "crypto";
 import {
+  AuthProvider,
   PublicUser,
   SubscriptionTier,
   UserRecord,
   UserStore,
 } from "./user.store";
 
-export type { PublicUser, SubscriptionTier } from "./user.store";
+export type {
+  AuthProvider,
+  PublicUser,
+  SubscriptionStatus,
+  SubscriptionTier,
+} from "./user.store";
 export type User = UserRecord;
 
 function hashPassword(password: string): string {
@@ -16,7 +22,8 @@ function hashPassword(password: string): string {
   return `${salt}:${hash}`;
 }
 
-function verifyPassword(password: string, stored: string): boolean {
+function verifyPassword(password: string, stored: string | null): boolean {
+  if (!stored) return false;
   const [salt, hash] = stored.split(":");
   if (!salt || !hash) return false;
   const candidate = scryptSync(password, salt, 64);
@@ -24,6 +31,15 @@ function verifyPassword(password: string, stored: string): boolean {
   return (
     candidate.length === expected.length && timingSafeEqual(candidate, expected)
   );
+}
+
+interface NewUser {
+  email: string;
+  password?: string | null;
+  tier?: SubscriptionTier;
+  name?: string | null;
+  avatarUrl?: string | null;
+  provider?: AuthProvider;
 }
 
 /**
@@ -36,23 +52,35 @@ export class UsersService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     if (await this.store.findByEmail("free@insightxi.dev")) return;
-    await this.createWithTier("free@insightxi.dev", "password", "FREE");
-    await this.createWithTier("premium@insightxi.dev", "password", "PREMIUM");
+    await this.buildAndInsert({
+      email: "free@insightxi.dev",
+      password: "password",
+      tier: "FREE",
+    });
+    await this.buildAndInsert({
+      email: "premium@insightxi.dev",
+      password: "password",
+      tier: "PREMIUM",
+    });
   }
 
-  private async createWithTier(
-    email: string,
-    password: string,
-    tier: SubscriptionTier,
-  ): Promise<PublicUser> {
+  private async buildAndInsert(input: NewUser): Promise<UserRecord> {
+    const isPremium = input.tier === "PREMIUM";
     const user: UserRecord = {
       id: randomUUID(),
-      email,
-      passwordHash: hashPassword(password),
-      tier,
+      email: input.email.toLowerCase(),
+      passwordHash: input.password ? hashPassword(input.password) : null,
+      tier: input.tier ?? "FREE",
+      name: input.name ?? null,
+      avatarUrl: input.avatarUrl ?? null,
+      provider: input.provider ?? "email",
+      subscriptionStatus: isPremium ? "active" : "none",
+      subscriptionProvider: null,
+      subscriptionRef: null,
+      currentPeriodEnd: null,
     };
     await this.store.insert(user);
-    return this.toPublic(user);
+    return user;
   }
 
   async create(
@@ -63,7 +91,8 @@ export class UsersService implements OnModuleInit {
     if (await this.store.findByEmail(email)) {
       throw new ConflictException("Email already registered");
     }
-    return this.createWithTier(email, password, tier);
+    const user = await this.buildAndInsert({ email, password, tier });
+    return this.toPublic(user);
   }
 
   async validate(email: string, password: string): Promise<UserRecord | null> {
@@ -76,6 +105,65 @@ export class UsersService implements OnModuleInit {
     return this.store.findByEmail(email);
   }
 
+  async findById(id: string): Promise<UserRecord | undefined> {
+    return this.store.findById(id);
+  }
+
+  /**
+   * Looks up an OAuth user by email or provisions one. Links the provider to
+   * an existing email account and backfills profile fields when missing.
+   */
+  async findOrCreateOAuth(input: {
+    email: string;
+    name?: string | null;
+    avatarUrl?: string | null;
+    provider: AuthProvider;
+  }): Promise<UserRecord> {
+    const existing = await this.store.findByEmail(input.email);
+    if (existing) {
+      const next: UserRecord = {
+        ...existing,
+        name: existing.name ?? input.name ?? null,
+        avatarUrl: existing.avatarUrl ?? input.avatarUrl ?? null,
+        // Keep "email" if a local password exists; else reflect the OAuth source.
+        provider: existing.passwordHash ? existing.provider : input.provider,
+      };
+      return this.store.update(next);
+    }
+    return this.buildAndInsert({
+      email: input.email,
+      password: null,
+      tier: "FREE",
+      name: input.name ?? null,
+      avatarUrl: input.avatarUrl ?? null,
+      provider: input.provider,
+    });
+  }
+
+  /** Grants PREMIUM access for the plan period after a verified payment. */
+  async activatePremium(
+    userId: string,
+    opts: { provider: string; reference: string; periodDays: number },
+  ): Promise<UserRecord | undefined> {
+    const user = await this.store.findById(userId);
+    if (!user) return undefined;
+    const now = Date.now();
+    // Extend from the existing period end if it is still in the future.
+    const base =
+      user.currentPeriodEnd && Date.parse(user.currentPeriodEnd) > now
+        ? Date.parse(user.currentPeriodEnd)
+        : now;
+    const periodEnd = new Date(base + opts.periodDays * 86_400_000).toISOString();
+    return this.store.update({
+      ...user,
+      tier: "PREMIUM",
+      subscriptionStatus: "active",
+      subscriptionProvider: opts.provider,
+      subscriptionRef: opts.reference,
+      currentPeriodEnd: periodEnd,
+    });
+  }
+
   async setTier(
     email: string,
     tier: SubscriptionTier,
@@ -85,6 +173,15 @@ export class UsersService implements OnModuleInit {
   }
 
   toPublic(user: UserRecord): PublicUser {
-    return { id: user.id, email: user.email, tier: user.tier };
+    return {
+      id: user.id,
+      email: user.email,
+      tier: user.tier,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      provider: user.provider,
+      subscriptionStatus: user.subscriptionStatus,
+      currentPeriodEnd: user.currentPeriodEnd,
+    };
   }
 }

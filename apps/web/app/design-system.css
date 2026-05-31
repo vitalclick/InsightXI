@@ -399,6 +399,19 @@ main.page { padding: 26px 28px 60px; max-width: 1640px; width: 100%; margin: 0 a
 .btn-lg { height: 50px; padding: 0 26px; font-size: 15px; border-radius: 13px; }
 .icon-btn { width: 36px; height: 36px; padding: 0; border-radius: 10px; }
 
+/* Social sign-in buttons (Google / Apple) */
+.social-btn { width: 100%; justify-content: center; gap: 10px; height: 44px; background: #fff; color: #1f2430; border-color: rgba(15,23,42,.14); font-weight: 600; }
+.social-btn:hover { background: #f3f5f9; border-color: rgba(15,23,42,.22); }
+.social-btn.apple { background: #000; color: #fff; border-color: #000; }
+.social-btn.apple:hover { background: #161616; }
+.social-btn:disabled { opacity: .6; cursor: default; transform: none; }
+
+/* Segmented control (payment method tabs) */
+.seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 11px; background: var(--surface-1); border: 1px solid var(--line); width: 100%; }
+.seg-btn { flex: 1; height: 34px; padding: 0 10px; border-radius: 8px; border: none; background: transparent; color: var(--text-2); font-size: 12.5px; font-weight: 600; font-family: var(--font-ui); }
+.seg-btn:hover { color: var(--text); }
+.seg-btn.active { background: var(--surface-3); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.18); }
+
 /* ============================================================
    Badges / chips / pills
    ============================================================ */
