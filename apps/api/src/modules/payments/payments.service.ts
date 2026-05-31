@@ -5,6 +5,7 @@ import { UsersService } from "../auth/users.service";
 import { UserRecord } from "../auth/user.store";
 import { EmailService } from "../email/email.service";
 import { paymentReceiptEmail } from "../email/templates";
+import { NotificationsService } from "../notifications/notifications.service";
 import { convertFromUsd, getCurrency } from "./currency";
 import { GeoService, RequestGeoHints } from "./geo.service";
 import { PREMIUM_PLAN } from "./pricing";
@@ -43,6 +44,7 @@ export class PaymentsService {
     private readonly users: UsersService,
     private readonly auth: AuthService,
     private readonly email: EmailService,
+    private readonly notifications: NotificationsService,
     paypal: PaypalGateway,
     paystack: PaystackGateway,
     flutterwave: FlutterwaveGateway,
@@ -50,7 +52,8 @@ export class PaymentsService {
     this.gateways = { paypal, paystack, flutterwave };
   }
 
-  /** Email a receipt on activation; never let delivery break confirmation. */
+  /** Email a receipt + raise an in-app notification on activation. Neither
+   * delivery is allowed to break payment confirmation. */
   private async sendReceipt(user: UserRecord, provider: PaymentProvider, reference: string): Promise<void> {
     try {
       await this.email.send(
@@ -64,6 +67,14 @@ export class PaymentsService {
     } catch (err) {
       this.logger.warn(`Receipt email failed for ${user.email}: ${(err as Error).message}`);
     }
+    await this.notifications.notify(user.id, {
+      type: "premium",
+      title: "Premium activated",
+      body: user.currentPeriodEnd
+        ? `You have full access through ${new Date(user.currentPeriodEnd).toLocaleDateString("en-GB")}.`
+        : "Your Premium subscription is now active.",
+      link: "/premium",
+    });
   }
 
   private gatewayFor(provider: PaymentProvider): PaymentGateway {

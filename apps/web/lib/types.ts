@@ -128,6 +128,18 @@ export interface AuthResponse {
   user: PublicUser;
 }
 
+export type NotificationType = "welcome" | "premium" | "system" | "match";
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  link: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
 export type PaymentProvider = "paypal" | "paystack" | "flutterwave";
 
 export interface LocalizedPrice {

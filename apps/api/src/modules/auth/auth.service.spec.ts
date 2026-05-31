@@ -8,6 +8,7 @@ import { PremiumGuard } from "./premium.guard";
 import { UserStore } from "./user.store";
 import { InMemoryUserStore } from "./in-memory-user.store";
 import { EmailService } from "../email/email.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 describe("Auth + subscriptions", () => {
   let auth: AuthService;
@@ -32,6 +33,7 @@ describe("Auth + subscriptions", () => {
         UsersService,
         { provide: UserStore, useClass: InMemoryUserStore },
         { provide: EmailService, useValue: emailStub },
+        { provide: NotificationsService, useValue: { notify: async () => undefined } },
       ],
     }).compile();
     await moduleRef.init(); // seeds demo users via UsersService.onModuleInit

@@ -11,6 +11,7 @@ import { UserRecord } from "./user.store";
 import { OAuthService } from "./oauth.service";
 import { EmailService } from "../email/email.service";
 import { passwordResetEmail, verificationEmail } from "../email/templates";
+import { NotificationsService } from "../notifications/notifications.service";
 
 export interface JwtPayload {
   sub: string;
@@ -53,6 +54,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly oauth: OAuthService,
     private readonly email: EmailService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** Signs an access JWT (carrying tier) plus a refresh token. */
@@ -86,6 +88,12 @@ export class AuthService {
     // (returns delivered:false) so this never fails the signup.
     const user = await this.users.findById(result.user.id);
     if (user) await this.sendVerification(user);
+    await this.notifications.notify(result.user.id, {
+      type: "welcome",
+      title: "Welcome to InsightXI",
+      body: "Explore explainable match intelligence, tactical reads and probability insights.",
+      link: "/dashboard",
+    });
     return result;
   }
 

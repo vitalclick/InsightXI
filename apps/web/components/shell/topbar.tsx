@@ -9,6 +9,7 @@ import { useAuthStore } from "../../store/auth-store";
 import { TOPNAV } from "./nav-config";
 import { SearchBox } from "./search-box";
 import { Freshness } from "./freshness";
+import { NotificationsBell } from "./notifications-bell";
 
 export function Topbar() {
   const pathname = usePathname();
@@ -55,10 +56,7 @@ export function Topbar() {
       >
         <Icon name="bolt" size={17} />
       </button>
-      <Link href="/account" className="tb-icon" title="Notifications" aria-label="Notifications">
-        <Icon name="bell" size={17} />
-        <span className="dot-n" />
-      </Link>
+      <NotificationsBell />
       <Link href="/account" className="tb-avatar" aria-label="Account">
         {initials}
       </Link>
