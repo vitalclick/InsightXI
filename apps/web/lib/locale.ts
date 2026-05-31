@@ -7,8 +7,14 @@ export function detectCountry(): string | undefined {
   if (typeof navigator === "undefined") return undefined;
   const locales = [navigator.language, ...(navigator.languages ?? [])];
   for (const loc of locales) {
-    // e.g. "en-NG" → "NG"; "en-US" → "US".
-    const region = loc?.split("-")[1];
+    if (!loc) continue;
+    // Prefer Intl's parser ("en-Latn-NG" → "NG"), fall back to a split.
+    let region: string | undefined;
+    try {
+      region = new Intl.Locale(loc).region ?? undefined;
+    } catch {
+      region = loc.split("-")[1];
+    }
     if (region && region.length === 2) return region.toUpperCase();
   }
   return undefined;
