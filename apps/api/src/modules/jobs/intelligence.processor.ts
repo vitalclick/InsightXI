@@ -12,14 +12,18 @@ import {
 
 /**
  * Processes background intelligence jobs:
- *  - refresh-data:    re-ingest from the football data provider
- *  - retrain-models:  close the Adaptive Intelligence feedback loop —
- *                     reconcile finished fixtures into Experience Memory and
- *                     rebuild the adaptive state (and, in production, kick off
- *                     a full `python -m app.training.train` for the ensemble).
+ *  - refresh-data (hourly):   re-ingest from the football data provider, then
+ *                             immediately close the Adaptive Intelligence loop
+ *                             on the freshly-arrived results — reconcile
+ *                             finished fixtures into Experience Memory and
+ *                             rebuild the adaptive state.
+ *  - retrain-models (daily):  the same reconcile/recompute (a catch-up; it is
+ *                             idempotent) plus the heavier full ensemble retrain
+ *                             (`python -m app.training.train`).
  *
- * These keep the queue wiring real and exercisable: refresh-data fans out to
- * the ingestion pipeline; retrain-models drives the continuous-learning loop.
+ * Running the recompute hourly keeps learned weights/calibration current as
+ * results land; it is cheap because the engine only recomputes when something
+ * actually resolved (an idle hour reconciles nothing and skips the rebuild).
  */
 @Processor(INTELLIGENCE_QUEUE)
 export class IntelligenceProcessor extends WorkerHost {
@@ -35,20 +39,19 @@ export class IntelligenceProcessor extends WorkerHost {
 
   async process(job: Job): Promise<{ ok: boolean }> {
     switch (job.name) {
-      case JOB_REFRESH_DATA:
+      case JOB_REFRESH_DATA: {
         this.logger.log("Refreshing football data from provider…");
         await this.ingestion.ingestAll();
         this.analytics.invalidate();
+        // Fresh results just landed — feed them back and recompute now.
+        await this.runAdaptiveRecompute();
         return { ok: true };
+      }
       case JOB_RETRAIN_MODELS: {
+        await this.runAdaptiveRecompute();
         this.logger.log(
-          "Closing the adaptive feedback loop (reconcile outcomes + recompute)…",
-        );
-        const { resolved, pending } =
-          await this.adaptiveFeedback.reconcileAndRecompute();
-        this.logger.log(
-          `Adaptive recompute done (${resolved}/${pending} reconciled). For a full ` +
-            "ensemble retrain, run `python -m app.training.train` in the AI service.",
+          "For a full ensemble retrain, run `python -m app.training.train` in " +
+            "the AI service.",
         );
         return { ok: true };
       }
@@ -56,5 +59,13 @@ export class IntelligenceProcessor extends WorkerHost {
         this.logger.warn(`Unknown job: ${job.name}`);
         return { ok: false };
     }
+  }
+
+  /** Reconcile finished fixtures into Experience Memory and rebuild adaptive state. */
+  private async runAdaptiveRecompute(): Promise<void> {
+    this.logger.log("Closing the adaptive feedback loop (reconcile + recompute)…");
+    const { resolved, pending } =
+      await this.adaptiveFeedback.reconcileAndRecompute();
+    this.logger.log(`Adaptive recompute done (${resolved}/${pending} reconciled)`);
   }
 }

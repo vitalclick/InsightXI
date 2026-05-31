@@ -410,9 +410,13 @@ simulator, so "is it learning?" has a reproducible, offline answer.
    Match-archetype bucketing (big-favourite / tight / high-total) is deferred to
    keep the first cut legible; the `resolve`/`recompute` shape already
    generalises to more buckets.
-3. **Recompute cadence** — driven by the daily **`retrain-models`** BullMQ job,
-   which reconciles finished fixtures then calls `/adaptive/recompute`. Cheap
-   enough to move to hourly (alongside `refresh-data`) later if desired.
+3. **Recompute cadence** — **hourly**: the `refresh-data` BullMQ job reconciles
+   finished fixtures and calls `/adaptive/recompute` immediately after ingesting
+   fresh results, so learned weights/calibration stay current as matches resolve.
+   The daily `retrain-models` job repeats the (idempotent) reconcile/recompute as
+   a catch-up and additionally drives the heavier full ensemble retrain. The
+   recompute is cheap because the engine only rebuilds when something actually
+   resolved (an idle hour is a near no-op).
 4. **System of record** — **AI-service artifact only for the MVP**
    (`experience.jsonl` + `adaptive_state.json`). The backend stays stateless and
    reconciles outcomes by querying the AI service's *pending* list
