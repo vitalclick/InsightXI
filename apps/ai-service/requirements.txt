@@ -7,3 +7,7 @@ scikit-learn>=1.5.1
 xgboost>=2.1.0
 pandas>=2.2.2
 numpy>=2.0.0
+# Used directly to (de)serialize trained model artifacts in app.training.train
+# and app.models.ml_ensemble. scikit-learn pulls it in transitively, but it is a
+# direct dependency here, so pin it explicitly rather than rely on that.
+joblib>=1.4.2
