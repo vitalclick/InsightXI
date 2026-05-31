@@ -44,13 +44,3 @@ export const SIDENAV: NavSection[] = [
     ],
   },
 ];
-
-/** Topbar quick links. */
-export const TOPNAV: NavItem[] = [
-  { label: "Home", href: "/dashboard", icon: "home" },
-  { label: "Confidence Board", href: "/board", icon: "grid" },
-  { label: "Confidence Picks", href: "/predictions", icon: "target" },
-  { label: "Fixtures", href: "/fixtures", icon: "fixtures" },
-  { label: "Results", href: "/results", icon: "results" },
-  { label: "Leagues", href: "/leagues", icon: "leagues" },
-];
