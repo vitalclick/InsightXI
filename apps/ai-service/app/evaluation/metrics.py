@@ -59,6 +59,39 @@ def expected_calibration_error(
     return float(ece)
 
 
+def reliability_curve(
+    y_true: np.ndarray, proba: np.ndarray, n_bins: int = 10
+) -> list[dict]:
+    """Per-bin reliability data backing a calibration plot.
+
+    Uses the same top-confidence binning as ``expected_calibration_error``: for
+    each populated bin we report the mean predicted confidence, the empirical
+    accuracy, and the bin count. A well-calibrated model traces the diagonal
+    (confidence == accuracy). Empty bins are omitted so the curve only plots
+    where the model actually makes predictions.
+    """
+    confidences = proba.max(axis=1)
+    predictions = proba.argmax(axis=1)
+    correct = (predictions == y_true).astype(float)
+
+    bins = np.linspace(0.0, 1.0, n_bins + 1)
+    out: list[dict] = []
+    for i in range(n_bins):
+        lo, hi = bins[i], bins[i + 1]
+        mask = (confidences > lo) & (confidences <= hi)
+        count = int(mask.sum())
+        if count == 0:
+            continue
+        out.append(
+            {
+                "confidence": round(float(confidences[mask].mean()), 4),
+                "accuracy": round(float(correct[mask].mean()), 4),
+                "count": count,
+            }
+        )
+    return out
+
+
 def evaluate(y_true: np.ndarray, proba: np.ndarray) -> dict:
     """Full metric bundle for a set of probabilistic predictions."""
     return {
@@ -67,4 +100,5 @@ def evaluate(y_true: np.ndarray, proba: np.ndarray) -> dict:
         "brier": round(multiclass_brier(y_true, proba), 4),
         "accuracy": round(accuracy(y_true, proba), 4),
         "ece": round(expected_calibration_error(y_true, proba), 4),
+        "reliability": reliability_curve(y_true, proba),
     }
