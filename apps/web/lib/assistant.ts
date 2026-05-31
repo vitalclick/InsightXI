@@ -42,7 +42,42 @@ export async function answerQuery(query: string): Promise<AssistantAnswer> {
 
   const [teams, fixtures] = await Promise.all([api.teams(), api.fixtures()]);
 
-  // Predictions for the upcoming slate (parallel, tolerant of an offline AI).
+  // --- Team-specific question --------------------------------------------
+  // Resolve this path from ratings first and only the team's next-fixture
+  // prediction. Fanning predictions out across the whole slate up front would
+  // make a team query wait on every /predictions call (each ~5s when the AI
+  // service is offline) before the available ratings could be shown.
+  const team = matchTeam(query, teams);
+  if (team) {
+    try {
+      const r = await api.teamRatings(team.id);
+      const lines = [
+        `Elo ${Math.round(r.elo)} · recent form ${r.recentFormPoints}/15`,
+        `Attack strength ${r.attackStrength.toFixed(2)} · defense ${r.defenseStrength.toFixed(2)} (1.0 = league average)`,
+        `Avg xG ${r.avgXgFor.toFixed(2)} for / ${r.avgXgAgainst.toFixed(2)} against`,
+      ];
+      const nextFixture = fixtures.find((m) => m.homeTeamId === team.id || m.awayTeamId === team.id);
+      if (nextFixture) {
+        const p = await api.prediction(nextFixture.id).catch(() => undefined);
+        if (p) {
+          const isHome = nextFixture.homeTeamId === team.id;
+          const winP = isHome ? p.outcome.homeWin : p.outcome.awayWin;
+          const opp = isHome ? nextFixture.awayTeamName : nextFixture.homeTeamName;
+          lines.push(`Next up vs ${opp}: model gives ${team.name} a ${pct(winP)} win probability (${p.confidenceLevel}).`);
+        }
+      }
+      return {
+        title: team.name,
+        lines,
+        href: nextFixture ? `/matches/${nextFixture.id}` : `/teams/${team.id}`,
+        hrefLabel: nextFixture ? "Open match intel →" : "Team profile →",
+      };
+    } catch {
+      return { title: team.name, lines: [], note: "Ratings are temporarily unavailable." };
+    }
+  }
+
+  // --- Slate-level questions: now fan predictions out across the fixtures.
   const preds = await Promise.all(
     fixtures.map((m) =>
       api
@@ -52,34 +87,6 @@ export async function answerQuery(query: string): Promise<AssistantAnswer> {
     ),
   );
   const withPred = preds.filter((x): x is { m: MatchView; p: NonNullable<typeof x.p> } => Boolean(x.p));
-
-  // --- Team-specific question --------------------------------------------
-  const team = matchTeam(query, teams);
-  if (team) {
-    const next = withPred.find((x) => x.m.homeTeamId === team.id || x.m.awayTeamId === team.id);
-    try {
-      const r = await api.teamRatings(team.id);
-      const lines = [
-        `Elo ${Math.round(r.elo)} · recent form ${r.recentFormPoints}/15`,
-        `Attack strength ${r.attackStrength.toFixed(2)} · defense ${r.defenseStrength.toFixed(2)} (1.0 = league average)`,
-        `Avg xG ${r.avgXgFor.toFixed(2)} for / ${r.avgXgAgainst.toFixed(2)} against`,
-      ];
-      if (next) {
-        const isHome = next.m.homeTeamId === team.id;
-        const winP = isHome ? next.p.outcome.homeWin : next.p.outcome.awayWin;
-        const opp = isHome ? next.m.awayTeamName : next.m.homeTeamName;
-        lines.push(`Next up vs ${opp}: model gives ${team.name} a ${pct(winP)} win probability (${next.p.confidenceLevel}).`);
-      }
-      return {
-        title: team.name,
-        lines,
-        href: next ? `/matches/${next.m.id}` : `/teams/${team.id}`,
-        hrefLabel: next ? "Open match intel →" : "Team profile →",
-      };
-    } catch {
-      return { title: team.name, lines: [], note: "Ratings are temporarily unavailable." };
-    }
-  }
 
   if (withPred.length === 0) {
     return {
