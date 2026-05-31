@@ -65,3 +65,35 @@ jobs:
         run: pnpm exec tsc --noEmit -p tsconfig.e2e.json
       - name: Run E2E (offline mock backend)
         run: pnpm test:e2e
+
+  lighthouse:
+    name: Lighthouse (perf budget)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build API (served from dist for the audit)
+        run: pnpm --filter @insightxi/api build
+      - name: Build web (production bundles)
+        run: pnpm --filter @insightxi/web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          # Serve via `next start` (not the standalone bundle) for the audit.
+          NEXT_DISABLE_STANDALONE: "true"
+      # @lhci/cli is run via dlx so it never touches the workspace lockfile.
+      # ubuntu-latest ships Google Chrome, which chrome-launcher auto-detects.
+      - name: Run Lighthouse CI (enforces the JS bundle budget)
+        run: pnpm dlx @lhci/cli@0.14.x autorun
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci
+          if-no-files-found: ignore
