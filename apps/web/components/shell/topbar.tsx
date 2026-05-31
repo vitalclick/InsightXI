@@ -7,6 +7,7 @@ import { ThemeToggle } from "../theme/theme-toggle";
 import { useUiStore } from "../../store/ui-store";
 import { useAuthStore } from "../../store/auth-store";
 import { TOPNAV } from "./nav-config";
+import { SearchBox } from "./search-box";
 
 export function Topbar() {
   const pathname = usePathname();
@@ -25,18 +26,17 @@ export function Topbar() {
       <button className="sb-toggle" onClick={onToggle} aria-label="Toggle sidebar">
         <Icon name="menu" size={18} />
       </button>
-      <nav className="topnav">
-        {TOPNAV.map((l) => (
-          <Link key={l.href} href={l.href} className={pathname.startsWith(l.href) ? "active" : ""}>
-            {l.label}
-          </Link>
-        ))}
+      <nav className="topnav" aria-label="Primary">
+        {TOPNAV.map((l) => {
+          const active = pathname.startsWith(l.href);
+          return (
+            <Link key={l.href} href={l.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+              {l.label}
+            </Link>
+          );
+        })}
       </nav>
-      <div className="tb-search">
-        <Icon name="search" size={15} />
-        <input placeholder="Search teams, players, matches…" aria-label="Search" />
-        <kbd>⌘K</kbd>
-      </div>
+      <SearchBox />
       <ThemeToggle />
       <button className="tb-icon" title="AI Assistant" aria-label="AI Assistant">
         <Icon name="bolt" size={17} />

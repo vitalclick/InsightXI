@@ -3,7 +3,12 @@ import { AppShell } from "../../components/shell/app-shell";
 export default function AppGroupLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppShell>
-      <main className="page">{children}</main>
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
+      <main id="main-content" className="page" tabIndex={-1}>
+        {children}
+      </main>
     </AppShell>
   );
 }

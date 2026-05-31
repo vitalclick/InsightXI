@@ -6,6 +6,7 @@ import { api } from "../../../services/api-client";
 import { PageHead } from "../../../components/ui/page-head";
 import { LeagueChips } from "../../../components/ui/league-chips";
 import { MatchRow } from "../../../components/match/match-row";
+import { SkeletonRows } from "../../../components/ui/skeleton";
 import { usePredictions } from "../../../hooks/use-predictions";
 
 export default function FixturesPage() {
@@ -34,7 +35,7 @@ export default function FixturesPage() {
         </div>
         <div className="card-bd" style={{ padding: "4px 12px 8px" }}>
           {isLoading ? (
-            <div className="empty">Loading fixtures…</div>
+            <SkeletonRows />
           ) : fixtures.length === 0 ? (
             <div className="empty">
               <h4>No upcoming fixtures</h4>

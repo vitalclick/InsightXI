@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../services/api-client";
 import { clubCode } from "../../lib/club";
+import { useLive } from "../../hooks/use-live";
 import { Icon } from "../ui/icon";
 import type { MatchView } from "../../lib/types";
 
@@ -13,8 +14,23 @@ function fmtTime(iso: string): string {
 export function Ticker() {
   const { data: fixtures = [] } = useQuery({ queryKey: ["fixtures", ""], queryFn: () => api.fixtures() });
   const { data: results = [] } = useQuery({ queryKey: ["results", ""], queryFn: () => api.results() });
+  const { snapshot } = useLive();
 
   const items: React.ReactNode[] = [];
+
+  // Live match (websocket) leads the ticker and updates in real time.
+  if (snapshot) {
+    items.push(
+      <span className="ticker-item" key="live" style={{ color: "var(--text)" }}>
+        <span className="min" style={{ color: "var(--red)" }}>
+          {snapshot.status === "LIVE" ? `${snapshot.minute}'` : "FT"}
+        </span>
+        <b>{clubCode(snapshot.homeTeamName)}</b> {snapshot.homeGoals}–{snapshot.awayGoals}{" "}
+        <b>{clubCode(snapshot.awayTeamName)}</b>
+      </span>,
+    );
+  }
+
   results.slice(0, 5).forEach((m: MatchView) => {
     items.push(
       <span className="ticker-item" key={`r-${m.id}`}>

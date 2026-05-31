@@ -1,0 +1,91 @@
+/* ============================================================
+   InsightXI — responsive overrides
+   Inline grid-template-columns on pages need !important to be
+   overridden inside media queries; these rules collapse the
+   multi-column layouts down for tablet and phone widths.
+   ============================================================ */
+
+/* Prevent horizontal scroll from fixed-width rows on small screens. */
+main.page { overflow-x: hidden; }
+main.page:focus { outline: none; }
+
+/* Accessibility: skip-to-content link, visible only when focused. */
+.skip-link {
+  position: fixed;
+  top: -60px;
+  left: 12px;
+  z-index: 200;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  transition: top .15s;
+}
+.skip-link:focus {
+  top: 12px;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Visible keyboard focus across interactive chrome (mouse users unaffected). */
+.btn:focus-visible,
+.chip:focus-visible,
+.nav-i:focus-visible,
+.tb-icon:focus-visible,
+.tb-avatar:focus-visible,
+.sb-toggle:focus-visible,
+.day-pill:focus-visible,
+.board-row:focus-visible,
+.topnav a:focus-visible,
+.card-hover:focus-visible {
+  outline: 2px solid var(--blue-2);
+  outline-offset: 2px;
+}
+
+/* Tablet: drop dense layouts to two columns. */
+@media (max-width: 1024px) {
+  main.page .grid,
+  .sect .grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Phone: single column everywhere. */
+@media (max-width: 680px) {
+  main.page .grid,
+  .sect .grid {
+    grid-template-columns: 1fr !important;
+  }
+  .board-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Match / team header: let the crest row wrap and shrink. */
+  .crest.xl { width: 64px; height: 64px; font-size: 22px; }
+  .page-title { font-size: 22px; }
+  .sect-head h2 { font-size: 28px; }
+  .hero { padding: 40px 20px 30px; }
+  .sect { padding: 40px 20px; }
+}
+
+/* Compact rows: allow the fixed team block to shrink before overflowing. */
+@media (max-width: 560px) {
+  .board-row { gap: 8px; }
+  .board-row .mono { font-size: 11px; }
+}
+
+/* Topbar: reclaim space on small screens. */
+@media (max-width: 680px) {
+  .tb-search kbd { display: none; }
+  .topbar { gap: 10px; padding: 0 14px; }
+}
+@media (max-width: 560px) {
+  .topbar .tb-search { display: none; }
+}
+
+/* On phones the landing hero CTA stack should be full-width-friendly. */
+@media (max-width: 480px) {
+  .btn-lg { height: 46px; padding: 0 18px; font-size: 14px; }
+  .hero h1 { font-size: 34px; }
+}

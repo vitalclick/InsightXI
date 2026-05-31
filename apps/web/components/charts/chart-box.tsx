@@ -12,11 +12,14 @@ export function ChartBox({
   deps = [],
   className,
   style,
+  label,
 }: {
   draw: (el: HTMLElement) => void;
   deps?: unknown[];
   className?: string;
   style?: React.CSSProperties;
+  /** Accessible description; when omitted the chart is treated as decorative. */
+  label?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const version = useThemeStore((s) => s.version);
@@ -26,5 +29,14 @@ export function ChartBox({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version, ...deps]);
 
-  return <div ref={ref} className={className} style={style} />;
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={style}
+      role={label ? "img" : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+    />
+  );
 }

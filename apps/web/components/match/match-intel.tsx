@@ -8,12 +8,42 @@ import { Icon } from "../ui/icon";
 import { FormDots } from "../ui/form-dots";
 import { ChartBox } from "../charts/chart-box";
 import { formationLayout } from "../../lib/formation";
-import type { MarketProbability, MatchPrediction, TacticalProfile } from "../../lib/types";
+import { pressingGrid, attackGrid } from "../../lib/pitch-zones";
+import { clubCode } from "../../lib/club";
+import { ScoreMatrix } from "./score-matrix";
+import type { MarketProbability, MatchPrediction, MatchView, TacticalProfile } from "../../lib/types";
 import * as IX from "../../lib/ix-charts";
 
 function findMarket(markets: MarketProbability[], needle: string): number | null {
   const m = markets.find((x) => x.label.toLowerCase().includes(needle.toLowerCase()));
   return m ? Math.round(m.probability * 100) : null;
+}
+
+/** A team's expected-goals-for over its most recent matches (chronological). */
+function teamXgSeries(results: MatchView[], teamId: string, n = 8): number[] {
+  return results
+    .filter((m) => (m.homeTeamId === teamId || m.awayTeamId === teamId) && m.homeXg != null)
+    .sort((a, b) => a.utcDate.localeCompare(b.utcDate))
+    .slice(-n)
+    .map((m) => (m.homeTeamId === teamId ? (m.homeXg ?? 0) : (m.awayXg ?? 0)));
+}
+
+/** Per-match net goal difference (scaled to ±100) over recent matches. */
+function teamMomentumSeries(results: MatchView[], teamId: string, n = 8): number[] {
+  return results
+    .filter((m) => (m.homeTeamId === teamId || m.awayTeamId === teamId) && m.homeGoals != null)
+    .sort((a, b) => a.utcDate.localeCompare(b.utcDate))
+    .slice(-n)
+    .map((m) => {
+      const home = m.homeTeamId === teamId;
+      const gf = (home ? m.homeGoals : m.awayGoals) ?? 0;
+      const ga = (home ? m.awayGoals : m.homeGoals) ?? 0;
+      return Math.max(-100, Math.min(100, (gf - ga) * 45));
+    });
+}
+
+function formPoints(form: string[]): number {
+  return form.reduce((s, r) => s + (r === "W" ? 3 : r === "D" ? 1 : 0), 0);
 }
 
 const LINE_SCORE: Record<string, number> = { High: 88, Medium: 55, Low: 25 };
@@ -41,6 +71,11 @@ export function MatchIntel({ id }: { id: string }) {
     queryFn: () => api.h2h(homeId!, awayId!),
     enabled: !!homeId && !!awayId,
     retry: 0,
+  });
+  const { data: leagueResults = [] } = useQuery({
+    queryKey: ["results", match?.leagueId],
+    queryFn: () => api.results(match!.leagueId),
+    enabled: !!match,
   });
 
   if (isLoading) return <div className="empty">Loading match intelligence…</div>;
@@ -152,6 +187,27 @@ export function MatchIntel({ id }: { id: string }) {
             <ConfidenceCard pred={pred} />
           </div>
 
+          {/* CORRECT SCORE */}
+          <section className="card reveal" style={{ marginBottom: 18 }}>
+            <div className="card-hd">
+              <h3><span className="ic"><Icon name="grid" size={16} /></span> Correct-Score Heatmap</h3>
+              <span className="badge">Poisson · expected goals</span>
+            </div>
+            <div className="card-bd grid" style={{ gridTemplateColumns: "1.2fr 1fr", gap: 24, alignItems: "center" }}>
+              <ScoreMatrix
+                homeCode={clubCode(match.homeTeamName)}
+                awayCode={clubCode(match.awayTeamName)}
+                lambdaHome={pred.expectedGoals.home}
+                lambdaAway={pred.expectedGoals.away}
+              />
+              <div style={{ fontSize: 12.5, color: "var(--text-2)", lineHeight: 1.6 }}>
+                Each cell is the joint probability of that exact scoreline, derived from the model&apos;s expected goals
+                ({pred.expectedGoals.home.toFixed(2)} – {pred.expectedGoals.away.toFixed(2)}) under independent Poisson
+                processes. Darker cells are more likely; the ringed cell is the modal scoreline.
+              </div>
+            </div>
+          </section>
+
           {/* EXPLAINABLE */}
           <section className="card reveal" style={{ marginBottom: 18 }}>
             <div className="card-hd">
@@ -241,8 +297,116 @@ export function MatchIntel({ id }: { id: string }) {
                   </section>
                 </div>
               </div>
+
+              {/* PITCH ZONE HEATMAPS */}
+              <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start", marginBottom: 18 }}>
+                <section className="card reveal">
+                  <div className="card-hd">
+                    <h3>{clubCode(tactical.home.name)} Pressing Zones</h3>
+                    <span className="badge red">PPDA projection</span>
+                  </div>
+                  <div className="card-bd flex gap-16 aic">
+                    <ChartBox
+                      style={{ width: 180, flexShrink: 0 }}
+                      label={`Projected pressing intensity map for ${tactical.home.name}`}
+                      deps={[id, tactical.home.pressingIntensity, tactical.home.defensiveLine]}
+                      draw={(el) => IX.heatmap(el, pressingGrid(tactical.home), { w: 180, h: 240 })}
+                    />
+                    <div style={{ flex: 1, fontSize: 12.5, color: "var(--text-2)", lineHeight: 1.55 }}>
+                      A <b style={{ color: "var(--text)" }}>{tactical.home.defensiveLine.toLowerCase()}</b> defensive line with{" "}
+                      <b style={{ color: "var(--text)" }}>{tactical.home.pressingIntensity}</b> pressing intensity concentrates
+                      ball recoveries {tactical.home.defensiveLine === "High" ? "high up the pitch" : tactical.home.defensiveLine === "Low" ? "in their own third" : "around midfield"}.
+                      <div className="dim" style={{ fontSize: 11, marginTop: 8 }}>Model projection from tactical profile — not tracked event data.</div>
+                    </div>
+                  </div>
+                </section>
+                <section className="card reveal">
+                  <div className="card-hd">
+                    <h3>{clubCode(tactical.away.name)} Attack Zones</h3>
+                    <span className="badge green">Build-up projection</span>
+                  </div>
+                  <div className="card-bd flex gap-16 aic">
+                    <ChartBox
+                      style={{ width: 180, flexShrink: 0 }}
+                      label={`Projected attacking zone map for ${tactical.away.name}`}
+                      deps={[id, tactical.away.possession, tactical.away.attackingFlow]}
+                      draw={(el) => IX.heatmap(el, attackGrid(tactical.away), { w: 180, h: 240 })}
+                    />
+                    <div style={{ flex: 1, fontSize: 12.5, color: "var(--text-2)", lineHeight: 1.55 }}>
+                      With <b style={{ color: "var(--text)" }}>{tactical.away.possession}%</b> possession and a{" "}
+                      <b style={{ color: "var(--text)" }}>{(tactical.away.attackingFlow ?? "balanced").toLowerCase()}</b> attacking flow,
+                      threat is projected to load the final third {/wing|flank|wide/.test((tactical.away.attackingFlow ?? "").toLowerCase()) ? "down the channels" : "through central areas"}.
+                      <div className="dim" style={{ fontSize: 11, marginTop: 8 }}>Model projection from tactical profile — not tracked event data.</div>
+                    </div>
+                  </div>
+                </section>
+              </div>
             </>
           )}
+
+          {/* MOMENTUM */}
+          {(() => {
+            const homeXg = teamXgSeries(leagueResults, match.homeTeamId);
+            const awayXg = teamXgSeries(leagueResults, match.awayTeamId);
+            const homeMom = teamMomentumSeries(leagueResults, match.homeTeamId);
+            if (homeXg.length < 2 && awayXg.length < 2) return null;
+            const hPts = homeProfile ? formPoints(homeProfile.recentForm) : 0;
+            const aPts = awayProfile ? formPoints(awayProfile.recentForm) : 0;
+            const xMax = Math.max(homeXg.length, awayXg.length) - 1;
+            const yMax = Math.max(1, ...homeXg, ...awayXg) * 1.15;
+            return (
+              <>
+                <section className="section-title reveal">
+                  <h2><span className="ic" style={{ color: "var(--blue-2)" }}><Icon name="results" size={16} /></span> Team Momentum</h2>
+                  <div className="ln" />
+                </section>
+                <div className="grid" style={{ gridTemplateColumns: "1.4fr 1fr", alignItems: "start", marginBottom: 18 }}>
+                  <section className="card reveal">
+                    <div className="card-hd">
+                      <h3>xG Trend · last {Math.max(homeXg.length, awayXg.length)} matches</h3>
+                      <div className="flex gap-12" style={{ fontSize: 11.5 }}>
+                        <span className="flex aic gap-6"><span style={{ width: 9, height: 9, borderRadius: 3, background: "var(--blue)" }} />{clubCode(match.homeTeamName)}</span>
+                        <span className="flex aic gap-6"><span style={{ width: 9, height: 9, borderRadius: 3, background: "var(--green)" }} />{clubCode(match.awayTeamName)}</span>
+                      </div>
+                    </div>
+                    <div className="card-bd">
+                      <ChartBox
+                        deps={[id, homeXg.length, awayXg.length]}
+                        draw={(el) =>
+                          IX.line(el, {
+                            w: 560,
+                            h: 190,
+                            yLabels: true,
+                            yDec: 1,
+                            yMax,
+                            gy: 4,
+                            xMax,
+                            series: [
+                              { color: IX.C.blue, area: true, endDot: true, data: homeXg.map((y, x) => ({ x, y })) },
+                              { color: IX.C.green, endDot: true, data: awayXg.map((y, x) => ({ x, y })) },
+                            ],
+                          })
+                        }
+                      />
+                    </div>
+                  </section>
+                  <section className="card reveal">
+                    <div className="card-hd"><h3>Momentum Index</h3><span className="badge green">Form-weighted</span></div>
+                    <div className="card-bd">
+                      <MomentumTeam name={match.homeTeamName} form={homeProfile?.recentForm ?? []} pts={hPts} xg={homeProfile?.avgXgFor} accent />
+                      <MomentumTeam name={match.awayTeamName} form={awayProfile?.recentForm ?? []} pts={aPts} xg={awayProfile?.avgXgFor} />
+                      {homeMom.length >= 2 && (
+                        <>
+                          <div className="label-xs" style={{ margin: "16px 0 6px" }}>{clubCode(match.homeTeamName)} result swing · last {homeMom.length}</div>
+                          <ChartBox deps={[id, homeMom.length]} draw={(el) => IX.momentum(el, homeMom, { w: 460, h: 90 })} />
+                        </>
+                      )}
+                    </div>
+                  </section>
+                </div>
+              </>
+            );
+          })()}
 
           {/* HISTORY */}
           {h2h && h2h.played > 0 && (
@@ -362,6 +526,28 @@ function ConfidenceCard({ pred }: { pred: MatchPrediction }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function MomentumTeam({ name, form, pts, xg, accent }: { name: string; form: string[]; pts: number; xg?: number; accent?: boolean }) {
+  return (
+    <div className="flex aic gap-12" style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+      <span style={{ width: 9, height: 9, borderRadius: 3, background: accent ? "var(--blue)" : "var(--green)", flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
+        <div style={{ marginTop: 6 }}><FormDots form={form} /></div>
+      </div>
+      <div className="center" style={{ width: 52 }}>
+        <div className="mono" style={{ fontWeight: 700, fontSize: 15 }}>{pts}<span className="dim" style={{ fontSize: 11 }}>/15</span></div>
+        <div className="stat-lab">form</div>
+      </div>
+      {xg != null && (
+        <div className="center" style={{ width: 52 }}>
+          <div className="mono" style={{ fontWeight: 700, fontSize: 15, color: "var(--blue-2)" }}>{xg.toFixed(2)}</div>
+          <div className="stat-lab">xG/g</div>
+        </div>
+      )}
+    </div>
   );
 }
 

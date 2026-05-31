@@ -55,22 +55,26 @@ export function Sidebar() {
           Insight<b>XI</b>
         </div>
       </Link>
-      <nav className="sb-nav">
+      <nav className="sb-nav" aria-label="Sidebar">
         {SIDENAV.map((sec) => (
           <div key={sec.section}>
             <div className="sb-sec-label">{sec.section}</div>
-            {sec.items.map((it) => (
-              <Link
-                key={it.href}
-                href={it.href}
-                onClick={closeMobile}
-                className={`nav-i${isActive(pathname, it.href) ? " active" : ""}`}
-              >
-                <Icon name={it.icon} />
-                <span>{it.label}</span>
-                {it.tag && <TagBadge tag={it.tag} />}
-              </Link>
-            ))}
+            {sec.items.map((it) => {
+              const active = isActive(pathname, it.href);
+              return (
+                <Link
+                  key={it.href}
+                  href={it.href}
+                  onClick={closeMobile}
+                  className={`nav-i${active ? " active" : ""}`}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <Icon name={it.icon} />
+                  <span>{it.label}</span>
+                  {it.tag && <TagBadge tag={it.tag} />}
+                </Link>
+              );
+            })}
           </div>
         ))}
       </nav>

@@ -7,6 +7,7 @@ import { PageHead } from "../../../components/ui/page-head";
 import { LeagueChips } from "../../../components/ui/league-chips";
 import { FormDots } from "../../../components/ui/form-dots";
 import { Crest } from "../../../components/ui/crest";
+import { SkeletonRows } from "../../../components/ui/skeleton";
 
 export default function LeaguesPage() {
   const [league, setLeague] = useState("epl");
@@ -36,7 +37,7 @@ export default function LeaguesPage() {
         </div>
         <div className="card-bd" style={{ padding: 0, overflowX: "auto" }}>
           {isLoading ? (
-            <div className="empty">Loading table…</div>
+            <SkeletonRows rows={8} />
           ) : (
             <table className="tbl">
               <thead>
