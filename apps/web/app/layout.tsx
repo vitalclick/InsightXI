@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./design-system.css";
+import "./responsive.css";
 import { Providers } from "./providers";
 import { ServiceWorkerRegistrar } from "../components/service-worker";
 import { ClientInit } from "../components/client-init";
