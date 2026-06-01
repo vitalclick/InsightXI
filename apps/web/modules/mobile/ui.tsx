@@ -3,20 +3,31 @@
 /**
  * InsightXI Mobile — shared presentational atoms used across screens.
  * These lean on the design-system / mobile.css class system (crest, badge,
- * tribar, form dots, …) so they stay visually identical to the prototype.
+ * tribar, form dots, …) so they stay visually identical to the prototype,
+ * but take real API-shaped props (team name + stable seed for crest colours).
  */
 import { useEffect, useState } from "react";
-import { CLUBS, type ClubCode, type FormResult } from "./data";
+import { clubCode, clubColors } from "../../lib/club";
 
 export type CrestSize = "xs" | "sm" | "md" | "lg" | "xl";
 
-/** Coloured club crest chip with the 3-letter short code. */
-export function Crest({ code, size = "sm" }: { code: ClubCode; size?: CrestSize }) {
-  const c = CLUBS[code];
-  if (!c) return null;
+/** Geometric club crest (gradient + code), deterministic from the seed. */
+export function Crest({
+  name,
+  seed,
+  shortName,
+  size = "sm",
+}: {
+  name: string;
+  /** Stable seed for the gradient (defaults to the team id/name). */
+  seed?: string;
+  shortName?: string;
+  size?: CrestSize;
+}) {
+  const { c1, c2 } = clubColors(seed ?? name);
   return (
-    <div className={`crest ${size}`} style={{ background: `linear-gradient(150deg,${c.c1},${c.c2})` }}>
-      {c.short}
+    <div className={`crest ${size}`} style={{ background: `linear-gradient(150deg,${c1},${c2})` }} aria-hidden>
+      {clubCode(name, shortName)}
     </div>
   );
 }
@@ -42,7 +53,7 @@ export function Tribar({ hp, dp, ap, legend = true }: { hp: number; dp: number; 
 }
 
 /** Recent-form W/D/L dots. */
-export function FormDots({ form }: { form: FormResult[] }) {
+export function FormDots({ form }: { form: string[] }) {
   return (
     <div className="form-row">
       {form.map((f, i) => (

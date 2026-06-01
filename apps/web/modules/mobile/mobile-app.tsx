@@ -2,7 +2,7 @@
 
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useThemeStore } from "../../store/theme-store";
-import type { AnyMatch } from "./data";
+import type { MatchArg } from "./view";
 import { ICONS } from "./icons";
 import {
   MobileNavProvider,
@@ -24,7 +24,7 @@ import { PremiumScreen } from "./screens/premium";
 
 interface Entry {
   id: ScreenId;
-  arg?: AnyMatch;
+  arg?: MatchArg;
   key: number;
   anim: "tab-in" | "push-in" | null;
 }
@@ -105,7 +105,7 @@ export function MobileApp() {
     haptic(8);
   }, []);
 
-  const pushScreen = useCallback((id: DetailId, arg?: AnyMatch) => {
+  const pushScreen = useCallback((id: DetailId, arg?: MatchArg) => {
     setStack((cur) => [...cur, { id, arg, key: keyRef.current++, anim: "push-in" }]);
     setScrollY(0);
     haptic(10);

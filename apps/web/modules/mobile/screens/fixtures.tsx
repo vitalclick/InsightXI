@@ -1,71 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import { CLUBS, CLUB_CODES, UPCOMING, type AnyMatch } from "../data";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../../../services/api-client";
+import { clubCode } from "../../../lib/club";
+import { distinctMatchdays, filterByMatchday } from "../../../lib/fixtures";
+import { usePredictions } from "../../../hooks/use-predictions";
 import { useMobileNav } from "../nav-context";
 import { Crest, Tribar } from "../ui";
-
-const DAYS: [string, string][] = [
-  ["Today", "Today"],
-  ["Tomorrow", "Tomorrow"],
-  ["Sat", "Sat"],
-  ["Sun", "1 Jun"],
-  ["Mon", "2 Jun"],
-];
-
-interface FixtureRow {
-  id: string;
-  home: string;
-  away: string;
-  time: string;
-  date: string;
-  comp: string;
-  conf: number;
-  pick: string;
-  hp: number;
-  dp: number;
-  ap: number;
-}
-
-/** Real upcoming rows for the next days, deterministically synthesised beyond. */
-function group(dayKey: string): FixtureRow[] {
-  const fromData = UPCOMING.filter(
-    (m) =>
-      (dayKey === "Today" && m.date === "Today") ||
-      (dayKey === "Tomorrow" && m.date === "Tomorrow") ||
-      (dayKey === "Sat" && m.date === "Sat"),
-  );
-  if (fromData.length) return fromData;
-
-  const seed = dayKey.charCodeAt(0);
-  return [0, 1, 2, 3].map((i) => {
-    const h = CLUB_CODES[(seed + i * 3) % CLUB_CODES.length];
-    const a = CLUB_CODES[(seed + i * 5 + 4) % CLUB_CODES.length];
-    const hh = h === a ? CLUB_CODES[(seed + i + 7) % CLUB_CODES.length] : h;
-    const conf = 52 + ((seed * 7 + i * 13) % 26);
-    const hp = 30 + ((i * 6) % 22);
-    const ap = 26 + ((i * 4) % 16);
-    const dp = 100 - hp - ap;
-    return {
-      id: "syn" + dayKey + i,
-      home: hh,
-      away: a,
-      time: ["12:30", "15:00", "17:30", "20:00"][i],
-      date: dayKey,
-      comp: "Premier League",
-      conf,
-      pick: hp > ap ? CLUBS[hh].short : CLUBS[a].short,
-      hp,
-      dp,
-      ap,
-    };
-  });
-}
+import { outcomePct, pickClass, pickOf } from "../view";
 
 export function FixturesScreen() {
   const nav = useMobileNav();
-  const [day, setDay] = useState("Today");
-  const rows = group(day);
+  const [matchday, setMatchday] = useState<number | null>(null);
+  const { data: allFixtures = [], isLoading } = useQuery({
+    queryKey: ["fixtures", ""],
+    queryFn: () => api.fixtures(),
+  });
+
+  const matchdays = useMemo(() => distinctMatchdays(allFixtures), [allFixtures]);
+  useEffect(() => {
+    if (matchday !== null && !matchdays.includes(matchday)) setMatchday(null);
+  }, [matchdays, matchday]);
+
+  const fixtures = useMemo(() => filterByMatchday(allFixtures, matchday), [allFixtures, matchday]);
+  const preds = usePredictions(fixtures.map((m) => m.id));
 
   return (
     <>
@@ -75,53 +34,67 @@ export function FixturesScreen() {
         <div className="lg-sub">Every fixture with win probability, confidence and the model&apos;s pick.</div>
       </div>
 
-      <div className="seg-row" style={{ marginTop: 14 }}>
-        {DAYS.map((d) => (
-          <button key={d[0]} className={`seg day${day === d[0] ? " active" : ""}`} onClick={() => setDay(d[0])}>
-            {d[0]}
-            <small>{d[1]}</small>
+      {matchdays.length > 1 && (
+        <div className="seg-row" style={{ marginTop: 14 }}>
+          <button className={`seg${matchday === null ? " active" : ""}`} onClick={() => setMatchday(null)}>
+            All
           </button>
-        ))}
-      </div>
+          {matchdays.map((md) => (
+            <button key={md} className={`seg${matchday === md ? " active" : ""}`} onClick={() => setMatchday(md)}>
+              MD {md}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div>
         <div className="list-sec">
           <span className="badge blue" style={{ fontSize: 9 }}>
-            PL
+            ALL
           </span>{" "}
-          Premier League
+          {matchday === null ? "Upcoming fixtures" : `Matchday ${matchday}`}
+          <span className="badge" style={{ marginLeft: "auto" }}>
+            {fixtures.length}
+          </span>
         </div>
         <div className="block" style={{ paddingTop: 2 }}>
           <div className="m-card">
-            {rows.map((m) => {
-              const pick = m.hp >= m.dp && m.hp >= m.ap ? "1" : m.ap >= m.dp ? "2" : "X";
-              const pickCls = m.hp >= m.dp && m.hp >= m.ap ? "h" : m.ap >= m.dp ? "a" : "d";
+            {fixtures.map((m) => {
+              const p = preds[m.id];
+              const split = outcomePct(p);
+              const pick = pickOf(p);
               return (
-                <div
-                  className="match-row tappable"
-                  key={m.id}
-                  onClick={() => nav.pushScreen("match", m as AnyMatch)}
-                >
+                <div className="match-row tappable" key={m.id} onClick={() => nav.pushScreen("match", m)}>
                   <div className="match-time">
-                    <div className="t">{m.time}</div>
+                    <div className="t">{new Date(m.utcDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+                    <div className="d">{new Date(m.utcDate).toLocaleDateString([], { weekday: "short" })}</div>
                   </div>
                   <div className="mr-teams">
                     <div className="mr-team">
-                      <Crest code={m.home} size="xs" />
-                      <span className="nm">{CLUBS[m.home].short}</span>
+                      <Crest name={m.homeTeamName} seed={m.homeTeamId} size="xs" />
+                      <span className="nm">{clubCode(m.homeTeamName)}</span>
                     </div>
                     <div className="mr-team">
-                      <Crest code={m.away} size="xs" />
-                      <span className="nm">{CLUBS[m.away].short}</span>
+                      <Crest name={m.awayTeamName} seed={m.awayTeamId} size="xs" />
+                      <span className="nm">{clubCode(m.awayTeamName)}</span>
                     </div>
                   </div>
                   <div className="grow" style={{ maxWidth: 104 }}>
-                    <Tribar hp={m.hp} dp={m.dp} ap={m.ap} />
+                    {split ? <Tribar hp={split.hp} dp={split.dp} ap={split.ap} legend={false} /> : <div style={{ height: 7 }} />}
                   </div>
-                  <div className={`pickb ${pickCls}`}>{pick}</div>
+                  {pick ? (
+                    <div className={`pickb ${pickClass(pick)}`}>{pick}</div>
+                  ) : (
+                    <div className="pickb d">–</div>
+                  )}
                 </div>
               );
             })}
+            {!isLoading && fixtures.length === 0 && (
+              <div className="dim" style={{ padding: 16, fontSize: 13 }}>
+                No scheduled matches for this competition right now.
+              </div>
+            )}
           </div>
         </div>
       </div>

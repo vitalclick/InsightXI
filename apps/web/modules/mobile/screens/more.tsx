@@ -2,18 +2,28 @@
 
 import { useState } from "react";
 import { useThemeStore } from "../../../store/theme-store";
-import { FEATURE_MATCH } from "../data";
+import { useAuthStore } from "../../../store/auth-store";
 import { useMobileNav } from "../nav-context";
 import { Icon, type IconName } from "../icons";
 
 export function MoreScreen() {
   const nav = useMobileNav();
   const theme = useThemeStore((s) => s.theme);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
   const [alerts, setAlerts] = useState(true);
+
+  const displayName = user?.name ?? (user ? user.email.split("@")[0] : "Guest");
+  const initials = displayName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("") || "IX";
+  const isPremium = user?.tier === "PREMIUM";
 
   const intelligence: { title: string; sub: string; icon: IconName; go: () => void }[] = [
     { title: "Confidence Board", sub: "AI picks by day", icon: "grid", go: () => nav.pushScreen("board") },
-    { title: "Match Intel", sub: "Deep tactical read", icon: "match", go: () => nav.pushScreen("match", FEATURE_MATCH) },
+    { title: "Fixtures", sub: "Schedule & reads", icon: "fixtures", go: () => nav.showTab("fixtures") },
     { title: "Predictions", sub: "Sure-win board", icon: "target", go: () => nav.showTab("predictions") },
     { title: "Premium", sub: "Elite analytics", icon: "premium", go: () => nav.pushScreen("premium") },
   ];
@@ -34,43 +44,45 @@ export function MoreScreen() {
 
       <div className="block" style={{ paddingTop: 14 }}>
         <div className="profile-hd">
-          <div className="profile-av">AM</div>
+          <div className="profile-av">{initials}</div>
           <div className="grow">
-            <div style={{ fontWeight: 700, fontSize: 17 }}>Alex Mercer</div>
+            <div style={{ fontWeight: 700, fontSize: 17 }}>{displayName}</div>
             <div className="muted" style={{ fontSize: 12.5 }}>
-              alex@insightxi.app
+              {user?.email ?? "Sign in on the web app"}
             </div>
           </div>
-          <span className="badge gold">Free plan</span>
+          <span className={`badge ${isPremium ? "green" : "gold"}`}>{isPremium ? "Premium" : "Free plan"}</span>
         </div>
       </div>
 
-      <div className="block">
-        <div className="prem-hero tappable" onClick={() => nav.pushScreen("premium")}>
-          <div className="flex aic gap-8" style={{ marginBottom: 8 }}>
-            <span className="badge gold">
-              <Icon name="premium" /> Premium
-            </span>
+      {!isPremium && (
+        <div className="block">
+          <div className="prem-hero tappable" onClick={() => nav.pushScreen("premium")}>
+            <div className="flex aic gap-8" style={{ marginBottom: 8 }}>
+              <span className="badge gold">
+                <Icon name="premium" /> Premium
+              </span>
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 800,
+                fontSize: 18,
+                letterSpacing: "-.02em",
+                lineHeight: 1.15,
+              }}
+            >
+              Unlock the elite analytics layer
+            </div>
+            <div className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>
+              Tactical AI reports, fatigue modelling &amp; hidden-trend detection.
+            </div>
+            <button className="btn btn-gold" style={{ marginTop: 13 }}>
+              Upgrade Premium →
+            </button>
           </div>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 800,
-              fontSize: 18,
-              letterSpacing: "-.02em",
-              lineHeight: 1.15,
-            }}
-          >
-            Unlock the elite analytics layer
-          </div>
-          <div className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>
-            Tactical AI reports, fatigue modelling &amp; hidden-trend detection.
-          </div>
-          <button className="btn btn-gold" style={{ marginTop: 13 }}>
-            Upgrade Premium →
-          </button>
         </div>
-      </div>
+      )}
 
       <div className="block">
         <div className="block-hd">
@@ -145,10 +157,7 @@ export function MoreScreen() {
               <i />
             </div>
           </div>
-          <div
-            className="menu-row tappable"
-            onClick={() => nav.toast("Use your browser menu → Add to Home Screen")}
-          >
+          <div className="menu-row tappable" onClick={() => nav.toast("Use your browser menu → Add to Home Screen")}>
             <div className="mr-ic">
               <Icon name="refresh" />
             </div>
@@ -174,12 +183,19 @@ export function MoreScreen() {
           <div
             className="menu-row tappable"
             style={{ borderRadius: "var(--r-md)" }}
-            onClick={() => nav.toast("Signed out (demo)")}
+            onClick={() => {
+              if (user) {
+                logout();
+                nav.toast("Signed out");
+              } else {
+                nav.toast("Sign in on the web app");
+              }
+            }}
           >
             <div className="mr-ic" style={{ color: "#ff8a95" }}>
               <Icon name="logout" />
             </div>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "#ff8a95" }}>Sign out</div>
+            <div style={{ fontWeight: 600, fontSize: 14, color: "#ff8a95" }}>{user ? "Sign out" : "Sign in"}</div>
           </div>
         </div>
         <div className="center muted" style={{ fontSize: 11, marginTop: 16, fontFamily: "var(--font-mono)" }}>
