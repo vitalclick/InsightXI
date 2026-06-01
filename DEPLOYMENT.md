@@ -35,7 +35,7 @@ Directory differs per service. Getting this wrong = instant build failure.
 
 | Service | Root Directory | Config-as-code path | Public domain | Key vars |
 | --- | --- | --- | --- | --- |
-| **api** | `/` (repo root) | `apps/api/railway.json` | yes | `DATA_BACKEND=memory`, `JWT_SECRET`, `AI_SERVICE_URL` |
+| **api** | `/` (repo root) | `apps/api/railway.json` | yes | `DATA_BACKEND=memory`, `JWT_SECRET`, `AI_SERVICE_URL`, `CORS_ORIGINS` (or `WEB_APP_URL`) |
 | **ai**  | `apps/ai-service` | `railway.json` (relative to that root) | yes | `PORT=8000` |
 | **web** | `/` (repo root) | `apps/web/railway.json` | yes | build arg `NEXT_PUBLIC_API_URL` |
 
@@ -49,7 +49,9 @@ The AI Dockerfile only copies `requirements.txt` and `app/`, so its context is
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| API build OK, **healthcheck fails** | App listened on hardcoded port; Railway injects its own `$PORT` and probes that | App now prefers `process.env.PORT`; bind `0.0.0.0`. (Fixed in code.) |
+| API build OK, **healthcheck fails** | App listened on hardcoded port; Railway injects its own `$PORT` and probes that | App now prefers `process.env.PORT`. (Fixed in code.) |
+| API build+deploy OK, **healthcheck fails** | App bound IPv4-only `0.0.0.0`; Railway's probe/private network is IPv6 | API now binds dual-stack `::` (accepts IPv4 too). (Fixed in code.) |
+| API build+deploy OK, **healthcheck fails**, no logs after boot | Prod boot-gate **threw** because `CORS_ORIGINS`/`WEB_APP_URL` was unset, killing the process | Missing CORS origin is now a **warning** (fail-closed), not a hard stop. Still set `CORS_ORIGINS` so the frontend is allowed through. A default/empty `JWT_SECRET` is still fatal — set it. |
 | AI **build fails instantly** ("Failed to build an image") | Root Directory `/` but the AI Dockerfile expects context `apps/ai-service` | Set the `ai` service Root Directory to `apps/ai-service`, config to `railway.json` |
 | AI build OK, **healthcheck fails** | `railway.json` `startCommand` `--port $PORT` is **not** shell-expanded → uvicorn got the literal string `"$PORT"` | Removed the `startCommand` override; Dockerfile `CMD` uses shell form `--port ${PORT:-8000}` |
 | web **502 "Application failed to respond"** | Next standalone server bound to `localhost`; Railway edge can't reach it | `ENV HOSTNAME=0.0.0.0` in the Dockerfile (fixed) |
@@ -69,7 +71,11 @@ Deploy order: **api → ai → web** (web needs the API's public domain at build
 - Networking → **Generate Domain** (note the `https://…-api-….up.railway.app`).
 - Variables:
   - `DATA_BACKEND=memory`
-  - `JWT_SECRET` = `openssl rand -hex 32`
+  - `JWT_SECRET` = `openssl rand -hex 32` (a default/empty value makes the API
+    refuse to boot in production — the healthcheck will then never pass)
+  - `CORS_ORIGINS` = the web public URL (set after step 3, e.g.
+    `https://…-web-….up.railway.app`). Until set, cross-origin browser requests
+    are blocked but the API still boots.
   - `AI_SERVICE_URL` = the AI public URL (set after step 2)
   - leave `FOOTBALL_API_KEY` empty (uses deterministic mock data)
   - delete the placeholder `DATABASE_URL` / `REDIS_URL` if Railway suggested them

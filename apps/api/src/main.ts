@@ -29,12 +29,18 @@ async function bootstrap() {
   // reflects any origin only for the local/dev demo (see buildCorsOptions).
   app.enableCors(buildCorsOptions());
 
-  // Bind to 0.0.0.0 and prefer the platform-assigned PORT (Railway, Render,
-  // Heroku, etc. inject it), falling back to API_PORT, then 4000 for local dev.
+  // Prefer the platform-assigned PORT (Railway, Render, Heroku, etc. inject it),
+  // falling back to API_PORT, then 4000 for local dev.
   const port = process.env.PORT ?? process.env.API_PORT ?? 4000;
-  await app.listen(port, "0.0.0.0");
+  // Bind all interfaces. Default to IPv4 0.0.0.0 — it works on every host and
+  // is what Railway's public healthcheck probes. Where the api needs to be
+  // reachable over Railway's IPv6-only *.railway.internal private network, set
+  // HOST=:: (dual-stack) — but only on hosts whose stack supports it, since a
+  // bare `::` bind throws EAFNOSUPPORT on IPv6-less environments.
+  const host = process.env.HOST ?? "0.0.0.0";
+  await app.listen(port, host);
   // eslint-disable-next-line no-console
-  console.log(`InsightXI API listening on http://0.0.0.0:${port}`);
+  console.log(`InsightXI API listening on http://${host}:${port}`);
 }
 
 bootstrap();
