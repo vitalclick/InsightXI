@@ -12,7 +12,10 @@ test.describe("auth & premium gating", () => {
 
   test("signing in as premium unlocks season trends", async ({ page }) => {
     await page.goto("/account");
-    // Demo premium credentials are prefilled; just submit.
+    // Fill the premium demo credentials explicitly (mirrors the free-user test
+    // below). The form ships empty — the test must not rely on prefilled values.
+    await page.getByLabel("Email").fill("premium@insightxi.dev");
+    await page.getByLabel("Password").fill("password");
     await page.locator("form").getByRole("button", { name: /^Sign in$/ }).click();
     // The account tier badge in the page body (sidebar "Premium" link also exists).
     await expect(
