@@ -26,8 +26,11 @@ for (const file of [".env.local", ".env"]) {
 const nextConfig = {
   reactStrictMode: true,
   // Emit a self-contained server bundle for Docker/self-hosting.
-  // Vercel ignores this and uses its own build pipeline.
-  output: "standalone",
+  // Vercel ignores this and uses its own build pipeline. Disable with
+  // NEXT_DISABLE_STANDALONE=true (e.g. the Lighthouse CI build, which serves
+  // the standard build via `next start`).
+  output:
+    process.env.NEXT_DISABLE_STANDALONE === "true" ? undefined : "standalone",
   // App lives in a pnpm workspace; point tracing at the repo root so the
   // standalone bundle resolves correctly and the lockfile warning is silenced.
   // (In Next 14 this lives under `experimental`; it is top-level in Next 15.)

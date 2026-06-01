@@ -197,6 +197,25 @@ ML blend. See [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intellige
    *Authorized JavaScript origins*, and your domain/return URLs to the Apple
    *Services ID*. The `*_CLIENT_ID` and `NEXT_PUBLIC_*_CLIENT_ID` pairs must match.
 
+## Performance budget (Lighthouse CI)
+
+CI runs Lighthouse against production bundles (`lighthouserc.cjs`). The
+`lighthouse` job builds the API + web, boots both via `scripts/lhci-stack.mjs`,
+and audits `/`, `/dashboard`, and `/predictions`. The **enforced gate** is the
+deterministic JavaScript bundle budget (script ≤ 400 KB); Lighthouse category
+scores (performance, a11y, best-practices, SEO) are reported as warnings on the
+way to the Lighthouse 90+ target — tighten them to errors once a stable
+baseline exists on the deployed site. Reports upload as a CI artifact.
+
+Run it locally (needs Chrome installed):
+
+```bash
+pnpm --filter @insightxi/api build
+NEXT_DISABLE_STANDALONE=true NEXT_PUBLIC_API_URL=http://localhost:4000 \
+  pnpm --filter @insightxi/web build
+pnpm dlx @lhci/cli@0.14.x autorun
+```
+
 ## Design docs
 
 * [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intelligence-engine.md)

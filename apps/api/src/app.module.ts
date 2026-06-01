@@ -6,6 +6,7 @@ import { RateLimitGuard } from "./common/security/rate-limit.guard";
 import { AllExceptionsFilter } from "./common/observability/all-exceptions.filter";
 import { ErrorReporter } from "./common/observability/error-reporter";
 import { EmailModule } from "./modules/email/email.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { HealthModule } from "./modules/health/health.module";
 import { DataModule } from "./repositories/data.module";
 import { LeaguesModule } from "./modules/leagues/leagues.module";
@@ -43,6 +44,7 @@ import { ModelHealthModule } from "./modules/model-health/model-health.module";
     }),
     DataModule,
     EmailModule,
+    NotificationsModule,
     HealthModule,
     // Phase 1 — Football Data Hub
     LeaguesModule,

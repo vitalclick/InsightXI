@@ -3,6 +3,7 @@
  * All UI data access goes through services like this one.
  */
 import type {
+  AppNotification,
   AuthResponse,
   CheckoutSession,
   ConfirmResult,
@@ -110,6 +111,17 @@ export const api = {
   oauthApple: (idToken: string, name?: string) =>
     apiPost<AuthResponse>("/auth/oauth/apple", { idToken, name }),
   me: (token: string) => apiGet<PublicUser>("/auth/me", token),
+
+  // In-app notifications (all require a bearer token).
+  notifications: (token: string) =>
+    apiGet<AppNotification[]>("/notifications", token),
+  notificationsUnread: (token: string) =>
+    apiGet<{ count: number }>("/notifications/unread-count", token),
+  markNotificationRead: (id: string, token: string) =>
+    apiPost<{ ok: boolean }>(`/notifications/${id}/read`, {}, token),
+  markAllNotificationsRead: (token: string) =>
+    apiPost<{ ok: true }>("/notifications/read-all", {}, token),
+
   refresh: (refreshToken: string) =>
     apiPost<AuthResponse>("/auth/refresh", { refreshToken }),
   verifyEmail: (token: string) =>

@@ -7,6 +7,7 @@ import { useUiStore } from "../../store/ui-store";
 import { useAuthStore } from "../../store/auth-store";
 import { SearchBox } from "./search-box";
 import { Freshness } from "./freshness";
+import { NotificationsBell } from "./notifications-bell";
 
 export function Topbar() {
   const toggleCollapsed = useUiStore((s) => s.toggleCollapsed);
@@ -42,10 +43,7 @@ export function Topbar() {
       >
         <Icon name="bolt" size={17} />
       </button>
-      <Link href="/account" className="tb-icon" title="Notifications" aria-label="Notifications">
-        <Icon name="bell" size={17} />
-        <span className="dot-n" />
-      </Link>
+      <NotificationsBell />
       <Link href="/account" className="tb-avatar" aria-label="Account">
         {initials}
       </Link>

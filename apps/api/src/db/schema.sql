@@ -47,6 +47,19 @@ CREATE TABLE IF NOT EXISTS users (
   current_period_end    TEXT                              -- ISO timestamp; null = none/unlimited
 );
 
+CREATE TABLE IF NOT EXISTS notifications (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL REFERENCES users(id),
+  type       TEXT NOT NULL,                          -- welcome | premium | system | match
+  title      TEXT NOT NULL,
+  body       TEXT NOT NULL,
+  link       TEXT,                                   -- optional in-app deep link
+  read       BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TEXT NOT NULL                            -- ISO timestamp
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, created_at DESC);
+
 -- Migrations for existing deployments (idempotent).
 ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
