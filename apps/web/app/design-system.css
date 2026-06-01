@@ -520,6 +520,28 @@ body.anim-on .reveal { opacity: 0; transform: translateY(14px); animation: revea
 
 /* Tooltip */
 .has-tip { position: relative; }
+
+/* Collapsed-sidebar tooltip — labels are hidden in the icon rail, so hovering
+   or focusing an item surfaces its name. Fixed so the sidebar's scroll clip
+   (overflow-x: hidden) can't cut it off; left edge sits just past the rail. */
+.sb-tip {
+  position: fixed; left: calc(var(--sb-c) - 6px); z-index: 60;
+  transform: translateY(-50%);
+  padding: 6px 10px; border-radius: 8px;
+  background: var(--surface-3); border: 1px solid var(--line-2);
+  color: var(--text); font-size: 12.5px; font-weight: 600; white-space: nowrap;
+  box-shadow: var(--shadow-2); pointer-events: none;
+  animation: sb-tip-in .12s ease-out;
+}
+.sb-tip::before {
+  content: ''; position: absolute; left: -4px; top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px; height: 8px;
+  background: var(--surface-3);
+  border-left: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2);
+}
+@keyframes sb-tip-in { from { opacity: 0; transform: translateY(-50%) translateX(-4px); } to { opacity: 1; transform: translateY(-50%) translateX(0); } }
+@media (prefers-reduced-motion: reduce) { .sb-tip { animation: none; } }
 .ico { display: inline-flex; align-items: center; }
 .ico svg { width: 14px; height: 14px; stroke-width: 1.8; }
 
