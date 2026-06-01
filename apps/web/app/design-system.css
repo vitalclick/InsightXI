@@ -522,10 +522,11 @@ body.anim-on .reveal { opacity: 0; transform: translateY(14px); animation: revea
 .has-tip { position: relative; }
 
 /* Collapsed-sidebar tooltip — labels are hidden in the icon rail, so hovering
-   or focusing an item surfaces its name. Fixed so the sidebar's scroll clip
-   (overflow-x: hidden) can't cut it off; left edge sits just past the rail. */
+   or focusing an item surfaces its name. Rendered through a portal to <body>
+   (see sidebar.tsx) so no ancestor transform/overflow can contain or clip it;
+   top/left come from the hovered item's rect via inline style. */
 .sb-tip {
-  position: fixed; left: calc(var(--sb-c) - 6px); z-index: 60;
+  position: fixed; z-index: 60;
   transform: translateY(-50%);
   padding: 6px 10px; border-radius: 8px;
   background: var(--surface-3); border: 1px solid var(--line-2);

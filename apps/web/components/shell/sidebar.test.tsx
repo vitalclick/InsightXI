@@ -1,15 +1,14 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { Sidebar } from "./sidebar";
 import { useUiStore } from "../../store/ui-store";
 
-vi.mock("next/navigation", () => ({
+jest.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: jest.fn() }),
 }));
 
 beforeEach(() => {
-  // Reset shared UI store between tests.
+  // Reset the shared UI store between tests.
   useUiStore.setState({ collapsed: false, mobileOpen: false });
 });
 
@@ -22,9 +21,7 @@ describe("Sidebar collapsed tooltips", () => {
     expect(screen.queryByRole("tooltip")).toBeNull();
 
     fireEvent.mouseEnter(screen.getByRole("link", { name: "Fixtures" }));
-
-    const tip = screen.getByRole("tooltip");
-    expect(tip).toHaveTextContent("Fixtures");
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Fixtures");
 
     fireEvent.mouseLeave(screen.getByRole("link", { name: "Fixtures" }));
     expect(screen.queryByRole("tooltip")).toBeNull();
@@ -38,7 +35,7 @@ describe("Sidebar collapsed tooltips", () => {
     expect(screen.getByRole("tooltip")).toHaveTextContent("Historical");
   });
 
-  it("does NOT show a tooltip when the sidebar is expanded (labels visible)", () => {
+  it("does NOT show a tooltip when the sidebar is expanded (labels are visible)", () => {
     useUiStore.setState({ collapsed: false });
     render(<Sidebar />);
 
