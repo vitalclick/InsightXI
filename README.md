@@ -69,6 +69,7 @@ client bundle by design.
 | `ENABLE_QUEUES` | API | unset | Set to enable BullMQ ingestion/retrain jobs (needs Redis) |
 | `API_PORT` | API | `4000` | Local HTTP port |
 | `PORT` | API | — | Platform-assigned port (Railway/Render); overrides `API_PORT` |
+| `HOST` | API | `0.0.0.0` | Listen address. Keep `0.0.0.0` — that's what Railway's IPv4 healthcheck and public edge reach. Only set `::` if the api→ai call must use Railway's IPv6-only `*.railway.internal` private network, and only on a host whose stack supports it (a bare `::` can come up IPv6-only and fail the IPv4 healthcheck) |
 | `JWT_SECRET` | API | `change-me-in-production` | JWT signing secret (secret) — **must be changed in production** |
 | `JWT_EXPIRES_IN` | API | `7d` | Access-token lifetime |
 | `JWT_REFRESH_EXPIRES_IN` | API | `30d` | Refresh-token lifetime (`POST /auth/refresh`) |
@@ -77,7 +78,7 @@ client bundle by design.
 
 | Variable | Used by | Default | Notes |
 | --- | --- | --- | --- |
-| `CORS_ORIGINS` | API | — | Comma-separated allowed web origin(s). **Required in production** (or `WEB_APP_URL`); blank in dev reflects any origin |
+| `CORS_ORIGINS` | API | — | Comma-separated allowed **web origin(s)** — the public URL the browser loads the frontend from (e.g. `https://insightxi-web-production.up.railway.app`), **not** the API's own URL. Scheme + host only: `https://`, no trailing slash, no path; matched exactly against the browser `Origin` header. **Required in production** (or `WEB_APP_URL`); blank in dev reflects any origin. Add a custom domain too once you have one: `https://…railway.app,https://app.insightxi.com` |
 | `RATE_LIMIT_ENABLED` | API | `true` | IP fixed-window rate limiting; set `false` if a gateway throttles |
 | `RATE_LIMIT_MAX` | API | `120` | Max requests per window per IP |
 | `RATE_LIMIT_WINDOW_MS` | API | `60000` | Rate-limit window length (ms) |
@@ -182,6 +183,12 @@ ML blend. See [`docs/adaptive-intelligence-engine.md`](./docs/adaptive-intellige
 ### Production
 
 - **Backend → Railway:** project → **Variables**. Add all API-side variables.
+  In particular set `CORS_ORIGINS` to the **web** service's public URL (copy the
+  full generated domain from the web service's *Networking* tab), e.g.
+  `https://insightxi-web-production.up.railway.app` — without it the API boots
+  but the browser blocks cross-origin requests to it. Leave `HOST` at the
+  default `0.0.0.0` (it's what Railway's IPv4 healthcheck reaches); only switch
+  to `::` if you move the api→ai call onto the IPv6-only private network.
 - **Frontend → Vercel:** project → **Settings → Environment Variables**. Add the
   three `NEXT_PUBLIC_*` variables, then redeploy so they are rebuilt in.
 - **Claude Code on the web:** set them in the environment configuration when

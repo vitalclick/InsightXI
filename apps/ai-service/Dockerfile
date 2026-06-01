@@ -27,8 +27,10 @@ RUN if [ "$TRAIN_ON_BUILD" = "true" ]; then \
     fi
 
 EXPOSE 8000
-# Bind IPv6 (::) so the service is reachable over Railway's private network,
-# which is IPv6-only — 0.0.0.0 (IPv4) is NOT reachable on *.railway.internal.
-# Dual-stack also accepts IPv4, so local/compose still works. Shell form lets
-# ${PORT} expand at runtime (platform-assigned), defaulting to 8000.
-CMD uvicorn app.main:app --host :: --port ${PORT:-8000}
+# Bind 0.0.0.0 (IPv4). Railway's healthcheck probes the service over IPv4, and a
+# bare `::` bind comes up IPv6-only here, so the probe got "service unavailable"
+# for the full timeout even though the app was healthy. 0.0.0.0 is what the
+# public healthcheck and edge reach; revisit dual-stack only if/when the api→ai
+# call moves onto the IPv6-only *.railway.internal private network. Shell form
+# lets ${PORT} expand at runtime (platform-assigned), defaulting to 8000.
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
