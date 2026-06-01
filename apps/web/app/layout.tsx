@@ -33,11 +33,18 @@ export const viewport = {
 // Applied before paint to avoid a flash of the wrong theme.
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('ix-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
 
+// Phone-sized viewports get the dedicated mobile app at /m. Runs before paint
+// so the base URL (and any app route) redirects with no flash; the /m route
+// and larger screens are left alone. A resize listener also handles the
+// desktop→phone case after load (see PhoneRedirect in the (app) layout).
+const MOBILE_REDIRECT = `(function(){try{var p=location.pathname;if(p==='/m'||p.indexOf('/m/')===0)return;if(window.matchMedia&&window.matchMedia('(max-width: 520px)').matches){location.replace('/m');}}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+        <script dangerouslySetInnerHTML={{ __html: MOBILE_REDIRECT }} />
       </head>
       <body>
         <Providers>
