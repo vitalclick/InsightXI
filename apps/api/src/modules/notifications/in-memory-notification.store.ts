@@ -11,9 +11,11 @@ export class InMemoryNotificationStore extends NotificationStore {
   }
 
   async listForUser(userId: string, limit: number): Promise<NotificationRecord[]> {
+    // Insertion order is creation order; return newest-first deterministically
+    // (sorting by the ISO timestamp alone is ambiguous within the same ms).
     return this.items
       .filter((n) => n.userId === userId)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .reverse()
       .slice(0, limit);
   }
 
