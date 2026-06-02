@@ -85,7 +85,9 @@ export class LiveService {
   startNextMatch(): LiveSnapshot {
     const pairs = this.candidatePairs();
     if (pairs.length === 0) {
-      // No fixtures or teams yet — idle rather than crash on an empty dataset.
+      // No football data yet (e.g. a fresh Postgres DB before ingestion has
+      // run). Stay idle rather than throwing — this runs inside the gateway's
+      // interval, so an uncaught error here would crash the whole process.
       this.state = this.idleState();
       return this.state;
     }
