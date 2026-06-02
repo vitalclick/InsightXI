@@ -5,6 +5,7 @@ import {
   PublicUser,
   SubscriptionTier,
   UserRecord,
+  UserRole,
   UserStore,
 } from "./user.store";
 
@@ -13,6 +14,7 @@ export type {
   PublicUser,
   SubscriptionStatus,
   SubscriptionTier,
+  UserRole,
 } from "./user.store";
 export type User = UserRecord;
 
@@ -37,6 +39,7 @@ interface NewUser {
   email: string;
   password?: string | null;
   tier?: SubscriptionTier;
+  role?: UserRole;
   name?: string | null;
   avatarUrl?: string | null;
   provider?: AuthProvider;
@@ -65,6 +68,14 @@ export class UsersService implements OnModuleInit {
       tier: "PREMIUM",
       emailVerified: true,
     });
+    await this.buildAndInsert({
+      email: "admin@insightxi.dev",
+      password: "password",
+      tier: "PREMIUM",
+      role: "ADMIN",
+      name: "Alex Mercer",
+      emailVerified: true,
+    });
   }
 
   private async buildAndInsert(input: NewUser): Promise<UserRecord> {
@@ -74,6 +85,7 @@ export class UsersService implements OnModuleInit {
       email: input.email.toLowerCase(),
       passwordHash: input.password ? hashPassword(input.password) : null,
       tier: input.tier ?? "FREE",
+      role: input.role ?? "USER",
       name: input.name ?? null,
       avatarUrl: input.avatarUrl ?? null,
       provider: input.provider ?? "email",
@@ -111,6 +123,12 @@ export class UsersService implements OnModuleInit {
 
   async findById(id: string): Promise<UserRecord | undefined> {
     return this.store.findById(id);
+  }
+
+  /** Every account as a public view (admin console listing). */
+  async listPublic(): Promise<PublicUser[]> {
+    const users = await this.store.list();
+    return users.map((u) => this.toPublic(u));
   }
 
   /**
@@ -205,6 +223,7 @@ export class UsersService implements OnModuleInit {
       id: user.id,
       email: user.email,
       tier: user.tier,
+      role: user.role,
       name: user.name,
       avatarUrl: user.avatarUrl,
       provider: user.provider,

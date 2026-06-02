@@ -3,10 +3,15 @@
  * All UI data access goes through services like this one.
  */
 import type {
+  AdminFixture,
+  AdminOverview,
+  AdminUser,
   AppNotification,
+  AuditEntry,
   AuthResponse,
   CheckoutSession,
   ConfirmResult,
+  ContentPost,
   EvaluationReport,
   H2HSummary,
   League,
@@ -14,9 +19,13 @@ import type {
   MatchView,
   PaymentProvider,
   PlanResponse,
+  PredictionsAdminView,
   PublicUser,
   SeasonTrend,
+  SettingsView,
   StandingRow,
+  SubscriptionsView,
+  SupportTicket,
   TacticalMatchup,
   Team,
   TeamProfile,
@@ -147,6 +156,21 @@ export const api = {
   ) => apiPost<CheckoutSession>("/payments/checkout", { provider, ...hints }, token),
   confirmPayment: (provider: PaymentProvider, reference: string, token: string) =>
     apiPost<ConfirmResult>("/payments/confirm", { provider, reference }, token),
+
+  // Admin console — every route requires an ADMIN bearer token.
+  admin: {
+    overview: (token: string) => apiGet<AdminOverview>("/admin/overview", token),
+    users: (token: string) => apiGet<AdminUser[]>("/admin/users", token),
+    subscriptions: (token: string) =>
+      apiGet<SubscriptionsView>("/admin/subscriptions", token),
+    predictions: (token: string) =>
+      apiGet<PredictionsAdminView>("/admin/predictions", token),
+    fixtures: (token: string) => apiGet<AdminFixture[]>("/admin/fixtures", token),
+    content: (token: string) => apiGet<ContentPost[]>("/admin/content", token),
+    support: (token: string) => apiGet<SupportTicket[]>("/admin/support", token),
+    audit: (token: string) => apiGet<AuditEntry[]>("/admin/audit", token),
+    settings: (token: string) => apiGet<SettingsView>("/admin/settings", token),
+  },
 };
 
 export const API_URL_PUBLIC = API_URL;

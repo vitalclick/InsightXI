@@ -17,6 +17,7 @@ export interface JwtPayload {
   sub: string;
   email: string;
   tier: string;
+  role: string;
 }
 
 type TokenPurpose = "verify" | "reset" | "refresh";
@@ -63,6 +64,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       tier: user.tier,
+      role: user.role,
     };
     const refreshTtl = process.env.JWT_REFRESH_EXPIRES_IN ?? "30d";
     return {

@@ -6,6 +6,7 @@ import { OAuthService } from "./oauth.service";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { PremiumGuard } from "./premium.guard";
+import { AdminGuard } from "./admin.guard";
 import { UserStore } from "./user.store";
 import { InMemoryUserStore } from "./in-memory-user.store";
 import { PostgresUserStore } from "./postgres-user.store";
@@ -27,11 +28,19 @@ const usePostgres = process.env.DATA_BACKEND === "postgres";
     UsersService,
     JwtAuthGuard,
     PremiumGuard,
+    AdminGuard,
     {
       provide: UserStore,
       useClass: usePostgres ? PostgresUserStore : InMemoryUserStore,
     },
   ],
-  exports: [AuthService, UsersService, JwtAuthGuard, PremiumGuard, JwtModule],
+  exports: [
+    AuthService,
+    UsersService,
+    JwtAuthGuard,
+    PremiumGuard,
+    AdminGuard,
+    JwtModule,
+  ],
 })
 export class AuthModule {}

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS users (
   email                 TEXT UNIQUE NOT NULL,
   password_hash         TEXT,                            -- null for OAuth-only accounts
   tier                  TEXT NOT NULL DEFAULT 'FREE',
+  role                  TEXT NOT NULL DEFAULT 'USER',     -- USER | ADMIN (admin console access)
   name                  TEXT,
   avatar_url            TEXT,
   provider              TEXT NOT NULL DEFAULT 'email',    -- email | google | apple

@@ -1,6 +1,8 @@
 export type SubscriptionTier = "FREE" | "PREMIUM";
 export type AuthProvider = "email" | "google" | "apple";
 export type SubscriptionStatus = "none" | "active" | "expired" | "canceled";
+/** Platform access role. ADMIN unlocks the admin console; USER is the default. */
+export type UserRole = "USER" | "ADMIN";
 
 export interface UserRecord {
   id: string;
@@ -8,6 +10,8 @@ export interface UserRecord {
   /** Null for accounts created via an OAuth provider (no local password). */
   passwordHash: string | null;
   tier: SubscriptionTier;
+  /** Platform role gating the admin console (defaults to USER). */
+  role: UserRole;
   name: string | null;
   avatarUrl: string | null;
   provider: AuthProvider;
@@ -25,6 +29,7 @@ export interface PublicUser {
   id: string;
   email: string;
   tier: SubscriptionTier;
+  role: UserRole;
   name: string | null;
   avatarUrl: string | null;
   provider: AuthProvider;
@@ -40,6 +45,8 @@ export interface PublicUser {
 export abstract class UserStore {
   abstract findByEmail(email: string): Promise<UserRecord | undefined>;
   abstract findById(id: string): Promise<UserRecord | undefined>;
+  /** All accounts (admin console listing). */
+  abstract list(): Promise<UserRecord[]>;
   abstract insert(user: UserRecord): Promise<void>;
   /** Full update-by-id; returns the persisted record. */
   abstract update(user: UserRecord): Promise<UserRecord>;

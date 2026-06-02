@@ -23,6 +23,7 @@ import { PaymentsModule } from "./modules/payments/payments.module";
 import { HistoricalModule } from "./modules/historical/historical.module";
 import { IngestionModule } from "./modules/ingestion/ingestion.module";
 import { ModelHealthModule } from "./modules/model-health/model-health.module";
+import { AdminModule } from "./modules/admin/admin.module";
 
 /**
  * Root module. Feature modules from the InsightXI backend structure
@@ -64,6 +65,7 @@ import { ModelHealthModule } from "./modules/model-health/model-health.module";
     PaymentsModule,
     HistoricalModule,
     ModelHealthModule,
+    AdminModule,
   ],
   providers: [
     // Global IP-based rate limiting (dependency-free fixed window). Runs ahead

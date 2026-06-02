@@ -18,6 +18,7 @@ describe("useAuthStore", () => {
         id: "u1",
         email: "a@b.dev",
         tier: "PREMIUM",
+        role: "USER",
         name: null,
         avatarUrl: null,
         provider: "email",

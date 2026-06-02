@@ -17,6 +17,10 @@ export class InMemoryUserStore extends UserStore {
     return undefined;
   }
 
+  async list(): Promise<UserRecord[]> {
+    return [...this.users.values()];
+  }
+
   async insert(user: UserRecord): Promise<void> {
     this.users.set(user.email.toLowerCase(), user);
   }

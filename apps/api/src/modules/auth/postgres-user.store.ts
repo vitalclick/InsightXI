@@ -5,6 +5,7 @@ import {
   SubscriptionStatus,
   SubscriptionTier,
   UserRecord,
+  UserRole,
   UserStore,
 } from "./user.store";
 
@@ -13,6 +14,7 @@ interface UserRow {
   email: string;
   password_hash: string | null;
   tier: SubscriptionTier;
+  role: UserRole | null;
   name: string | null;
   avatar_url: string | null;
   provider: AuthProvider;
@@ -24,7 +26,7 @@ interface UserRow {
 }
 
 const COLUMNS =
-  "id, email, password_hash, tier, name, avatar_url, provider, email_verified, " +
+  "id, email, password_hash, tier, role, name, avatar_url, provider, email_verified, " +
   "subscription_status, subscription_provider, subscription_ref, current_period_end";
 
 function toRecord(row: UserRow): UserRecord {
@@ -33,6 +35,7 @@ function toRecord(row: UserRow): UserRecord {
     email: row.email,
     passwordHash: row.password_hash,
     tier: row.tier,
+    role: row.role ?? "USER",
     name: row.name,
     avatarUrl: row.avatar_url,
     provider: row.provider,
@@ -67,16 +70,24 @@ export class PostgresUserStore extends UserStore {
     return rows[0] ? toRecord(rows[0]) : undefined;
   }
 
+  async list(): Promise<UserRecord[]> {
+    const rows = await this.pg.query<UserRow>(
+      `SELECT ${COLUMNS} FROM users ORDER BY email`,
+    );
+    return rows.map(toRecord);
+  }
+
   async insert(user: UserRecord): Promise<void> {
     await this.pg.query(
       `INSERT INTO users (${COLUMNS})
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        ON CONFLICT (email) DO NOTHING`,
       [
         user.id,
         user.email.toLowerCase(),
         user.passwordHash,
         user.tier,
+        user.role,
         user.name,
         user.avatarUrl,
         user.provider,
@@ -92,15 +103,16 @@ export class PostgresUserStore extends UserStore {
   async update(user: UserRecord): Promise<UserRecord> {
     const rows = await this.pg.query<UserRow>(
       `UPDATE users SET
-         password_hash = $2, tier = $3, name = $4, avatar_url = $5,
-         provider = $6, email_verified = $7, subscription_status = $8,
-         subscription_provider = $9, subscription_ref = $10, current_period_end = $11
+         password_hash = $2, tier = $3, role = $4, name = $5, avatar_url = $6,
+         provider = $7, email_verified = $8, subscription_status = $9,
+         subscription_provider = $10, subscription_ref = $11, current_period_end = $12
        WHERE id = $1
        RETURNING ${COLUMNS}`,
       [
         user.id,
         user.passwordHash,
         user.tier,
+        user.role,
         user.name,
         user.avatarUrl,
         user.provider,
