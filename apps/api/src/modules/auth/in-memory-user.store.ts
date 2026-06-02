@@ -44,4 +44,14 @@ export class InMemoryUserStore extends UserStore {
       }
     }
   }
+
+  async bumpTokenVersion(id: string): Promise<UserRecord | undefined> {
+    for (const user of this.users.values()) {
+      if (user.id === id) {
+        user.tokenVersion += 1;
+        return user;
+      }
+    }
+    return undefined;
+  }
 }

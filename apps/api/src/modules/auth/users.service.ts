@@ -78,6 +78,7 @@ export class UsersService implements OnModuleInit {
       avatarUrl: input.avatarUrl ?? null,
       provider: input.provider ?? "email",
       emailVerified: input.emailVerified ?? false,
+      tokenVersion: 0,
       subscriptionStatus: isPremium ? "active" : "none",
       subscriptionProvider: null,
       subscriptionRef: null,
@@ -195,6 +196,11 @@ export class UsersService implements OnModuleInit {
   /** Permanently delete a user account. */
   async delete(userId: string): Promise<void> {
     await this.store.delete(userId);
+  }
+
+  /** Revoke all outstanding refresh tokens by bumping the token version. */
+  async bumpTokenVersion(userId: string): Promise<UserRecord | undefined> {
+    return this.store.bumpTokenVersion(userId);
   }
 
   async setTier(

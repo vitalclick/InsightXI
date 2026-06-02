@@ -54,6 +54,14 @@ export class AuthController {
     return this.auth.refresh(dto.refreshToken);
   }
 
+  /** Sign out everywhere — revokes the user's refresh tokens. */
+  @UseGuards(JwtAuthGuard)
+  @Post("logout")
+  @HttpCode(200)
+  logout(@CurrentUser() user: JwtPayload) {
+    return this.auth.logout(user.sub);
+  }
+
   @Post("verify-email")
   @HttpCode(200)
   verifyEmail(@Body() dto: TokenDto) {

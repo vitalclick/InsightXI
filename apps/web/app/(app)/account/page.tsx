@@ -41,6 +41,18 @@ export default function AccountPage() {
 
   const [busy, setBusy] = useState<"export" | "delete" | null>(null);
 
+  async function signOut() {
+    // Best-effort server-side revocation of refresh tokens, then clear locally.
+    if (token) {
+      try {
+        await api.logout(token);
+      } catch {
+        /* clear local session regardless */
+      }
+    }
+    logout();
+  }
+
   async function exportData() {
     if (!token) return;
     setBusy("export");
@@ -172,7 +184,7 @@ export default function AccountPage() {
               </Link>
             )}
             <div>
-              <button onClick={logout} className="btn btn-ghost">Sign out</button>
+              <button onClick={signOut} className="btn btn-ghost">Sign out</button>
             </div>
 
             <div

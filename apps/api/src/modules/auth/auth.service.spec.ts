@@ -143,6 +143,27 @@ describe("Auth + subscriptions", () => {
     await expect(auth.refresh(result.accessToken)).rejects.toThrow();
   });
 
+  it("revokes refresh tokens on logout", async () => {
+    const { user, refreshToken } = await auth.login("free@insightxi.dev", "password");
+    // Valid before logout.
+    expect((await auth.refresh(refreshToken)).accessToken).toBeTruthy();
+    await auth.logout(user.id);
+    // The original refresh token is now rejected (token version bumped).
+    await expect(auth.refresh(refreshToken)).rejects.toThrow();
+  });
+
+  it("revokes existing refresh tokens after a password reset", async () => {
+    const { refreshToken } = await auth.register("revoke@example.com", "oldpass123");
+    sent.length = 0;
+    await auth.requestPasswordReset("revoke@example.com");
+    const token = sent
+      .find((m) => m.to === "revoke@example.com")!
+      .text.match(/token=([^\s)]+)/)![1];
+    await auth.resetPassword(token, "brandnew123");
+    // A refresh token minted before the reset no longer works.
+    await expect(auth.refresh(refreshToken)).rejects.toThrow();
+  });
+
   it("exports the account's personal data", async () => {
     const { user } = await auth.register("export-me@example.com", "secret123");
     const dump = (await auth.exportAccount(user.id)) as {

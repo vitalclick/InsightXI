@@ -142,6 +142,7 @@ export const api = {
 
   refresh: (refreshToken: string) =>
     apiPost<AuthResponse>("/auth/refresh", { refreshToken }),
+  logout: (token: string) => apiPost<{ ok: true }>("/auth/logout", {}, token),
   verifyEmail: (token: string) =>
     apiPost<{ verified: boolean; user: PublicUser }>("/auth/verify-email", { token }),
   resendVerification: (token: string) =>
