@@ -37,7 +37,7 @@ const THEME_INIT = `(function(){try{var t=localStorage.getItem('ix-theme')||'dar
 // so the base URL (and any app route) redirects with no flash; the /m route
 // and larger screens are left alone. A resize listener also handles the
 // desktop→phone case after load (see PhoneRedirect in the (app) layout).
-const MOBILE_REDIRECT = `(function(){try{var p=location.pathname;if(p==='/m'||p.indexOf('/m/')===0)return;if(window.matchMedia&&window.matchMedia('(max-width: 520px)').matches){location.replace('/m');}}catch(e){}})();`;
+const MOBILE_REDIRECT = `(function(){try{var p=location.pathname;if(p==='/m'||p.indexOf('/m/')===0)return;if(window.matchMedia&&window.matchMedia('(max-width: 520px)').matches){location.replace('/m'+location.search);}}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

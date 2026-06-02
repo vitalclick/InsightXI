@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Post,
@@ -53,6 +54,14 @@ export class AuthController {
     return this.auth.refresh(dto.refreshToken);
   }
 
+  /** Sign out everywhere — revokes the user's refresh tokens. */
+  @UseGuards(JwtAuthGuard)
+  @Post("logout")
+  @HttpCode(200)
+  logout(@CurrentUser() user: JwtPayload) {
+    return this.auth.logout(user.sub);
+  }
+
   @Post("verify-email")
   @HttpCode(200)
   verifyEmail(@Body() dto: TokenDto) {
@@ -83,5 +92,20 @@ export class AuthController {
   async me(@CurrentUser() user: JwtPayload) {
     const found = await this.users.findById(user.sub);
     return found ? this.users.toPublic(found) : user;
+  }
+
+  /** Download all personal data we hold (GDPR/POPIA portability). */
+  @UseGuards(JwtAuthGuard)
+  @Get("account/export")
+  exportAccount(@CurrentUser() user: JwtPayload) {
+    return this.auth.exportAccount(user.sub);
+  }
+
+  /** Permanently delete the authenticated account and its data. */
+  @UseGuards(JwtAuthGuard)
+  @Delete("account")
+  @HttpCode(200)
+  deleteAccount(@CurrentUser() user: JwtPayload) {
+    return this.auth.deleteAccount(user.sub);
   }
 }

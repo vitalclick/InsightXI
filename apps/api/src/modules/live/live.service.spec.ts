@@ -1,10 +1,24 @@
 import { Test } from "@nestjs/testing";
 import { DataModule } from "../../repositories/data.module";
+import { FootballRepository } from "../../repositories/football.repository";
 import { AnalyticsService } from "../analytics/analytics.service";
 import { LiveService } from "./live.service";
 
 describe("LiveService", () => {
   let service: LiveService;
+
+  it("idles instead of crashing on an empty dataset (fresh Postgres)", () => {
+    const emptyRepo = {
+      getMatches: () => [],
+      getTeams: () => [],
+      getTeam: () => undefined,
+    } as unknown as FootballRepository;
+    const svc = new LiveService(emptyRepo, {} as AnalyticsService);
+    expect(() => svc.tick()).not.toThrow();
+    const snap = svc.snapshot();
+    expect(snap.matchId).toBe("live-idle");
+    expect(snap.status).toBe("FINISHED");
+  });
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({

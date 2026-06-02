@@ -97,3 +97,46 @@ jobs:
           name: lighthouse-reports
           path: .lighthouseci
           if-no-files-found: ignore
+
+  postgres-smoke:
+    name: Postgres smoke (DATA_BACKEND=postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: insightxi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/insightxi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Apply the schema with psql (preinstalled on ubuntu-latest) before the
+      # API boots — it seeds the demo users on startup and needs the tables.
+      - name: Apply schema
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f apps/api/src/db/schema.sql
+      - name: Build API
+        run: pnpm --filter @insightxi/api build
+      - name: Start API against Postgres
+        run: node apps/api/dist/main.js &
+        env:
+          DATA_BACKEND: postgres
+          API_PORT: "4000"
+          JWT_SECRET: ci-postgres-smoke-secret
+          RATE_LIMIT_ENABLED: "false"
+      - name: Run Postgres smoke test
+        run: node scripts/pg-smoke.mjs

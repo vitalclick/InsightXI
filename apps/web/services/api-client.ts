@@ -134,6 +134,10 @@ export const api = {
   oauthApple: (idToken: string, name?: string) =>
     apiPost<AuthResponse>("/auth/oauth/apple", { idToken, name }),
   me: (token: string) => apiGet<PublicUser>("/auth/me", token),
+  exportAccount: (token: string) =>
+    apiGet<Record<string, unknown>>("/auth/account/export", token),
+  deleteAccount: (token: string) =>
+    apiDelete<{ deleted: true }>("/auth/account", token),
 
   // In-app notifications (all require a bearer token).
   notifications: (token: string) =>
@@ -147,6 +151,7 @@ export const api = {
 
   refresh: (refreshToken: string) =>
     apiPost<AuthResponse>("/auth/refresh", { refreshToken }),
+  logout: (token: string) => apiPost<{ ok: true }>("/auth/logout", {}, token),
   verifyEmail: (token: string) =>
     apiPost<{ verified: boolean; user: PublicUser }>("/auth/verify-email", { token }),
   resendVerification: (token: string) =>

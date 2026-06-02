@@ -81,4 +81,8 @@ export class PostgresNotificationStore extends NotificationStore {
       [userId],
     );
   }
+
+  async deleteForUser(userId: string): Promise<void> {
+    await this.pg.query(`DELETE FROM notifications WHERE user_id = $1`, [userId]);
+  }
 }
