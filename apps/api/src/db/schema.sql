@@ -77,3 +77,56 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_ref TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS current_period_end TEXT;
 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
 ALTER TABLE notifications ADD COLUMN IF NOT EXISTS seq BIGSERIAL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'USER';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- ── Admin console subsystems ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS support_tickets (
+  id         TEXT PRIMARY KEY,
+  subject    TEXT NOT NULL,
+  category   TEXT NOT NULL,
+  priority   TEXT NOT NULL,                          -- High | Medium | Low
+  status     TEXT NOT NULL,                          -- Open | Pending | Closed
+  requester  TEXT NOT NULL,
+  assignee   TEXT NOT NULL,
+  updated_at TEXT NOT NULL                            -- ISO timestamp
+);
+
+CREATE TABLE IF NOT EXISTS content_posts (
+  id           TEXT PRIMARY KEY,
+  title        TEXT NOT NULL,
+  category     TEXT NOT NULL,
+  status       TEXT NOT NULL,                        -- Published | Scheduled | Draft
+  author       TEXT NOT NULL,
+  views        INTEGER NOT NULL DEFAULT 0,
+  published_at TEXT NOT NULL                          -- ISO timestamp
+);
+
+CREATE TABLE IF NOT EXISTS feature_flags (
+  key         TEXT PRIMARY KEY,
+  name        TEXT NOT NULL,
+  description TEXT NOT NULL,
+  enabled     BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id         TEXT PRIMARY KEY,
+  user_name  TEXT NOT NULL,
+  email      TEXT NOT NULL,
+  plan       TEXT NOT NULL,                          -- Monthly | Annual
+  amount     NUMERIC(10,2) NOT NULL,
+  status     TEXT NOT NULL,                          -- Paid | Failed | Refunded
+  method     TEXT NOT NULL,
+  created_at TEXT NOT NULL                            -- ISO timestamp
+);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+  id     TEXT PRIMARY KEY,
+  actor  TEXT NOT NULL,
+  action TEXT NOT NULL,
+  target TEXT NOT NULL,
+  ip     TEXT NOT NULL,
+  at     TEXT NOT NULL                                -- ISO timestamp
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_at ON audit_log (at DESC);

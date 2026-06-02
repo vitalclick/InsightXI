@@ -1,4 +1,5 @@
 import { AdminService } from "./admin.service";
+import { InMemoryAdminStore } from "./in-memory-admin.store";
 import { UsersService } from "../auth/users.service";
 import { MatchesService } from "../matches/matches.service";
 import { PublicUser } from "../auth/user.store";
@@ -41,7 +42,7 @@ describe("AdminService", () => {
     results: () => [match],
   } as unknown as MatchesService;
 
-  const admin = new AdminService(usersStub, matchesStub);
+  const admin = new AdminService(usersStub, matchesStub, new InMemoryAdminStore());
 
   it("merges real accounts into the user listing", async () => {
     const users = await admin.listUsers();
@@ -67,19 +68,20 @@ describe("AdminService", () => {
     expect(view.picks[0].home).toBe("Riverside");
   });
 
-  it("lists feature flags and team members in settings", () => {
-    const s = admin.settings();
+  it("lists feature flags and team members in settings", async () => {
+    const s = await admin.settings();
     expect(s.team.length).toBeGreaterThan(0);
     expect(s.flags.every((f) => typeof f.enabled === "boolean")).toBe(true);
   });
 
-  it("toggles a feature flag and records an audit entry", () => {
-    const before = admin.audit().length;
-    const flag = admin.setFlag("admin@insightxi.dev", "laliga", true);
+  it("toggles a feature flag and records an audit entry", async () => {
+    const before = (await admin.audit()).length;
+    const flag = await admin.setFlag("admin@insightxi.dev", "laliga", true);
     expect(flag.enabled).toBe(true);
-    expect(admin.settings().flags.find((f) => f.key === "laliga")?.enabled).toBe(true);
-    expect(admin.audit().length).toBe(before + 1);
-    expect(admin.audit()[0].action).toContain("feature flag");
+    expect((await admin.settings()).flags.find((f) => f.key === "laliga")?.enabled).toBe(true);
+    const after = await admin.audit();
+    expect(after.length).toBe(before + 1);
+    expect(after[0].action).toContain("feature flag");
   });
 
   it("updates a demo user's plan in place", async () => {
@@ -95,25 +97,25 @@ describe("AdminService", () => {
     expect(again.find((u) => u.id === demo.id)?.plan).toBe("Premium");
   });
 
-  it("publishes and deletes content", () => {
-    const post = admin.createPost("admin@insightxi.dev", { title: "Scaffold test post" });
+  it("publishes and deletes content", async () => {
+    const post = await admin.createPost("admin@insightxi.dev", { title: "Scaffold test post" });
     expect(post.status).toBe("Draft");
-    expect(admin.updatePost("admin@insightxi.dev", post.id, { status: "Published" }).status).toBe(
-      "Published",
-    );
-    expect(admin.deletePost("admin@insightxi.dev", post.id).deleted).toBe(true);
-    expect(admin.content().find((p) => p.id === post.id)).toBeUndefined();
+    const published = await admin.updatePost("admin@insightxi.dev", post.id, { status: "Published" });
+    expect(published.status).toBe("Published");
+    expect((await admin.deletePost("admin@insightxi.dev", post.id)).deleted).toBe(true);
+    expect((await admin.content()).find((p) => p.id === post.id)).toBeUndefined();
   });
 
-  it("refunds a paid transaction", () => {
-    const paid = admin.subscriptions().transactions.find((t) => t.status === "Paid");
+  it("refunds a paid transaction", async () => {
+    const paid = (await admin.subscriptions()).transactions.find((t) => t.status === "Paid");
     if (paid) {
-      expect(admin.refundTransaction("admin@insightxi.dev", paid.id).status).toBe("Refunded");
+      const refunded = await admin.refundTransaction("admin@insightxi.dev", paid.id);
+      expect(refunded.status).toBe("Refunded");
     }
   });
 
   it("throws NotFound for unknown write targets", async () => {
     await expect(admin.deleteUser("a", "nope")).rejects.toThrow();
-    expect(() => admin.setFlag("a", "nope", true)).toThrow();
+    await expect(admin.setFlag("a", "nope", true)).rejects.toThrow();
   });
 });

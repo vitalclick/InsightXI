@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { UsersService } from "../auth/users.service";
 import { MatchesService } from "../matches/matches.service";
+import { AdminStore } from "./admin.store";
 import {
   AdminFixture,
   AdminOverview,
@@ -24,7 +25,7 @@ function rng(s: number): number {
 function pick<T>(arr: readonly T[], s: number): T {
   return arr[Math.floor(rng(s) * arr.length)];
 }
-/** A fixed "now" so the seeded dataset is stable across requests. */
+/** A fixed "now" so the seeded cohort is stable across requests. */
 const NOW = new Date("2026-05-31T12:00:00Z");
 function daysAgo(n: number): string {
   return new Date(NOW.getTime() - n * 86_400_000).toISOString();
@@ -61,35 +62,31 @@ export interface UserPatch {
 
 /**
  * Admin console backend. Read models blend real account/match data with a
- * deterministic demo dataset; write actions mutate session-scoped state and
- * append to a live audit log (real accounts persist through UsersService).
+ * deterministic demo dataset; the ticket/content/flag/transaction/audit
+ * subsystems persist through AdminStore (in-memory or Postgres per
+ * DATA_BACKEND), and real accounts persist through UsersService.
  *
- * The demo collections are cached on construction so that edits made during a
- * session stick (they reset when the process restarts — the same offline-seed
- * contract the rest of the platform uses until a database is wired in).
+ * The demo user cohort is generated once on construction — it populates the
+ * users table visually alongside real registered accounts.
  */
 @Injectable()
-export class AdminService {
+export class AdminService implements OnModuleInit {
   private readonly demoCohort: AdminUser[];
-  private readonly tickets: SupportTicket[];
-  private readonly posts: ContentPost[];
-  private readonly flags: FeatureFlag[];
-  private readonly transactions: AdminTransaction[];
-  private readonly auditLog: AuditEntry[];
 
   constructor(
     private readonly users: UsersService,
     private readonly matches: MatchesService,
+    private readonly store: AdminStore,
   ) {
     this.demoCohort = this.buildDemoUsers();
-    this.tickets = this.buildTickets(this.demoCohort);
-    this.posts = this.buildPosts();
-    this.flags = this.buildFlags();
-    this.transactions = this.buildTransactions(this.demoCohort);
-    this.auditLog = this.buildAudit();
   }
 
-  // ── Seed builders (run once) ────────────────────────────────────────────
+  async onModuleInit(): Promise<void> {
+    // Runs after DataModule's MigrationService has created the tables.
+    await this.store.seedIfEmpty();
+  }
+
+  // ── Demo cohort (in-memory, session-scoped) ─────────────────────────────
   private buildDemoUsers(): AdminUser[] {
     const plans = ["Free", "Free", "Free", "Premium", "Premium", "Trial"] as const;
     const statuses = ["Active", "Active", "Active", "Active", "Pending", "Suspended"] as const;
@@ -117,9 +114,7 @@ export class AdminService {
         id: `usr_${1042 + i}`,
         name,
         email:
-          `${fn}.${ln}`.toLowerCase().replace(/[^a-z.]/g, "") +
-          "@" +
-          pick(domains, s),
+          `${fn}.${ln}`.toLowerCase().replace(/[^a-z.]/g, "") + "@" + pick(domains, s),
         plan,
         status,
         role,
@@ -135,137 +130,6 @@ export class AdminService {
       });
     }
     return out;
-  }
-
-  private buildTickets(allUsers: AdminUser[]): SupportTicket[] {
-    const subjects: [string, string, SupportTicket["priority"]][] = [
-      ["Premium not unlocking after payment", "Billing", "High"],
-      ["Confidence board not loading on iOS", "Bug", "High"],
-      ["Request: export picks to CSV", "Feature", "Low"],
-      ["Wrong scoreline shown for live match", "Data", "Medium"],
-      ["Cancel subscription and refund", "Billing", "Medium"],
-      ["Login link expired", "Account", "Low"],
-      ["Push notifications not arriving", "Bug", "Medium"],
-      ["Annual plan discount not applied", "Billing", "High"],
-      ["Add La Liga coverage", "Feature", "Low"],
-      ["Radar chart overlaps on tablet", "Bug", "Low"],
-      ["Duplicate charge this month", "Billing", "High"],
-      ["How is model accuracy calculated?", "Question", "Low"],
-    ];
-    const assignees = ["Alex Mercer", "Priya Raman", "Daniel Cole", "Sara Lindqvist"];
-    const closed = ["Open", "Pending", "Closed"] as const;
-    return subjects.map((t, i) => {
-      const s = i * 17 + 3;
-      const requester = allUsers[(i * 5 + 2) % allUsers.length];
-      return {
-        id: `TKT-${2100 + i}`,
-        subject: t[0],
-        category: t[1],
-        priority: t[2],
-        status: i < 7 ? pick(["Open", "Pending", "Open"] as const, s) : pick(closed, s),
-        requester: requester?.name ?? "Unknown",
-        assignee: i % 3 === 0 ? "Unassigned" : assignees[i % assignees.length],
-        date: daysAgo(Math.floor(rng(s) * 12)),
-      };
-    });
-  }
-
-  private buildPosts(): ContentPost[] {
-    const posts: [string, string, ContentPost["status"], number][] = [
-      ["The pressing revolution: how counter-press wins titles", "Tactical", "Published", 18_400],
-      ["xG explained: reading the model behind the numbers", "Analytics", "Published", 24_100],
-      ["Five clubs overperforming their underlying data", "Trends", "Published", 12_800],
-      ["Set-piece intelligence: the hidden 41%", "Tactical", "Scheduled", 0],
-      ["Fatigue modelling and the congested fixture list", "Analytics", "Draft", 0],
-      ["Matchday 31 preview: every confidence pick", "Preview", "Published", 9_600],
-      ["How we calibrate confidence at InsightXI", "Product", "Draft", 0],
-      ["Transition defence: the metric nobody tracks", "Tactical", "Published", 7_300],
-    ];
-    const authors = ["Alex Mercer", "Priya Raman", "Daniel Cole", "Sara Lindqvist"];
-    return posts.map((p, i) => ({
-      id: `post_${300 + i}`,
-      title: p[0],
-      category: p[1],
-      status: p[2],
-      views: p[3],
-      author: authors[i % authors.length],
-      date: daysAgo(Math.floor(rng(i * 7 + 2) * 40)),
-    }));
-  }
-
-  private buildFlags(): FeatureFlag[] {
-    return [
-      { key: "live_winprob", name: "Live win-probability tracker", description: "Real-time stacked win-prob on live matches", enabled: true },
-      { key: "mobile_pwa", name: "Mobile PWA install prompt", description: "Show add-to-home-screen banner", enabled: true },
-      { key: "confidence_v2", name: "Confidence board v2", description: "New confidence ranking algorithm", enabled: false },
-      { key: "laliga", name: "La Liga coverage", description: "Enable Spanish top-flight fixtures", enabled: false },
-      { key: "ai_assistant", name: "AI match assistant (beta)", description: "Conversational match intel", enabled: true },
-    ];
-  }
-
-  private buildTransactions(allUsers: AdminUser[]): AdminTransaction[] {
-    const paying = allUsers.filter((u) => u.plan === "Premium" || u.plan === "Trial");
-    const methods = ["Visa ··4291", "Mastercard ··8830", "PayPal", "Apple Pay"];
-    const statuses = ["Paid", "Paid", "Paid", "Paid", "Failed", "Refunded"] as const;
-    const out: AdminTransaction[] = paying.slice(0, 24).map((u, i) => {
-      const s = i * 9 + 3;
-      const annual = rng(s) > 0.6;
-      return {
-        id: `in_${9100 + i}`,
-        userName: u.name,
-        email: u.email,
-        plan: annual ? "Annual" : "Monthly",
-        amount: annual ? 79 : 9.99,
-        status: pick(statuses, s * 3 + 1),
-        method: pick(methods, s),
-        date: daysAgo(Math.floor(rng(s * 5) * 60)),
-      };
-    });
-    out.sort((a, b) => b.date.localeCompare(a.date));
-    return out;
-  }
-
-  private buildAudit(): AuditEntry[] {
-    const actions: [string, string][] = [
-      ["suspended user", "usr_1058"],
-      ["changed plan to Premium", "usr_1071"],
-      ["published post", "post_300"],
-      ["refunded invoice", "in_9104"],
-      ["edited fixture", "RVS v KGT"],
-      ["featured match of the day", "RVS v KGT"],
-      ["invited team member", "sara@insightxi.app"],
-      ["updated role to Analyst", "usr_1063"],
-      ["closed ticket", "TKT-2103"],
-      ["exported users CSV", "64 records"],
-      ["toggled feature flag", "live_winprob"],
-      ["deleted draft", "post_307"],
-      ["sent broadcast", "12,480 users"],
-      ["impersonated user", "usr_1049"],
-      ["retrained model", "v4.2"],
-    ];
-    const admins = ["Alex Mercer", "Priya Raman", "Daniel Cole"];
-    return actions.map((a, i) => ({
-      id: `log_${i}`,
-      actor: admins[i % admins.length],
-      action: a[0],
-      target: a[1],
-      ip: `102.0.${10 + i}.${(i * 7) % 250}`,
-      at: minsAgo(i * 47 + Math.floor(rng(i * 3) * 40)),
-    }));
-  }
-
-  /** Prepends an entry to the live audit log. */
-  private recordAudit(actor: string, action: string, target: string): AuditEntry {
-    const entry: AuditEntry = {
-      id: `log_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      actor,
-      action,
-      target,
-      ip: "internal",
-      at: new Date().toISOString(),
-    };
-    this.auditLog.unshift(entry);
-    return entry;
   }
 
   /** Real registered accounts mapped into the admin row shape. */
@@ -294,9 +158,23 @@ export class AdminService {
     return [...(await this.realUsers()), ...this.demoCohort];
   }
 
+  /** Prepends an entry to the audit log via the store. */
+  private async recordAudit(actor: string, action: string, target: string): Promise<void> {
+    await this.store.appendAudit({
+      id: `log_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      actor,
+      action,
+      target,
+      ip: "internal",
+      at: new Date().toISOString(),
+    });
+  }
+
   // ── Read models ─────────────────────────────────────────────────────────
   async overview(): Promise<AdminOverview> {
     const all = await this.listUsers();
+    const tickets = await this.store.listTickets();
+    const audit = await this.store.listAudit();
     const premium = all.filter((u) => u.plan === "Premium").length;
     const trialing = all.filter((u) => u.plan === "Trial").length;
     const free = all.length - premium - trialing;
@@ -321,7 +199,7 @@ export class AdminService {
         churn: 2.1,
         arpu: 8.85,
         dau: 4120,
-        openTickets: this.tickets.filter((t) => t.status !== "Closed").length,
+        openTickets: tickets.filter((t) => t.status !== "Closed").length,
         picksToday: 24,
       },
       series: {
@@ -336,7 +214,7 @@ export class AdminService {
         { plan: "Free", count: free, pct: Math.round((free / all.length) * 100) },
       ],
       recentSignups,
-      recentActivity: this.auditLog.slice(0, 6),
+      recentActivity: audit.slice(0, 6),
       health: [
         { label: "Model API", value: "200 OK", status: "ok" },
         { label: "Prediction latency", value: "142 ms", status: "info" },
@@ -348,7 +226,7 @@ export class AdminService {
     };
   }
 
-  subscriptions(): SubscriptionsView {
+  async subscriptions(): Promise<SubscriptionsView> {
     return {
       summary: {
         mrr: 28_400,
@@ -358,7 +236,7 @@ export class AdminService {
         churn: 2.1,
         arpu: 8.85,
       },
-      transactions: this.transactions,
+      transactions: await this.store.listTransactions(),
     };
   }
 
@@ -412,19 +290,19 @@ export class AdminService {
     return [...upcoming.map(toRow), ...recent.map((m, i) => toRow(m, i + 100))];
   }
 
-  content(): ContentPost[] {
-    return this.posts;
+  content(): Promise<ContentPost[]> {
+    return this.store.listPosts();
   }
 
-  support(): SupportTicket[] {
-    return this.tickets;
+  support(): Promise<SupportTicket[]> {
+    return this.store.listTickets();
   }
 
-  audit(): AuditEntry[] {
-    return this.auditLog;
+  audit(): Promise<AuditEntry[]> {
+    return this.store.listAudit();
   }
 
-  settings(): SettingsView {
+  async settings(): Promise<SettingsView> {
     return {
       team: [
         { name: "Alex Mercer", email: "alex@insightxi.app", role: "Owner", lastSeen: minsAgo(0) },
@@ -433,7 +311,7 @@ export class AdminService {
         { name: "Sara Lindqvist", email: "sara@insightxi.app", role: "Analyst", lastSeen: daysAgo(3) },
         { name: "Marco Romano", email: "marco@insightxi.app", role: "Support", lastSeen: minsAgo(300) },
       ],
-      flags: this.flags,
+      flags: await this.store.listFlags(),
     };
   }
 
@@ -445,10 +323,9 @@ export class AdminService {
       if (patch.role) demo.role = patch.role;
       if (patch.plan) demo.plan = patch.plan;
       if (patch.status) demo.status = patch.status;
-      this.auditFor(actor, patch, id);
+      await this.auditUserChange(actor, patch, id);
       return demo;
     }
-    // Real account → persist through UsersService.
     const updated = await this.users.adminUpdate(id, {
       role: patch.role === "Admin" ? "ADMIN" : patch.role ? "USER" : undefined,
       tier: patch.plan === "Premium" ? "PREMIUM" : patch.plan ? "FREE" : undefined,
@@ -456,7 +333,7 @@ export class AdminService {
         patch.status === "Suspended" ? true : patch.status === "Active" ? false : undefined,
     });
     if (!updated) throw new NotFoundException(`User ${id} not found`);
-    this.auditFor(actor, patch, id);
+    await this.auditUserChange(actor, patch, id);
     return {
       id: updated.id,
       name: updated.name ?? updated.email.split("@")[0],
@@ -476,11 +353,11 @@ export class AdminService {
     };
   }
 
-  private auditFor(actor: string, patch: UserPatch, id: string): void {
-    if (patch.status === "Suspended") this.recordAudit(actor, "suspended user", id);
-    else if (patch.status === "Active") this.recordAudit(actor, "reactivated user", id);
-    if (patch.plan) this.recordAudit(actor, `changed plan to ${patch.plan}`, id);
-    if (patch.role) this.recordAudit(actor, `updated role to ${patch.role}`, id);
+  private async auditUserChange(actor: string, patch: UserPatch, id: string): Promise<void> {
+    if (patch.status === "Suspended") await this.recordAudit(actor, "suspended user", id);
+    else if (patch.status === "Active") await this.recordAudit(actor, "reactivated user", id);
+    if (patch.plan) await this.recordAudit(actor, `changed plan to ${patch.plan}`, id);
+    if (patch.role) await this.recordAudit(actor, `updated role to ${patch.role}`, id);
   }
 
   /** Permanently delete an account (real or demo). */
@@ -488,44 +365,36 @@ export class AdminService {
     const idx = this.demoCohort.findIndex((u) => u.id === id);
     if (idx >= 0) {
       this.demoCohort.splice(idx, 1);
-      this.recordAudit(actor, "deleted user", id);
+      await this.recordAudit(actor, "deleted user", id);
       return { deleted: true };
     }
     const deleted = await this.users.remove(id);
     if (!deleted) throw new NotFoundException(`User ${id} not found`);
-    this.recordAudit(actor, "deleted user", id);
+    await this.recordAudit(actor, "deleted user", id);
     return { deleted: true };
   }
 
-  setFlag(actor: string, key: string, enabled: boolean): FeatureFlag {
-    const flag = this.flags.find((f) => f.key === key);
+  async setFlag(actor: string, key: string, enabled: boolean): Promise<FeatureFlag> {
+    const flag = await this.store.setFlag(key, enabled);
     if (!flag) throw new NotFoundException(`Flag ${key} not found`);
-    flag.enabled = enabled;
-    this.recordAudit(actor, `${enabled ? "enabled" : "disabled"} feature flag`, key);
+    await this.recordAudit(actor, `${enabled ? "enabled" : "disabled"} feature flag`, key);
     return flag;
   }
 
-  updateTicket(
+  async updateTicket(
     actor: string,
     id: string,
     patch: { status?: SupportTicket["status"]; assignee?: string },
-  ): SupportTicket {
-    const ticket = this.tickets.find((t) => t.id === id);
+  ): Promise<SupportTicket> {
+    const ticket = await this.store.updateTicket(id, { ...patch, date: new Date().toISOString() });
     if (!ticket) throw new NotFoundException(`Ticket ${id} not found`);
-    if (patch.status) {
-      ticket.status = patch.status;
-      this.recordAudit(actor, `${patch.status.toLowerCase()} ticket`, id);
-    }
-    if (patch.assignee) {
-      ticket.assignee = patch.assignee;
-      this.recordAudit(actor, "reassigned ticket", id);
-    }
-    ticket.date = new Date().toISOString();
+    if (patch.status) await this.recordAudit(actor, `${patch.status.toLowerCase()} ticket`, id);
+    if (patch.assignee) await this.recordAudit(actor, "reassigned ticket", id);
     return ticket;
   }
 
-  createPost(actor: string, input: { title: string; category?: string }): ContentPost {
-    const post: ContentPost = {
+  async createPost(actor: string, input: { title: string; category?: string }): Promise<ContentPost> {
+    const post = await this.store.insertPost({
       id: `post_${Date.now()}`,
       title: input.title,
       category: input.category ?? "Product",
@@ -533,35 +402,33 @@ export class AdminService {
       author: actor,
       views: 0,
       date: new Date().toISOString(),
-    };
-    this.posts.unshift(post);
-    this.recordAudit(actor, "created draft", post.id);
+    });
+    await this.recordAudit(actor, "created draft", post.id);
     return post;
   }
 
-  updatePost(actor: string, id: string, patch: { status?: ContentPost["status"] }): ContentPost {
-    const post = this.posts.find((p) => p.id === id);
+  async updatePost(
+    actor: string,
+    id: string,
+    patch: { status?: ContentPost["status"] },
+  ): Promise<ContentPost> {
+    const post = await this.store.updatePost(id, patch);
     if (!post) throw new NotFoundException(`Post ${id} not found`);
-    if (patch.status) {
-      post.status = patch.status;
-      this.recordAudit(actor, `${patch.status.toLowerCase()} post`, id);
-    }
+    if (patch.status) await this.recordAudit(actor, `${patch.status.toLowerCase()} post`, id);
     return post;
   }
 
-  deletePost(actor: string, id: string): { deleted: boolean } {
-    const idx = this.posts.findIndex((p) => p.id === id);
-    if (idx < 0) throw new NotFoundException(`Post ${id} not found`);
-    this.posts.splice(idx, 1);
-    this.recordAudit(actor, "deleted post", id);
+  async deletePost(actor: string, id: string): Promise<{ deleted: boolean }> {
+    const deleted = await this.store.deletePost(id);
+    if (!deleted) throw new NotFoundException(`Post ${id} not found`);
+    await this.recordAudit(actor, "deleted post", id);
     return { deleted: true };
   }
 
-  refundTransaction(actor: string, id: string): AdminTransaction {
-    const txn = this.transactions.find((t) => t.id === id);
+  async refundTransaction(actor: string, id: string): Promise<AdminTransaction> {
+    const txn = await this.store.refundTransaction(id);
     if (!txn) throw new NotFoundException(`Transaction ${id} not found`);
-    txn.status = "Refunded";
-    this.recordAudit(actor, "refunded invoice", id);
+    await this.recordAudit(actor, "refunded invoice", id);
     return txn;
   }
 }

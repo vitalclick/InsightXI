@@ -1,6 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
+import { applyMigrations } from "./db/migrations";
 import {
   applySecurityHeaders,
   assertProductionConfig,
@@ -11,6 +12,10 @@ async function bootstrap() {
   // Refuse to boot with insecure config in production (default JWT secret,
   // wildcard CORS); warns instead of throwing in development.
   assertProductionConfig();
+
+  // Apply the SQL schema before any module initializes (Postgres only) so that
+  // repositories reading the DB in their init hooks find the tables present.
+  await applyMigrations();
 
   // rawBody: true preserves the unparsed request body so payment webhook
   // signatures (Paystack HMAC, Flutterwave verif-hash, PayPal) can be verified.
