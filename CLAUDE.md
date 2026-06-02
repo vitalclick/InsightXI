@@ -351,9 +351,22 @@ provider behind `FootballDataProvider`).
 
 ### Next (beyond MVP)
 
-* Real provider integration (API-Football), Postgres/Prisma persistence
+* Real provider integration (API-Football); seed football data into Postgres
 * Model calibration + drift monitoring, richer feature set
 * Performance hardening to Lighthouse 90+, real manager/lineup data
+
+> **Persistence.** The data layer is swappable via `DATA_BACKEND=memory|postgres`
+> (default `memory`, deterministic seed). Postgres uses **raw `node-postgres`
+> (`pg`) against `apps/api/src/db/schema.sql`** — there is no ORM (an earlier
+> note mentioned Prisma; the code does not use it). On boot with
+> `DATA_BACKEND=postgres`, `applyMigrations()` (called in `main.ts` before the
+> Nest app initializes) runs `schema.sql`, which is idempotent
+> (`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`). Set `DATABASE_URL`
+> to a Neon/Postgres connection string. Persisted domains: users (incl.
+> role/suspension), notifications, football data, and the admin subsystems
+> (support tickets, content, feature flags, transactions, audit log). The admin
+> *demo user cohort* is always in-memory (it visually pads the users table
+> alongside real accounts).
 
 ---
 

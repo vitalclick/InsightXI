@@ -109,11 +109,14 @@ export interface TacticalMatchup {
 export type SubscriptionTier = "FREE" | "PREMIUM";
 export type AuthProvider = "email" | "google" | "apple";
 export type SubscriptionStatus = "none" | "active" | "expired" | "canceled";
+export type UserRole = "USER" | "ADMIN";
 
 export interface PublicUser {
   id: string;
   email: string;
   tier: SubscriptionTier;
+  role: UserRole;
+  suspended: boolean;
   name: string | null;
   avatarUrl: string | null;
   provider: AuthProvider;
@@ -257,4 +260,182 @@ export interface LiveSnapshot {
   momentum: number;
   status: "LIVE" | "FINISHED";
   events: LiveEvent[];
+}
+
+// ── Admin console (mirrors apps/api admin.types.ts) ──────────────────────────
+export type AdminPlan = "Premium" | "Trial" | "Free";
+
+export interface AdminKpis {
+  totalUsers: number;
+  premium: number;
+  trialing: number;
+  free: number;
+  mrr: number;
+  arr: number;
+  accuracy: number;
+  activeNow: number;
+  churn: number;
+  arpu: number;
+  dau: number;
+  openTickets: number;
+  picksToday: number;
+}
+
+export interface AdminSeries {
+  userGrowth: number[];
+  revenue: number[];
+  accuracy: number[];
+  activeHourly: number[];
+}
+
+export interface PlanSlice {
+  plan: AdminPlan;
+  count: number;
+  pct: number;
+}
+
+export interface HealthRow {
+  label: string;
+  value: string;
+  status: "ok" | "warn" | "down" | "info";
+}
+
+export interface AdminSignup {
+  id: string;
+  name: string;
+  email: string;
+  plan: AdminPlan;
+}
+
+export interface AuditEntry {
+  id: string;
+  actor: string;
+  action: string;
+  target: string;
+  ip: string;
+  at: string;
+}
+
+export interface AdminOverview {
+  kpis: AdminKpis;
+  series: AdminSeries;
+  planDistribution: PlanSlice[];
+  recentSignups: AdminSignup[];
+  recentActivity: AuditEntry[];
+  health: HealthRow[];
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  plan: AdminPlan;
+  status: "Active" | "Pending" | "Suspended";
+  role: "User" | "Analyst" | "Admin";
+  country: string;
+  cc: string;
+  verified: boolean;
+  predictions: number;
+  logins: number;
+  spend: number;
+  flagged: boolean;
+  signup: string;
+  lastSeen: string;
+}
+
+export interface AdminTransaction {
+  id: string;
+  userName: string;
+  email: string;
+  plan: "Monthly" | "Annual";
+  amount: number;
+  status: "Paid" | "Failed" | "Refunded";
+  method: string;
+  date: string;
+}
+
+export interface SubscriptionsView {
+  summary: {
+    mrr: number;
+    arr: number;
+    activeSubs: number;
+    trialing: number;
+    churn: number;
+    arpu: number;
+  };
+  transactions: AdminTransaction[];
+}
+
+export interface ModelPick {
+  id: string;
+  home: string;
+  away: string;
+  market: string;
+  pick: string;
+  confidence: number;
+  result: "Hit" | "Miss" | "Pending";
+  model: string;
+  date: string;
+}
+
+export interface PredictionsAdminView {
+  model: {
+    version: string;
+    accuracy: number;
+    brier: number;
+    logLoss: number;
+    lastTrained: string;
+    picksToday: number;
+  };
+  picks: ModelPick[];
+}
+
+export interface AdminFixture {
+  id: string;
+  league: string;
+  home: string;
+  away: string;
+  kickoff: string;
+  status: string;
+  featured: boolean;
+}
+
+export interface ContentPost {
+  id: string;
+  title: string;
+  category: string;
+  status: "Published" | "Scheduled" | "Draft";
+  author: string;
+  views: number;
+  date: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  subject: string;
+  category: string;
+  priority: "High" | "Medium" | "Low";
+  status: "Open" | "Pending" | "Closed";
+  requester: string;
+  assignee: string;
+  date: string;
+}
+
+export interface TeamMember {
+  name: string;
+  email: string;
+  role: string;
+  lastSeen: string;
+}
+
+export interface FeatureFlag {
+  key: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+}
+
+export interface SettingsView {
+  team: TeamMember[];
+  flags: FeatureFlag[];
 }

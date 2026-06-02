@@ -5,6 +5,7 @@ import { AuthService } from "./auth.service";
 import { OAuthService } from "./oauth.service";
 import { UsersService } from "./users.service";
 import { PremiumGuard } from "./premium.guard";
+import { AdminGuard } from "./admin.guard";
 import { UserStore } from "./user.store";
 import { InMemoryUserStore } from "./in-memory-user.store";
 import { EmailService } from "../email/email.service";
@@ -72,6 +73,27 @@ describe("Auth + subscriptions", () => {
 
     expect(guard.canActivate(ctx("PREMIUM"))).toBe(true);
     expect(() => guard.canActivate(ctx("FREE"))).toThrow(ForbiddenException);
+  });
+
+  it("AdminGuard blocks non-admins and allows admins", () => {
+    const guard = new AdminGuard();
+    const ctx = (role: string): ExecutionContext =>
+      ({
+        switchToHttp: () => ({ getRequest: () => ({ user: { role } }) }),
+      }) as unknown as ExecutionContext;
+
+    expect(guard.canActivate(ctx("ADMIN"))).toBe(true);
+    expect(() => guard.canActivate(ctx("USER"))).toThrow(ForbiddenException);
+  });
+
+  it("seeds an ADMIN account whose JWT carries the admin role", async () => {
+    const { accessToken, user } = await auth.login(
+      "admin@insightxi.dev",
+      "password",
+    );
+    expect(user.role).toBe("ADMIN");
+    const payload = jwt.verify(accessToken);
+    expect(payload.role).toBe("ADMIN");
   });
 
   it("signs in via Google sandbox token and provisions a FREE account", async () => {

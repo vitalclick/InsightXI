@@ -3,20 +3,31 @@
  * All UI data access goes through services like this one.
  */
 import type {
+  AdminFixture,
+  AdminOverview,
+  AdminTransaction,
+  AdminUser,
   AppNotification,
+  AuditEntry,
   AuthResponse,
   CheckoutSession,
   ConfirmResult,
+  ContentPost,
   EvaluationReport,
+  FeatureFlag,
   H2HSummary,
   League,
   MatchPrediction,
   MatchView,
   PaymentProvider,
   PlanResponse,
+  PredictionsAdminView,
   PublicUser,
   SeasonTrend,
+  SettingsView,
   StandingRow,
+  SubscriptionsView,
+  SupportTicket,
   TacticalMatchup,
   Team,
   TeamProfile,
@@ -49,14 +60,19 @@ export async function apiGet<T>(path: string, token?: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function apiPost<T>(path: string, body: unknown, token?: string): Promise<T> {
+async function apiSend<T>(
+  method: "POST" | "PATCH" | "DELETE",
+  path: string,
+  body: unknown,
+  token?: string,
+): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
-    method: "POST",
+    method,
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify(body),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   if (!res.ok) {
     throw new ApiError(res.status, `API ${res.status}: ${res.statusText}`);
@@ -64,19 +80,12 @@ async function apiPost<T>(path: string, body: unknown, token?: string): Promise<
   return res.json() as Promise<T>;
 }
 
-async function apiDelete<T>(path: string, token?: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-  if (!res.ok) {
-    throw new ApiError(res.status, `API ${res.status}: ${res.statusText}`);
-  }
-  return res.json() as Promise<T>;
-}
+const apiPost = <T>(path: string, body: unknown, token?: string) =>
+  apiSend<T>("POST", path, body, token);
+const apiPatch = <T>(path: string, body: unknown, token?: string) =>
+  apiSend<T>("PATCH", path, body, token);
+const apiDelete = <T>(path: string, token?: string) =>
+  apiSend<T>("DELETE", path, undefined, token);
 
 /** Optional currency/country hints for localized pricing. */
 function planQuery(hints?: { currency?: string; country?: string }): string {
@@ -166,6 +175,45 @@ export const api = {
   ) => apiPost<CheckoutSession>("/payments/checkout", { provider, ...hints }, token),
   confirmPayment: (provider: PaymentProvider, reference: string, token: string) =>
     apiPost<ConfirmResult>("/payments/confirm", { provider, reference }, token),
+
+  // Admin console — every route requires an ADMIN bearer token.
+  admin: {
+    overview: (token: string) => apiGet<AdminOverview>("/admin/overview", token),
+    users: (token: string) => apiGet<AdminUser[]>("/admin/users", token),
+    subscriptions: (token: string) =>
+      apiGet<SubscriptionsView>("/admin/subscriptions", token),
+    predictions: (token: string) =>
+      apiGet<PredictionsAdminView>("/admin/predictions", token),
+    fixtures: (token: string) => apiGet<AdminFixture[]>("/admin/fixtures", token),
+    content: (token: string) => apiGet<ContentPost[]>("/admin/content", token),
+    support: (token: string) => apiGet<SupportTicket[]>("/admin/support", token),
+    audit: (token: string) => apiGet<AuditEntry[]>("/admin/audit", token),
+    settings: (token: string) => apiGet<SettingsView>("/admin/settings", token),
+
+    // Write actions
+    updateUser: (
+      id: string,
+      patch: { role?: AdminUser["role"]; plan?: AdminUser["plan"]; status?: AdminUser["status"] },
+      token: string,
+    ) => apiPatch<AdminUser>(`/admin/users/${id}`, patch, token),
+    deleteUser: (id: string, token: string) =>
+      apiDelete<{ deleted: boolean }>(`/admin/users/${id}`, token),
+    setFlag: (key: string, enabled: boolean, token: string) =>
+      apiPatch<FeatureFlag>(`/admin/settings/flags/${key}`, { enabled }, token),
+    updateTicket: (
+      id: string,
+      patch: { status?: SupportTicket["status"]; assignee?: string },
+      token: string,
+    ) => apiPatch<SupportTicket>(`/admin/support/${id}`, patch, token),
+    createPost: (input: { title: string; category?: string }, token: string) =>
+      apiPost<ContentPost>("/admin/content", input, token),
+    updatePost: (id: string, patch: { status?: ContentPost["status"] }, token: string) =>
+      apiPatch<ContentPost>(`/admin/content/${id}`, patch, token),
+    deletePost: (id: string, token: string) =>
+      apiDelete<{ deleted: boolean }>(`/admin/content/${id}`, token),
+    refundTransaction: (id: string, token: string) =>
+      apiPost<AdminTransaction>(`/admin/subscriptions/${id}/refund`, {}, token),
+  },
 };
 
 export const API_URL_PUBLIC = API_URL;

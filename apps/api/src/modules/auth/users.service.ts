@@ -5,6 +5,7 @@ import {
   PublicUser,
   SubscriptionTier,
   UserRecord,
+  UserRole,
   UserStore,
 } from "./user.store";
 
@@ -13,6 +14,7 @@ export type {
   PublicUser,
   SubscriptionStatus,
   SubscriptionTier,
+  UserRole,
 } from "./user.store";
 export type User = UserRecord;
 
@@ -37,6 +39,7 @@ interface NewUser {
   email: string;
   password?: string | null;
   tier?: SubscriptionTier;
+  role?: UserRole;
   name?: string | null;
   avatarUrl?: string | null;
   provider?: AuthProvider;
@@ -65,6 +68,14 @@ export class UsersService implements OnModuleInit {
       tier: "PREMIUM",
       emailVerified: true,
     });
+    await this.buildAndInsert({
+      email: "admin@insightxi.dev",
+      password: "password",
+      tier: "PREMIUM",
+      role: "ADMIN",
+      name: "Alex Mercer",
+      emailVerified: true,
+    });
   }
 
   private async buildAndInsert(input: NewUser): Promise<UserRecord> {
@@ -74,6 +85,8 @@ export class UsersService implements OnModuleInit {
       email: input.email.toLowerCase(),
       passwordHash: input.password ? hashPassword(input.password) : null,
       tier: input.tier ?? "FREE",
+      role: input.role ?? "USER",
+      suspended: false,
       name: input.name ?? null,
       avatarUrl: input.avatarUrl ?? null,
       provider: input.provider ?? "email",
@@ -112,6 +125,36 @@ export class UsersService implements OnModuleInit {
 
   async findById(id: string): Promise<UserRecord | undefined> {
     return this.store.findById(id);
+  }
+
+  /** Every account as a public view (admin console listing). */
+  async listPublic(): Promise<PublicUser[]> {
+    const users = await this.store.list();
+    return users.map((u) => this.toPublic(u));
+  }
+
+  /**
+   * Admin mutation: apply role/tier/suspension changes to an account by id.
+   * Returns the updated public view, or undefined if the id is unknown.
+   */
+  async adminUpdate(
+    id: string,
+    patch: { role?: UserRole; tier?: SubscriptionTier; suspended?: boolean },
+  ): Promise<PublicUser | undefined> {
+    const user = await this.store.findById(id);
+    if (!user) return undefined;
+    const updated = await this.store.update({
+      ...user,
+      role: patch.role ?? user.role,
+      tier: patch.tier ?? user.tier,
+      suspended: patch.suspended ?? user.suspended,
+    });
+    return this.toPublic(updated);
+  }
+
+  /** Admin mutation: permanently delete an account. */
+  async remove(id: string): Promise<boolean> {
+    return this.store.delete(id);
   }
 
   /**
@@ -216,6 +259,8 @@ export class UsersService implements OnModuleInit {
       id: user.id,
       email: user.email,
       tier: user.tier,
+      role: user.role,
+      suspended: user.suspended,
       name: user.name,
       avatarUrl: user.avatarUrl,
       provider: user.provider,

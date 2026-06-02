@@ -17,6 +17,7 @@ export interface JwtPayload {
   sub: string;
   email: string;
   tier: string;
+  role: string;
 }
 
 type TokenPurpose = "verify" | "reset" | "refresh";
@@ -63,6 +64,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       tier: user.tier,
+      role: user.role,
     };
     const refreshTtl = process.env.JWT_REFRESH_EXPIRES_IN ?? "30d";
     return {
@@ -78,6 +80,9 @@ export class AuthService {
   async login(email: string, password: string): Promise<AuthResult> {
     const user = await this.users.validate(email, password);
     if (!user) throw new UnauthorizedException("Invalid credentials");
+    if (user.suspended) {
+      throw new UnauthorizedException("This account has been suspended");
+    }
     return this.issueToken(user);
   }
 
@@ -102,6 +107,9 @@ export class AuthService {
     const payload = await this.verifyPurpose(refreshToken, "refresh");
     const user = await this.users.findById(payload.sub);
     if (!user) throw new UnauthorizedException("Unknown user");
+    if (user.suspended) {
+      throw new UnauthorizedException("This account has been suspended");
+    }
     // Reject refresh tokens issued before the latest revocation (logout / reset).
     if ((payload.tv ?? 0) !== user.tokenVersion) {
       throw new UnauthorizedException("Session expired — please sign in again");

@@ -17,6 +17,10 @@ export class InMemoryUserStore extends UserStore {
     return undefined;
   }
 
+  async list(): Promise<UserRecord[]> {
+    return [...this.users.values()];
+  }
+
   async insert(user: UserRecord): Promise<void> {
     this.users.set(user.email.toLowerCase(), user);
   }
@@ -36,13 +40,14 @@ export class InMemoryUserStore extends UserStore {
     return user;
   }
 
-  async delete(id: string): Promise<void> {
-    for (const [email, user] of this.users) {
+  async delete(id: string): Promise<boolean> {
+    for (const [key, user] of this.users) {
       if (user.id === id) {
-        this.users.delete(email);
-        return;
+        this.users.delete(key);
+        return true;
       }
     }
+    return false;
   }
 
   async bumpTokenVersion(id: string): Promise<UserRecord | undefined> {

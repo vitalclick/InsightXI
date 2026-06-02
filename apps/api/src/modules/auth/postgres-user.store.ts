@@ -5,6 +5,7 @@ import {
   SubscriptionStatus,
   SubscriptionTier,
   UserRecord,
+  UserRole,
   UserStore,
 } from "./user.store";
 
@@ -13,6 +14,8 @@ interface UserRow {
   email: string;
   password_hash: string | null;
   tier: SubscriptionTier;
+  role: UserRole | null;
+  suspended: boolean | null;
   name: string | null;
   avatar_url: string | null;
   provider: AuthProvider;
@@ -25,7 +28,7 @@ interface UserRow {
 }
 
 const COLUMNS =
-  "id, email, password_hash, tier, name, avatar_url, provider, email_verified, " +
+  "id, email, password_hash, tier, role, suspended, name, avatar_url, provider, email_verified, " +
   "token_version, subscription_status, subscription_provider, subscription_ref, current_period_end";
 
 function toRecord(row: UserRow): UserRecord {
@@ -34,6 +37,8 @@ function toRecord(row: UserRow): UserRecord {
     email: row.email,
     passwordHash: row.password_hash,
     tier: row.tier,
+    role: row.role ?? "USER",
+    suspended: row.suspended ?? false,
     name: row.name,
     avatarUrl: row.avatar_url,
     provider: row.provider,
@@ -69,16 +74,25 @@ export class PostgresUserStore extends UserStore {
     return rows[0] ? toRecord(rows[0]) : undefined;
   }
 
+  async list(): Promise<UserRecord[]> {
+    const rows = await this.pg.query<UserRow>(
+      `SELECT ${COLUMNS} FROM users ORDER BY email`,
+    );
+    return rows.map(toRecord);
+  }
+
   async insert(user: UserRecord): Promise<void> {
     await this.pg.query(
       `INSERT INTO users (${COLUMNS})
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        ON CONFLICT (email) DO NOTHING`,
       [
         user.id,
         user.email.toLowerCase(),
         user.passwordHash,
         user.tier,
+        user.role,
+        user.suspended,
         user.name,
         user.avatarUrl,
         user.provider,
@@ -95,15 +109,17 @@ export class PostgresUserStore extends UserStore {
   async update(user: UserRecord): Promise<UserRecord> {
     const rows = await this.pg.query<UserRow>(
       `UPDATE users SET
-         password_hash = $2, tier = $3, name = $4, avatar_url = $5,
-         provider = $6, email_verified = $7, subscription_status = $8,
-         subscription_provider = $9, subscription_ref = $10, current_period_end = $11
+         password_hash = $2, tier = $3, role = $4, suspended = $5, name = $6, avatar_url = $7,
+         provider = $8, email_verified = $9, subscription_status = $10,
+         subscription_provider = $11, subscription_ref = $12, current_period_end = $13
        WHERE id = $1
        RETURNING ${COLUMNS}`,
       [
         user.id,
         user.passwordHash,
         user.tier,
+        user.role,
+        user.suspended,
         user.name,
         user.avatarUrl,
         user.provider,
@@ -128,8 +144,12 @@ export class PostgresUserStore extends UserStore {
     return rows[0] ? toRecord(rows[0]) : undefined;
   }
 
-  async delete(id: string): Promise<void> {
-    await this.pg.query(`DELETE FROM users WHERE id = $1`, [id]);
+  async delete(id: string): Promise<boolean> {
+    const rows = await this.pg.query<{ id: string }>(
+      `DELETE FROM users WHERE id = $1 RETURNING id`,
+      [id],
+    );
+    return rows.length > 0;
   }
 
   async bumpTokenVersion(id: string): Promise<UserRecord | undefined> {
