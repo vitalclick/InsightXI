@@ -19,7 +19,8 @@ export interface ApiFootballConfig {
   apiKey: string;
   baseUrl?: string;
   leagueIds: number[];
-  season: number;
+  /** One or more start-year seasons to pull (e.g. [2022, 2023]). */
+  seasons: number[];
   fetchImpl?: FetchLike;
 }
 
@@ -27,6 +28,9 @@ export interface ApiFootballConfig {
  * Live data source backed by API-Football (v3). Implements the same
  * FootballDataProvider contract as the mock, so no service code changes when
  * switching to live data — selection happens in ProvidersModule by env.
+ *
+ * Pulls every (league × season) combination so multiple seasons of history can
+ * be ingested in one pass.
  */
 export class ApiFootballProvider implements FootballDataProvider {
   private readonly logger = new Logger(ApiFootballProvider.name);
@@ -49,40 +53,68 @@ export class ApiFootballProvider implements FootballDataProvider {
       throw new Error(`API-Football responded ${res.status} for ${path}`);
     }
     const body = (await res.json()) as AfEnvelope<T>;
+    // API-Football replies 200 even on misconfiguration; surface the reason
+    // (bad season/plan/token/rate-limit) instead of silently returning [].
+    if (hasErrors(body.errors)) {
+      this.logger.warn(
+        `API-Football returned errors for ${path}: ${JSON.stringify(body.errors)}`,
+      );
+    }
     return body.response ?? [];
   }
 
   async getLeagues(): Promise<League[]> {
-    const out: League[] = [];
+    const byId = new Map<string, League>();
     for (const id of this.config.leagueIds) {
-      const rows = await this.get<AfLeagueResponse>(
-        `/leagues?id=${id}&season=${this.config.season}`,
-      );
-      if (rows[0]) out.push(mapLeague(rows[0]));
+      for (const season of this.config.seasons) {
+        const rows = await this.get<AfLeagueResponse>(
+          `/leagues?id=${id}&season=${season}`,
+        );
+        if (rows[0]) {
+          const league = mapLeague(rows[0]);
+          byId.set(league.id, league);
+        }
+      }
     }
-    return out;
+    return [...byId.values()];
   }
 
   async getTeams(): Promise<Team[]> {
-    const out: Team[] = [];
+    const byId = new Map<string, Team>();
     for (const id of this.config.leagueIds) {
-      const rows = await this.get<AfTeamResponse>(
-        `/teams?league=${id}&season=${this.config.season}`,
-      );
-      for (const r of rows) out.push(mapTeam(r, String(id)));
+      for (const season of this.config.seasons) {
+        const rows = await this.get<AfTeamResponse>(
+          `/teams?league=${id}&season=${season}`,
+        );
+        for (const r of rows) {
+          const team = mapTeam(r, String(id));
+          byId.set(team.id, team);
+        }
+      }
     }
-    return out;
+    return [...byId.values()];
   }
 
   async getMatches(): Promise<Match[]> {
     const out: Match[] = [];
     for (const id of this.config.leagueIds) {
-      const rows = await this.get<AfFixtureResponse>(
-        `/fixtures?league=${id}&season=${this.config.season}`,
-      );
-      for (const r of rows) out.push(mapFixture(r));
+      for (const season of this.config.seasons) {
+        const rows = await this.get<AfFixtureResponse>(
+          `/fixtures?league=${id}&season=${season}`,
+        );
+        for (const r of rows) out.push(mapFixture(r));
+      }
     }
-    this.logger.log(`Fetched ${out.length} fixtures from API-Football`);
+    this.logger.log(
+      `Fetched ${out.length} fixtures from API-Football ` +
+        `(leagues ${this.config.leagueIds.join(",")}; seasons ${this.config.seasons.join(",")})`,
+    );
     return out;
   }
+}
+
+/** True when API-Football's `errors` payload is non-empty (object or array). */
+function hasErrors(errors: AfEnvelope<unknown>["errors"]): boolean {
+  if (!errors) return false;
+  return Array.isArray(errors) ? errors.length > 0 : Object.keys(errors).length > 0;
 }

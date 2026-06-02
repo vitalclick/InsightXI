@@ -13,6 +13,15 @@ export function parseLeagueIds(value?: string): number[] {
     .filter((n) => !Number.isNaN(n));
 }
 
+/** Parse "2022,2023" -> [2022, 2023]; defaults to the current year. */
+export function parseSeasons(value?: string): number[] {
+  const seasons = (value ?? "")
+    .split(",")
+    .map((s) => Number(s.trim()))
+    .filter((n) => !Number.isNaN(n));
+  return seasons.length > 0 ? seasons : [new Date().getFullYear()];
+}
+
 /**
  * Selects the football data source:
  *  - FOOTBALL_API_KEY present -> ApiFootballProvider (live API-Football)
@@ -33,9 +42,7 @@ export function parseLeagueIds(value?: string): number[] {
             apiKey,
             baseUrl: process.env.FOOTBALL_API_BASE_URL,
             leagueIds: parseLeagueIds(process.env.FOOTBALL_LEAGUE_IDS),
-            season: Number(
-              process.env.FOOTBALL_SEASON ?? new Date().getFullYear(),
-            ),
+            seasons: parseSeasons(process.env.FOOTBALL_SEASON),
           });
           // Never let an upstream outage (or a restricted free-tier season)
           // crash the boot: fall back to the deterministic seed provider.
