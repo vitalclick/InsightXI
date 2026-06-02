@@ -2,6 +2,9 @@
 
 import { type UIEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useThemeStore } from "../../store/theme-store";
+import { useAuthStore } from "../../store/auth-store";
+import { api } from "../../services/api-client";
+import type { PaymentProvider } from "../../lib/types";
 import type { MatchArg } from "./view";
 import { ICONS } from "./icons";
 import {
@@ -137,6 +140,40 @@ export function MobileApp() {
     () => ({ showTab, pushScreen, pop, toast, haptic, toggleTheme }),
     [showTab, pushScreen, pop, toast, toggleTheme],
   );
+
+  // Confirm a hosted-checkout return. Paystack/Flutterwave/PayPal redirect back
+  // to /premium?provider=…&reference=…; on a phone the redirect-to-/m preserves
+  // that query, and we verify + unlock Premium here regardless of the open tab.
+  const checkoutHandled = useRef(false);
+  useEffect(() => {
+    if (checkoutHandled.current) return;
+    checkoutHandled.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const provider = params.get("provider") as PaymentProvider | null;
+    const reference =
+      params.get("reference") ?? params.get("trxref") ?? params.get("tx_ref") ?? params.get("token");
+    if (!provider || !reference) return;
+    window.history.replaceState({}, "", window.location.pathname);
+    const { token, setAuth } = useAuthStore.getState();
+    if (!token) {
+      toast("Sign in to confirm your payment");
+      pushScreen("premium");
+      return;
+    }
+    void api
+      .confirmPayment(provider, reference, token)
+      .then((res) => {
+        if (res.status === "active" && res.auth) {
+          setAuth(res.auth.accessToken, res.auth.user);
+          toast("Premium unlocked");
+        } else {
+          toast("Payment pending confirmation");
+        }
+        pushScreen("premium");
+      })
+      .catch(() => toast("We couldn't verify that payment"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Pull-to-refresh on the active screen (touch only — mirrors the prototype).
   const screensRef = useRef<HTMLDivElement>(null);

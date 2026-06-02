@@ -15,7 +15,7 @@ export function PhoneRedirect() {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const mq = window.matchMedia("(max-width: 520px)");
     const apply = () => {
-      if (mq.matches) router.replace("/m");
+      if (mq.matches) router.replace("/m" + window.location.search);
     };
     apply();
     mq.addEventListener("change", apply);

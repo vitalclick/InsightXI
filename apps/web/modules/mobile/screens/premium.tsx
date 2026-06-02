@@ -1,7 +1,11 @@
 "use client";
 
 import { usePlan } from "../../../hooks/use-plan";
+import { useAuthStore } from "../../../store/auth-store";
+import { SocialAuth } from "../../../components/auth/social-auth";
+import type { AuthResponse } from "../../../lib/types";
 import { useMobileNav } from "../nav-context";
+import { CheckoutSheet } from "../checkout-sheet";
 import { Icon } from "../icons";
 
 const FALLBACK_FEATURES = [
@@ -14,11 +18,18 @@ const FALLBACK_FEATURES = [
 
 export function PremiumScreen() {
   const nav = useMobileNav();
+  const { user, token, setAuth } = useAuthStore();
+  const isPremium = user?.tier === "PREMIUM";
   const { data, isLoading } = usePlan();
   const plan = data?.plan;
   const features = plan?.features?.length ? plan.features : FALLBACK_FEATURES;
   const price = plan?.local.display ?? plan?.base.display ?? "£9.99";
   const interval = plan?.interval ?? "month";
+
+  function onActivated(auth: AuthResponse) {
+    setAuth(auth.accessToken, auth.user);
+    nav.toast("Premium unlocked");
+  }
 
   return (
     <>
@@ -77,12 +88,31 @@ export function PremiumScreen() {
             <span className="mono" style={{ fontSize: 28, fontWeight: 800 }}>{price}</span>
             <span className="muted" style={{ fontSize: 12 }}>/ {interval}</span>
           </div>
-          <div className="dim" style={{ fontSize: 11.5 }}>
-            {isLoading ? "Loading localized pricing…" : "Cancel anytime · billed via PayPal, Paystack or Flutterwave"}
+          <div className="dim" style={{ fontSize: 11.5, marginBottom: 14 }}>
+            {isLoading ? "Loading localized pricing…" : "Cancel anytime · billed securely"}
           </div>
-          <button className="btn btn-gold" style={{ width: "100%", marginTop: 13 }} onClick={() => nav.toast("Complete checkout on the web app")}>
-            Start Premium →
-          </button>
+
+          {isPremium ? (
+            <div>
+              <span className="badge green" style={{ display: "inline-flex" }}>
+                Premium active
+              </span>
+              {user?.currentPeriodEnd && (
+                <div className="dim" style={{ fontSize: 11.5, marginTop: 10 }}>
+                  Access through {new Date(user.currentPeriodEnd).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          ) : token && data ? (
+            <CheckoutSheet token={token} plan={data} onActivated={onActivated} />
+          ) : (
+            <div>
+              <div className="muted" style={{ fontSize: 12, marginBottom: 12, lineHeight: 1.5 }}>
+                Sign in to upgrade — your account unlocks Premium across web and mobile.
+              </div>
+              <SocialAuth onSuccess={onActivated} demoEmail="premium.user@insightxi.dev" />
+            </div>
+          )}
         </div>
       </div>
 
