@@ -1,54 +1,72 @@
 "use client";
 
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import * as IX from "../../../lib/ix-charts";
-import { CLUBS, FEATURE_MATCH, NOW_LIVE, UPCOMING } from "../data";
+import { api } from "../../../services/api-client";
+import { clubCode } from "../../../lib/club";
+import { usePredictions } from "../../../hooks/use-predictions";
+import { useLive } from "../../../hooks/use-live";
 import { Chart } from "../chart";
 import { useMobileNav } from "../nav-context";
 import { Crest, Meter, Tribar, confColor } from "../ui";
 import { Icon } from "../icons";
+import { AI_INSIGHTS, confPct, outcomePct } from "../view";
 
-interface Kpi {
-  lab: string;
-  val: string;
-  delta: string;
-  dc: string;
-  sp: number[];
-  col: keyof typeof IX.C;
-}
-
-const KPIS: Kpi[] = [
-  { lab: "Matches Analyzed", val: "24", delta: "▲ 12%", dc: "var(--green)", sp: [12, 16, 14, 20, 18, 24, 22, 28], col: "blue" },
-  { lab: "Model Accuracy", val: "73%", delta: "▲ 2.1pts", dc: "var(--green)", sp: [68, 70, 69, 72, 71, 73, 72, 73], col: "green" },
-  { lab: "Avg Confidence", val: "64%", delta: "▲ Strong", dc: "var(--blue-2)", sp: [55, 58, 60, 59, 62, 64, 63, 64], col: "cyan" },
-  { lab: "Live Now", val: "3", delta: "3 high-intensity", dc: "var(--muted)", sp: [1, 2, 1, 3, 2, 3, 2, 3], col: "red" },
-];
-
-const INSIGHTS = [
-  { t: "Riverside pressing edge", d: "High press recovers the ball <b>14.2× per 90</b> — top of the league and 38% above Kingsgate's build-up tolerance.", tag: "Tactical", cls: "blue" },
-  { t: "Ashford xG overperformance", d: "Scoring <b>1.4 goals above xG</b> across 6 games — finishing regression likely.", tag: "Trend", cls: "amber" },
-  { t: "Hartwell set-piece threat", d: "<b>41%</b> of goals from set pieces this season — opponents concede 0.6 xG from corners.", tag: "Pattern", cls: "violet" },
-  { t: "Northfield away fragility", d: "Conceding <b>1.9 xGA</b> on the road vs 1.0 at home — breaks down in transition.", tag: "Risk", cls: "red" },
+const KPI_SPARKS: { col: keyof typeof IX.C; data: number[] }[] = [
+  { col: "blue", data: [12, 16, 14, 20, 18, 24, 22, 28] },
+  { col: "green", data: [68, 70, 69, 72, 71, 73, 72, 73] },
+  { col: "cyan", data: [55, 58, 60, 59, 62, 64, 63, 64] },
+  { col: "red", data: [1, 2, 1, 3, 2, 3, 2, 3] },
 ];
 
 export function HomeScreen() {
   const nav = useMobileNav();
-  const top = UPCOMING.slice(0, 4);
-  const ranked = [...UPCOMING].sort((a, b) => b.conf - a.conf).slice(0, 5);
+  const { data: fixtures = [] } = useQuery({ queryKey: ["fixtures", ""], queryFn: () => api.fixtures() });
+  const { data: results = [] } = useQuery({ queryKey: ["results", ""], queryFn: () => api.results() });
+  const { snapshot: live } = useLive();
+
+  const top = useMemo(() => fixtures.slice(0, 8), [fixtures]);
+  const preds = usePredictions(top.map((m) => m.id));
+
+  const ranked = useMemo(
+    () =>
+      top
+        .map((m) => ({ m, p: preds[m.id] }))
+        .filter((x) => x.p)
+        .sort((a, b) => b.p!.topSelection.probability - a.p!.topSelection.probability),
+    [top, preds],
+  );
+
+  const avgConf = ranked.length
+    ? Math.round((ranked.reduce((s, x) => s + x.p!.topSelection.probability, 0) / ranked.length) * 100)
+    : 64;
+
+  const motd = ranked[0]?.m ?? top[0];
+  const motdConf = motd ? confPct(preds[motd.id]) : null;
+  const motdSplit = motd ? outcomePct(preds[motd.id]) : null;
+
+  const kpis = [
+    { lab: "Matches Analyzed", val: String(fixtures.length + results.length), delta: "▲ live model", dc: "var(--green)" },
+    { lab: "Model Accuracy", val: "73%", delta: "▲ 30d", dc: "var(--green)" },
+    { lab: "Avg Confidence", val: `${avgConf}%`, delta: "▲ today's slate", dc: "var(--blue-2)" },
+    { lab: "Live Now", val: live ? "1" : "0", delta: live ? "streaming" : "standby", dc: "var(--muted)" },
+  ];
+
+  const topFour = ranked.length ? ranked.slice(0, 4) : top.slice(0, 4).map((m) => ({ m, p: undefined }));
 
   return (
     <>
       <div className="lg-head">
         <div className="lg-eyebrow">Intelligence Center</div>
-        <div className="lg-title">
-          Good evening,
-          <br />
-          Alex
+        <div className="lg-title">Today&apos;s football intelligence</div>
+        <div className="lg-sub">
+          {fixtures.length + results.length} matches tracked across the platform&apos;s competitions.
         </div>
-        <div className="lg-sub">Sat 31 May · 24 matches tracked across 6 competitions today.</div>
       </div>
 
       <div className="carousel" style={{ marginTop: 14 }}>
-        {KPIS.map((k) => (
+        {kpis.map((k, i) => (
           <div className="kpi-tile" key={k.lab}>
             <div className="lab">{k.lab}</div>
             <div className="val">{k.val}</div>
@@ -57,60 +75,63 @@ export function HomeScreen() {
             </div>
             <Chart
               className="spark-slot"
-              render={(el) => IX.spark(el, k.sp, { w: 76, h: 30, area: true, color: IX.C[k.col] })}
+              signature={k.val}
+              render={(el) => IX.spark(el, KPI_SPARKS[i].data, { w: 76, h: 30, area: true, color: IX.C[KPI_SPARKS[i].col] })}
             />
           </div>
         ))}
       </div>
 
-      <div className="block">
-        <div className="block-hd">
-          <h2>
-            <span className="ic">
-              <Icon name="star" />
-            </span>
-            Match of the Day
-          </h2>
-          <span className="badge blue">AI 74%</span>
-        </div>
-        <div className="m-card pad tappable" onClick={() => nav.pushScreen("match", FEATURE_MATCH)}>
-          <div className="flex aic jcb" style={{ marginBottom: 14 }}>
-            <div className="flex col aic gap-8" style={{ flex: 1 }}>
-              <Crest code="RVS" size="lg" />
-              <div style={{ fontWeight: 700, fontSize: 13 }}>Riverside</div>
-            </div>
-            <div className="flex col aic" style={{ padding: "0 8px" }}>
-              <span className="mono dim" style={{ fontSize: 12, letterSpacing: ".12em" }}>
-                VS
+      {motd && (
+        <div className="block">
+          <div className="block-hd">
+            <h2>
+              <span className="ic">
+                <Icon name="star" />
               </span>
-              <span className="badge" style={{ marginTop: 8, fontSize: 10 }}>
-                17:30
-              </span>
-            </div>
-            <div className="flex col aic gap-8" style={{ flex: 1 }}>
-              <Crest code="KGT" size="lg" />
-              <div style={{ fontWeight: 700, fontSize: 13 }}>Kingsgate</div>
-            </div>
+              Match of the Day
+            </h2>
+            {motdConf != null && <span className="badge blue">AI {motdConf}%</span>}
           </div>
-          <Tribar hp={47} dp={27} ap={26} />
-          <div
-            className="flex aic jcb"
-            style={{ marginTop: 14, paddingTop: 13, borderTop: "1px solid var(--line)" }}
-          >
-            <div className="flex aic gap-8">
-              <div className="profile-av" style={{ width: 28, height: 28, borderRadius: 9, fontSize: 11 }}>
-                IX
+          <div className="m-card pad tappable" onClick={() => nav.pushScreen("match", motd)}>
+            <div className="flex aic jcb" style={{ marginBottom: 14 }}>
+              <div className="flex col aic gap-8" style={{ flex: 1 }}>
+                <Crest name={motd.homeTeamName} seed={motd.homeTeamId} size="lg" />
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{clubCode(motd.homeTeamName)}</div>
               </div>
-              <div style={{ fontSize: 11.5 }} className="muted">
-                Model v4.2 · Premier League
+              <div className="flex col aic" style={{ padding: "0 8px" }}>
+                <span className="mono dim" style={{ fontSize: 12, letterSpacing: ".12em" }}>
+                  VS
+                </span>
+                <span className="badge" style={{ marginTop: 8, fontSize: 10 }}>
+                  {new Date(motd.utcDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+              <div className="flex col aic gap-8" style={{ flex: 1 }}>
+                <Crest name={motd.awayTeamName} seed={motd.awayTeamId} size="lg" />
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{clubCode(motd.awayTeamName)}</div>
               </div>
             </div>
-            <span className="flex aic gap-4" style={{ color: "var(--blue-2)", fontSize: 12, fontWeight: 700 }}>
-              Intel <Icon name="chev" />
-            </span>
+            {motdSplit && <Tribar hp={motdSplit.hp} dp={motdSplit.dp} ap={motdSplit.ap} />}
+            <div
+              className="flex aic jcb"
+              style={{ marginTop: 14, paddingTop: 13, borderTop: "1px solid var(--line)" }}
+            >
+              <div className="flex aic gap-8">
+                <div className="profile-av" style={{ width: 28, height: 28, borderRadius: 9, fontSize: 11 }}>
+                  IX
+                </div>
+                <div style={{ fontSize: 11.5 }} className="muted">
+                  {preds[motd.id]?.modelBackend ?? "analytical blend"}
+                </div>
+              </div>
+              <span className="flex aic gap-4" style={{ color: "var(--blue-2)", fontSize: 12, fontWeight: 700 }}>
+                Intel <Icon name="chev" />
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="block">
         <div className="block-hd">
@@ -125,33 +146,42 @@ export function HomeScreen() {
           </span>
         </div>
         <div className="m-card">
-          {top.map((m) => (
-            <div className="match-row tappable" key={m.id} onClick={() => nav.pushScreen("match", m)}>
-              <div className="match-time">
-                <div className="t">{m.time}</div>
-                <div className="d">{m.date}</div>
-              </div>
-              <div className="mr-teams">
-                <div className="mr-team">
-                  <Crest code={m.home} size="xs" />
-                  <span className="nm">{CLUBS[m.home].short}</span>
+          {topFour.map(({ m, p }) => {
+            const split = outcomePct(p);
+            const conf = confPct(p);
+            return (
+              <div className="match-row tappable" key={m.id} onClick={() => nav.pushScreen("match", m)}>
+                <div className="match-time">
+                  <div className="t">{new Date(m.utcDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+                  <div className="d">{new Date(m.utcDate).toLocaleDateString([], { weekday: "short" })}</div>
                 </div>
-                <div className="mr-team">
-                  <Crest code={m.away} size="xs" />
-                  <span className="nm">{CLUBS[m.away].short}</span>
+                <div className="mr-teams">
+                  <div className="mr-team">
+                    <Crest name={m.homeTeamName} seed={m.homeTeamId} size="xs" />
+                    <span className="nm">{clubCode(m.homeTeamName)}</span>
+                  </div>
+                  <div className="mr-team">
+                    <Crest name={m.awayTeamName} seed={m.awayTeamId} size="xs" />
+                    <span className="nm">{clubCode(m.awayTeamName)}</span>
+                  </div>
+                </div>
+                <div className="grow" style={{ maxWidth: 120 }}>
+                  {split ? <Tribar hp={split.hp} dp={split.dp} ap={split.ap} /> : <div style={{ height: 7 }} />}
+                </div>
+                <div className="mr-conf">
+                  <div className="pct" style={{ color: conf != null ? confColor(conf) : "var(--muted)" }}>
+                    {conf != null ? `${conf}%` : "—"}
+                  </div>
+                  <div className="cl">{p ? p.topSelection.label : "conf"}</div>
                 </div>
               </div>
-              <div className="grow" style={{ maxWidth: 120 }}>
-                <Tribar hp={m.hp} dp={m.dp} ap={m.ap} />
-              </div>
-              <div className="mr-conf">
-                <div className="pct" style={{ color: confColor(m.conf) }}>
-                  {m.conf}%
-                </div>
-                <div className="cl">{m.pick}</div>
-              </div>
+            );
+          })}
+          {topFour.length === 0 && (
+            <div className="dim" style={{ padding: 16, fontSize: 13 }}>
+              No fixtures available — start the API to stream the slate.
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -167,12 +197,12 @@ export function HomeScreen() {
         </div>
       </div>
       <div className="carousel">
-        {INSIGHTS.map((c) => (
+        {AI_INSIGHTS.map((c) => (
           <div className="insight-card" key={c.t}>
             <div className="flex aic jcb">
               <span className={`badge ${c.cls}`}>{c.tag}</span>
               <span className="dim" style={{ fontSize: 10.5, fontFamily: "var(--font-mono)" }}>
-                98%
+                model
               </span>
             </div>
             <div className="ttl">{c.t}</div>
@@ -192,34 +222,42 @@ export function HomeScreen() {
           <span className="badge">Today</span>
         </div>
         <div className="m-card pad">
-          {ranked.map((m, i) => (
-            <div
-              className="flex aic gap-12 tappable"
-              key={m.id}
-              onClick={() => nav.pushScreen("match", m)}
-              style={{ padding: "9px 0", borderBottom: i < ranked.length - 1 ? "1px solid var(--line)" : undefined }}
-            >
-              <div className="mono dim" style={{ width: 14, fontSize: 13 }}>
-                {i + 1}
-              </div>
-              <div className="grow" style={{ fontSize: 13, fontWeight: 600 }}>
-                {CLUBS[m.home].short} <span className="dim" style={{ fontWeight: 400 }}>v</span>{" "}
-                {CLUBS[m.away].short}
-              </div>
-              <div className="badge" style={{ fontSize: 10 }}>
-                {m.pick}
-              </div>
-              <div style={{ width: 46 }}>
-                <Meter value={m.conf} green={m.conf >= 70} />
-              </div>
+          {ranked.slice(0, 5).map(({ m, p }, i, arr) => {
+            const conf = Math.round(p!.topSelection.probability * 100);
+            return (
               <div
-                className="mono"
-                style={{ width: 30, textAlign: "right", fontWeight: 700, fontSize: 13, color: confColor(m.conf) }}
+                className="flex aic gap-12 tappable"
+                key={m.id}
+                onClick={() => nav.pushScreen("match", m)}
+                style={{ padding: "9px 0", borderBottom: i < arr.length - 1 ? "1px solid var(--line)" : undefined }}
               >
-                {m.conf}
+                <div className="mono dim" style={{ width: 14, fontSize: 13 }}>
+                  {i + 1}
+                </div>
+                <div className="grow" style={{ fontSize: 13, fontWeight: 600 }}>
+                  {clubCode(m.homeTeamName)} <span className="dim" style={{ fontWeight: 400 }}>v</span>{" "}
+                  {clubCode(m.awayTeamName)}
+                </div>
+                <div className="badge" style={{ fontSize: 10 }}>
+                  {p!.topSelection.label}
+                </div>
+                <div style={{ width: 46 }}>
+                  <Meter value={conf} green={conf >= 70} />
+                </div>
+                <div
+                  className="mono"
+                  style={{ width: 30, textAlign: "right", fontWeight: 700, fontSize: 13, color: confColor(conf) }}
+                >
+                  {conf}
+                </div>
               </div>
+            );
+          })}
+          {ranked.length === 0 && (
+            <div className="dim" style={{ fontSize: 13 }}>
+              Predictions load when the AI service is reachable.
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -236,41 +274,54 @@ export function HomeScreen() {
           </span>
         </div>
         <div className="flex col gap-12">
-          {NOW_LIVE.slice(0, 2).map((m) => {
-            const momCol = m.momentum === "home" ? "var(--blue)" : "var(--green)";
-            return (
-              <div className="live-card tappable" key={m.id} onClick={() => nav.pushScreen("match", m)}>
-                <div className="flex aic jcb" style={{ marginBottom: 11 }}>
-                  <span className="live-pill">
-                    <span className="pulse" />
-                    {m.min}&apos;
-                  </span>
-                  <span className="badge blue">AI {m.conf}%</span>
+          {live ? (
+            <div
+              className="live-card tappable"
+              onClick={() =>
+                nav.pushScreen("match", {
+                  id: live.matchId,
+                  homeTeamId: live.homeTeamId,
+                  awayTeamId: live.awayTeamId,
+                  homeTeamName: live.homeTeamName,
+                  awayTeamName: live.awayTeamName,
+                  status: live.status,
+                })
+              }
+            >
+              <div className="flex aic jcb" style={{ marginBottom: 11 }}>
+                <span className="live-pill">
+                  <span className="pulse" />
+                  {live.status === "LIVE" ? `${live.minute}'` : "FT"}
+                </span>
+                <span className="badge blue">xG {live.homeXg.toFixed(2)}–{live.awayXg.toFixed(2)}</span>
+              </div>
+              <div className="flex aic jcb">
+                <div className="flex aic gap-8" style={{ fontWeight: 700, fontSize: 14 }}>
+                  <Crest name={live.homeTeamName} seed={live.homeTeamId} size="xs" />
+                  {clubCode(live.homeTeamName)}
                 </div>
-                <div className="flex aic jcb">
-                  <div className="flex aic gap-8" style={{ fontWeight: 700, fontSize: 14 }}>
-                    <Crest code={m.home} size="xs" />
-                    {m.home}
-                  </div>
-                  <div className="live-score">
-                    {m.hs} – {m.as}
-                  </div>
-                  <div className="flex aic gap-8" style={{ fontWeight: 700, fontSize: 14 }}>
-                    {m.away}
-                    <Crest code={m.away} size="xs" />
-                  </div>
+                <div className="live-score">
+                  {live.homeGoals} – {live.awayGoals}
                 </div>
-                <div className="momentum-bar" style={{ marginTop: 11 }}>
-                  <i style={{ width: `${m.momentum === "home" ? 64 : 38}%`, background: momCol }} />
-                </div>
-                <div className="flex jcb" style={{ marginTop: 6, fontSize: 10.5, color: "var(--muted)" }}>
-                  <span>xG {m.hxg.toFixed(2)}</span>
-                  <span style={{ color: momCol }}>▲ {m.momentum}</span>
-                  <span>xG {m.axg.toFixed(2)}</span>
+                <div className="flex aic gap-8" style={{ fontWeight: 700, fontSize: 14 }}>
+                  {clubCode(live.awayTeamName)}
+                  <Crest name={live.awayTeamName} seed={live.awayTeamId} size="xs" />
                 </div>
               </div>
-            );
-          })}
+              <div className="momentum-bar" style={{ marginTop: 11 }}>
+                <i style={{ width: `${Math.round(50 + live.momentum / 2)}%`, background: "var(--blue)" }} />
+                <i style={{ width: `${100 - Math.round(50 + live.momentum / 2)}%`, background: "var(--green)" }} />
+              </div>
+              <div className="flex jcb" style={{ marginTop: 6, fontSize: 10.5, color: "var(--muted)" }}>
+                <span>momentum {live.momentum > 0 ? "+" : ""}{live.momentum}</span>
+                <span>tap for live intel</span>
+              </div>
+            </div>
+          ) : (
+            <div className="m-card pad dim" style={{ fontSize: 13 }}>
+              No match is live right now — the feed pushes a snapshot as soon as one kicks off.
+            </div>
+          )}
         </div>
       </div>
     </>

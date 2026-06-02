@@ -1,25 +1,31 @@
 "use client";
 
+import { usePlan } from "../../../hooks/use-plan";
 import { useMobileNav } from "../nav-context";
 import { Icon } from "../icons";
 
-const FEATS: [string, string][] = [
-  ["Tactical AI reports", "Full pressing maps, attack zones & momentum"],
-  ["Fatigue & lineup impact", "Squad-load modelling and projected XIs"],
-  ["Hidden-trend detection", "Cross-season patterns the model surfaces"],
-  ["Cross-competition board", "Every league, all confidence picks unlocked"],
-  ["Priority live intel", "Real-time alerts the moment edges appear"],
+const FALLBACK_FEATURES = [
+  "Tactical AI reports — pressing maps, attack zones & momentum",
+  "Fatigue & lineup-impact modelling",
+  "Hidden-trend detection across seasons",
+  "Cross-competition confidence board",
+  "Priority live intelligence alerts",
 ];
 
 export function PremiumScreen() {
   const nav = useMobileNav();
+  const { data, isLoading } = usePlan();
+  const plan = data?.plan;
+  const features = plan?.features?.length ? plan.features : FALLBACK_FEATURES;
+  const price = plan?.local.display ?? plan?.base.display ?? "£9.99";
+  const interval = plan?.interval ?? "month";
 
   return (
     <>
       <div className="block" style={{ paddingTop: 14 }}>
         <div className="prem-hero">
           <span className="badge gold" style={{ marginBottom: 12 }}>
-            <Icon name="premium" /> Premium Intelligence
+            <Icon name="premium" /> {plan?.badge ?? "Premium Intelligence"}
           </span>
           <div
             style={{
@@ -30,7 +36,7 @@ export function PremiumScreen() {
               lineHeight: 1.06,
             }}
           >
-            Unlock the elite analytics layer
+            {plan?.tagline ?? "Unlock the elite analytics layer"}
           </div>
           <div className="muted" style={{ fontSize: 13, marginTop: 10, lineHeight: 1.5 }}>
             The tools the pros use — tactical AI reports, fatigue analysis, lineup-impact modelling and hidden-trend
@@ -38,28 +44,16 @@ export function PremiumScreen() {
           </div>
           <div className="flex gap-16" style={{ marginTop: 18 }}>
             <div>
-              <div className="mono" style={{ fontSize: 22, fontWeight: 800, color: "var(--gold)" }}>
-                73%
-              </div>
-              <div className="dim" style={{ fontSize: 11 }}>
-                model accuracy
-              </div>
+              <div className="mono" style={{ fontSize: 22, fontWeight: 800, color: "var(--gold)" }}>73%</div>
+              <div className="dim" style={{ fontSize: 11 }}>model accuracy</div>
             </div>
             <div>
-              <div className="mono" style={{ fontSize: 22, fontWeight: 800 }}>
-                120+
-              </div>
-              <div className="dim" style={{ fontSize: 11 }}>
-                competitions
-              </div>
+              <div className="mono" style={{ fontSize: 22, fontWeight: 800 }}>120+</div>
+              <div className="dim" style={{ fontSize: 11 }}>competitions</div>
             </div>
             <div>
-              <div className="mono" style={{ fontSize: 22, fontWeight: 800, color: "var(--green)" }}>
-                2.4M
-              </div>
-              <div className="dim" style={{ fontSize: 11 }}>
-                matches modelled
-              </div>
+              <div className="mono" style={{ fontSize: 22, fontWeight: 800, color: "var(--green)" }}>2.4M</div>
+              <div className="dim" style={{ fontSize: 11 }}>matches modelled</div>
             </div>
           </div>
         </div>
@@ -67,54 +61,28 @@ export function PremiumScreen() {
 
       <div className="block">
         <div className="block-hd">
-          <h2>Choose your plan</h2>
+          <h2>{plan?.name ?? "Premium"} plan</h2>
         </div>
-        <div className="flex col gap-12">
-          <div className="plan-card featured tappable" onClick={() => nav.toast("Annual plan — checkout (demo)")}>
-            <div className="flex aic jcb">
-              <div className="flex aic gap-8">
-                <b style={{ fontSize: 15 }}>Annual</b>
-                <span className="badge gold">Save 34%</span>
-              </div>
-              <div className="flex aic gap-6" style={{ color: "var(--gold)" }}>
-                <Icon name="star" />
-              </div>
+        <div className="plan-card featured">
+          <div className="flex aic jcb">
+            <div className="flex aic gap-8">
+              <b style={{ fontSize: 15 }}>{plan?.name ?? "Premium"}</b>
+              {plan?.local.estimated && <span className="badge">est.</span>}
             </div>
-            <div className="flex aic gap-6" style={{ margin: "10px 0 4px" }}>
-              <span className="mono" style={{ fontSize: 28, fontWeight: 800 }}>
-                £79
-              </span>
-              <span className="muted" style={{ fontSize: 12 }}>
-                / year
-              </span>
+            <div className="flex aic gap-6" style={{ color: "var(--gold)" }}>
+              <Icon name="star" />
             </div>
-            <div className="dim" style={{ fontSize: 11.5 }}>
-              £6.58 / month · billed annually
-            </div>
-            <button className="btn btn-gold" style={{ width: "100%", marginTop: 13 }}>
-              Start Annual
-            </button>
           </div>
-          <div className="plan-card tappable" onClick={() => nav.toast("Monthly plan — checkout (demo)")}>
-            <div className="flex aic jcb">
-              <b style={{ fontSize: 15 }}>Monthly</b>
-              <span className="badge">Flexible</span>
-            </div>
-            <div className="flex aic gap-6" style={{ margin: "10px 0 4px" }}>
-              <span className="mono" style={{ fontSize: 28, fontWeight: 800 }}>
-                £9.99
-              </span>
-              <span className="muted" style={{ fontSize: 12 }}>
-                / month
-              </span>
-            </div>
-            <div className="dim" style={{ fontSize: 11.5 }}>
-              Cancel anytime
-            </div>
-            <button className="btn" style={{ width: "100%", marginTop: 13, background: "var(--surface-3)", borderColor: "var(--line-2)" }}>
-              Start Monthly
-            </button>
+          <div className="flex aic gap-6" style={{ margin: "10px 0 4px" }}>
+            <span className="mono" style={{ fontSize: 28, fontWeight: 800 }}>{price}</span>
+            <span className="muted" style={{ fontSize: 12 }}>/ {interval}</span>
           </div>
+          <div className="dim" style={{ fontSize: 11.5 }}>
+            {isLoading ? "Loading localized pricing…" : "Cancel anytime · billed via PayPal, Paystack or Flutterwave"}
+          </div>
+          <button className="btn btn-gold" style={{ width: "100%", marginTop: 13 }} onClick={() => nav.toast("Complete checkout on the web app")}>
+            Start Premium →
+          </button>
         </div>
       </div>
 
@@ -123,17 +91,22 @@ export function PremiumScreen() {
           <h2>Everything in Premium</h2>
         </div>
         <div className="m-card pad">
-          {FEATS.map((f) => (
-            <div className="prem-feat" key={f[0]}>
-              <span className="pf-ic">✓</span>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 13.5 }}>{f[0]}</div>
-                <div className="muted" style={{ fontSize: 11.5, marginTop: 2 }}>
-                  {f[1]}
+          {features.map((f, i) => {
+            const [head, ...rest] = f.split(/ — | - /);
+            return (
+              <div className="prem-feat" key={i}>
+                <span className="pf-ic">✓</span>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 13.5 }}>{head}</div>
+                  {rest.length > 0 && (
+                    <div className="muted" style={{ fontSize: 11.5, marginTop: 2 }}>
+                      {rest.join(" — ")}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

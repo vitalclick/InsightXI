@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { AnyMatch } from "./data";
+import type { MatchArg } from "./view";
 
 export type TabId = "home" | "live" | "predictions" | "fixtures" | "more";
 export type DetailId = "match" | "board" | "premium";
@@ -22,7 +22,7 @@ export const SCREEN_TITLES: Record<ScreenId, string> = {
 
 export interface MobileNav {
   showTab: (t: TabId) => void;
-  pushScreen: (id: DetailId, arg?: AnyMatch) => void;
+  pushScreen: (id: DetailId, arg?: MatchArg) => void;
   pop: () => void;
   toast: (msg: string) => void;
   haptic: (ms?: number) => void;
