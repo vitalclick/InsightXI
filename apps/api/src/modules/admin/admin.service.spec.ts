@@ -9,6 +9,7 @@ function publicUser(over: Partial<PublicUser> = {}): PublicUser {
     email: "a@b.dev",
     tier: "PREMIUM",
     role: "USER",
+    suspended: false,
     name: "Test User",
     avatarUrl: null,
     provider: "email",
@@ -70,5 +71,49 @@ describe("AdminService", () => {
     const s = admin.settings();
     expect(s.team.length).toBeGreaterThan(0);
     expect(s.flags.every((f) => typeof f.enabled === "boolean")).toBe(true);
+  });
+
+  it("toggles a feature flag and records an audit entry", () => {
+    const before = admin.audit().length;
+    const flag = admin.setFlag("admin@insightxi.dev", "laliga", true);
+    expect(flag.enabled).toBe(true);
+    expect(admin.settings().flags.find((f) => f.key === "laliga")?.enabled).toBe(true);
+    expect(admin.audit().length).toBe(before + 1);
+    expect(admin.audit()[0].action).toContain("feature flag");
+  });
+
+  it("updates a demo user's plan in place", async () => {
+    const users = await admin.listUsers();
+    const demo = users.find((u) => u.id.startsWith("usr_"))!;
+    const updated = await admin.updateUser("admin@insightxi.dev", demo.id, {
+      plan: "Premium",
+      status: "Suspended",
+    });
+    expect(updated.plan).toBe("Premium");
+    expect(updated.status).toBe("Suspended");
+    const again = await admin.listUsers();
+    expect(again.find((u) => u.id === demo.id)?.plan).toBe("Premium");
+  });
+
+  it("publishes and deletes content", () => {
+    const post = admin.createPost("admin@insightxi.dev", { title: "Scaffold test post" });
+    expect(post.status).toBe("Draft");
+    expect(admin.updatePost("admin@insightxi.dev", post.id, { status: "Published" }).status).toBe(
+      "Published",
+    );
+    expect(admin.deletePost("admin@insightxi.dev", post.id).deleted).toBe(true);
+    expect(admin.content().find((p) => p.id === post.id)).toBeUndefined();
+  });
+
+  it("refunds a paid transaction", () => {
+    const paid = admin.subscriptions().transactions.find((t) => t.status === "Paid");
+    if (paid) {
+      expect(admin.refundTransaction("admin@insightxi.dev", paid.id).status).toBe("Refunded");
+    }
+  });
+
+  it("throws NotFound for unknown write targets", async () => {
+    await expect(admin.deleteUser("a", "nope")).rejects.toThrow();
+    expect(() => admin.setFlag("a", "nope", true)).toThrow();
   });
 });

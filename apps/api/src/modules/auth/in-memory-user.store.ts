@@ -39,4 +39,14 @@ export class InMemoryUserStore extends UserStore {
     user.tier = tier;
     return user;
   }
+
+  async delete(id: string): Promise<boolean> {
+    for (const [key, user] of this.users) {
+      if (user.id === id) {
+        this.users.delete(key);
+        return true;
+      }
+    }
+    return false;
+  }
 }

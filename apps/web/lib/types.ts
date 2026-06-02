@@ -116,6 +116,7 @@ export interface PublicUser {
   email: string;
   tier: SubscriptionTier;
   role: UserRole;
+  suspended: boolean;
   name: string | null;
   avatarUrl: string | null;
   provider: AuthProvider;

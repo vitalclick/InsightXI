@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash         TEXT,                            -- null for OAuth-only accounts
   tier                  TEXT NOT NULL DEFAULT 'FREE',
   role                  TEXT NOT NULL DEFAULT 'USER',     -- USER | ADMIN (admin console access)
+  suspended             BOOLEAN NOT NULL DEFAULT FALSE,   -- admin-suspended accounts cannot sign in
   name                  TEXT,
   avatar_url            TEXT,
   provider              TEXT NOT NULL DEFAULT 'email',    -- email | google | apple

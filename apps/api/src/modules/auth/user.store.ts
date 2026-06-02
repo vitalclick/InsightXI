@@ -12,6 +12,8 @@ export interface UserRecord {
   tier: SubscriptionTier;
   /** Platform role gating the admin console (defaults to USER). */
   role: UserRole;
+  /** When true the account is blocked from signing in (admin suspension). */
+  suspended: boolean;
   name: string | null;
   avatarUrl: string | null;
   provider: AuthProvider;
@@ -30,6 +32,7 @@ export interface PublicUser {
   email: string;
   tier: SubscriptionTier;
   role: UserRole;
+  suspended: boolean;
   name: string | null;
   avatarUrl: string | null;
   provider: AuthProvider;
@@ -54,4 +57,6 @@ export abstract class UserStore {
     email: string,
     tier: SubscriptionTier,
   ): Promise<UserRecord | undefined>;
+  /** Permanently removes an account by id. Returns true if a row was deleted. */
+  abstract delete(id: string): Promise<boolean>;
 }

@@ -1,35 +1,61 @@
 "use client";
 
 import { api } from "../../../services/api-client";
-import { useAdminData } from "../../../hooks/use-admin";
+import { useAdminAction, useAdminData } from "../../../hooks/use-admin";
 import { DataTable, type Column } from "../../../components/admin/data-table";
 import { StatusTag, fmtMoney, fmtNum, fmtDate } from "../../../components/admin/ui";
 import type { AdminTransaction } from "../../../lib/types";
 
-const COLUMNS: Column<AdminTransaction>[] = [
-  { key: "id", label: "Invoice", render: (t) => <span className="mono">{t.id}</span> },
-  {
-    key: "userName",
-    label: "Customer",
-    sortable: true,
-    render: (t) => (
-      <div className="cell-user">
-        <div className="meta">
-          <b>{t.userName}</b>
-          <span>{t.email}</span>
-        </div>
-      </div>
-    ),
-  },
-  { key: "plan", label: "Plan", sortable: true, render: (t) => <StatusTag value={t.plan === "Annual" ? "Premium" : "Trial"} /> },
-  { key: "amount", label: "Amount", sortable: true, align: "right", render: (t) => <span className="cell-num">£{t.amount.toFixed(2)}</span> },
-  { key: "method", label: "Method", render: (t) => <span className="muted">{t.method}</span> },
-  { key: "status", label: "Status", sortable: true, render: (t) => <StatusTag value={t.status} /> },
-  { key: "date", label: "Date", sortable: true, sortValue: (t) => t.date, render: (t) => <span className="muted">{fmtDate(t.date)}</span> },
-];
-
 export default function AdminSubscriptionsPage() {
   const { data, isLoading } = useAdminData("subscriptions", api.admin.subscriptions);
+  const refund = useAdminAction(
+    ({ id }: { id: string }, token) => api.admin.refundTransaction(id, token),
+    { success: "Invoice refunded", invalidate: ["subscriptions", "audit", "overview"] },
+  );
+
+  const columns: Column<AdminTransaction>[] = [
+    { key: "id", label: "Invoice", render: (t) => <span className="mono">{t.id}</span> },
+    {
+      key: "userName",
+      label: "Customer",
+      sortable: true,
+      render: (t) => (
+        <div className="cell-user">
+          <div className="meta">
+            <b>{t.userName}</b>
+            <span>{t.email}</span>
+          </div>
+        </div>
+      ),
+    },
+    { key: "plan", label: "Plan", sortable: true, render: (t) => <StatusTag value={t.plan === "Annual" ? "Premium" : "Trial"} /> },
+    { key: "amount", label: "Amount", sortable: true, align: "right", render: (t) => <span className="cell-num">£{t.amount.toFixed(2)}</span> },
+    { key: "method", label: "Method", render: (t) => <span className="muted">{t.method}</span> },
+    { key: "status", label: "Status", sortable: true, render: (t) => <StatusTag value={t.status} /> },
+    { key: "date", label: "Date", sortable: true, sortValue: (t) => t.date, render: (t) => <span className="muted">{fmtDate(t.date)}</span> },
+    {
+      key: "actions",
+      label: "",
+      align: "right",
+      render: (t) =>
+        t.status === "Paid" ? (
+          <div className="row-actions">
+            <button
+              className="mini-btn danger"
+              onClick={() => {
+                if (confirm(`Refund ${t.id} (£${t.amount.toFixed(2)})?`)) refund.mutate({ id: t.id });
+              }}
+            >
+              Refund
+            </button>
+          </div>
+        ) : (
+          <span className="muted" style={{ fontSize: 12 }}>
+            —
+          </span>
+        ),
+    },
+  ];
 
   if (isLoading || !data) return <p className="muted">Loading subscriptions…</p>;
   const { summary, transactions } = data;
@@ -65,7 +91,7 @@ export default function AdminSubscriptionsPage() {
       <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Recent Transactions</h3>
       <DataTable
         rows={transactions}
-        columns={COLUMNS}
+        columns={columns}
         searchKeys={["userName", "email", "id"]}
         searchPlaceholder="Search customer…"
         pageSize={10}

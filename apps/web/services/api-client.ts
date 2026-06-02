@@ -5,6 +5,7 @@
 import type {
   AdminFixture,
   AdminOverview,
+  AdminTransaction,
   AdminUser,
   AppNotification,
   AuditEntry,
@@ -13,6 +14,7 @@ import type {
   ConfirmResult,
   ContentPost,
   EvaluationReport,
+  FeatureFlag,
   H2HSummary,
   League,
   MatchPrediction,
@@ -58,20 +60,32 @@ export async function apiGet<T>(path: string, token?: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function apiPost<T>(path: string, body: unknown, token?: string): Promise<T> {
+async function apiSend<T>(
+  method: "POST" | "PATCH" | "DELETE",
+  path: string,
+  body: unknown,
+  token?: string,
+): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
-    method: "POST",
+    method,
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify(body),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   if (!res.ok) {
     throw new ApiError(res.status, `API ${res.status}: ${res.statusText}`);
   }
   return res.json() as Promise<T>;
 }
+
+const apiPost = <T>(path: string, body: unknown, token?: string) =>
+  apiSend<T>("POST", path, body, token);
+const apiPatch = <T>(path: string, body: unknown, token?: string) =>
+  apiSend<T>("PATCH", path, body, token);
+const apiDelete = <T>(path: string, token?: string) =>
+  apiSend<T>("DELETE", path, undefined, token);
 
 /** Optional currency/country hints for localized pricing. */
 function planQuery(hints?: { currency?: string; country?: string }): string {
@@ -170,6 +184,30 @@ export const api = {
     support: (token: string) => apiGet<SupportTicket[]>("/admin/support", token),
     audit: (token: string) => apiGet<AuditEntry[]>("/admin/audit", token),
     settings: (token: string) => apiGet<SettingsView>("/admin/settings", token),
+
+    // Write actions
+    updateUser: (
+      id: string,
+      patch: { role?: AdminUser["role"]; plan?: AdminUser["plan"]; status?: AdminUser["status"] },
+      token: string,
+    ) => apiPatch<AdminUser>(`/admin/users/${id}`, patch, token),
+    deleteUser: (id: string, token: string) =>
+      apiDelete<{ deleted: boolean }>(`/admin/users/${id}`, token),
+    setFlag: (key: string, enabled: boolean, token: string) =>
+      apiPatch<FeatureFlag>(`/admin/settings/flags/${key}`, { enabled }, token),
+    updateTicket: (
+      id: string,
+      patch: { status?: SupportTicket["status"]; assignee?: string },
+      token: string,
+    ) => apiPatch<SupportTicket>(`/admin/support/${id}`, patch, token),
+    createPost: (input: { title: string; category?: string }, token: string) =>
+      apiPost<ContentPost>("/admin/content", input, token),
+    updatePost: (id: string, patch: { status?: ContentPost["status"] }, token: string) =>
+      apiPatch<ContentPost>(`/admin/content/${id}`, patch, token),
+    deletePost: (id: string, token: string) =>
+      apiDelete<{ deleted: boolean }>(`/admin/content/${id}`, token),
+    refundTransaction: (id: string, token: string) =>
+      apiPost<AdminTransaction>(`/admin/subscriptions/${id}/refund`, {}, token),
   },
 };
 

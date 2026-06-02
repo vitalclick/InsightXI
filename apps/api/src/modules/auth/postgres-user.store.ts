@@ -15,6 +15,7 @@ interface UserRow {
   password_hash: string | null;
   tier: SubscriptionTier;
   role: UserRole | null;
+  suspended: boolean | null;
   name: string | null;
   avatar_url: string | null;
   provider: AuthProvider;
@@ -26,7 +27,7 @@ interface UserRow {
 }
 
 const COLUMNS =
-  "id, email, password_hash, tier, role, name, avatar_url, provider, email_verified, " +
+  "id, email, password_hash, tier, role, suspended, name, avatar_url, provider, email_verified, " +
   "subscription_status, subscription_provider, subscription_ref, current_period_end";
 
 function toRecord(row: UserRow): UserRecord {
@@ -36,6 +37,7 @@ function toRecord(row: UserRow): UserRecord {
     passwordHash: row.password_hash,
     tier: row.tier,
     role: row.role ?? "USER",
+    suspended: row.suspended ?? false,
     name: row.name,
     avatarUrl: row.avatar_url,
     provider: row.provider,
@@ -80,7 +82,7 @@ export class PostgresUserStore extends UserStore {
   async insert(user: UserRecord): Promise<void> {
     await this.pg.query(
       `INSERT INTO users (${COLUMNS})
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        ON CONFLICT (email) DO NOTHING`,
       [
         user.id,
@@ -88,6 +90,7 @@ export class PostgresUserStore extends UserStore {
         user.passwordHash,
         user.tier,
         user.role,
+        user.suspended,
         user.name,
         user.avatarUrl,
         user.provider,
@@ -103,9 +106,9 @@ export class PostgresUserStore extends UserStore {
   async update(user: UserRecord): Promise<UserRecord> {
     const rows = await this.pg.query<UserRow>(
       `UPDATE users SET
-         password_hash = $2, tier = $3, role = $4, name = $5, avatar_url = $6,
-         provider = $7, email_verified = $8, subscription_status = $9,
-         subscription_provider = $10, subscription_ref = $11, current_period_end = $12
+         password_hash = $2, tier = $3, role = $4, suspended = $5, name = $6, avatar_url = $7,
+         provider = $8, email_verified = $9, subscription_status = $10,
+         subscription_provider = $11, subscription_ref = $12, current_period_end = $13
        WHERE id = $1
        RETURNING ${COLUMNS}`,
       [
@@ -113,6 +116,7 @@ export class PostgresUserStore extends UserStore {
         user.passwordHash,
         user.tier,
         user.role,
+        user.suspended,
         user.name,
         user.avatarUrl,
         user.provider,
@@ -135,5 +139,13 @@ export class PostgresUserStore extends UserStore {
       [email.toLowerCase(), tier],
     );
     return rows[0] ? toRecord(rows[0]) : undefined;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const rows = await this.pg.query<{ id: string }>(
+      `DELETE FROM users WHERE id = $1 RETURNING id`,
+      [id],
+    );
+    return rows.length > 0;
   }
 }

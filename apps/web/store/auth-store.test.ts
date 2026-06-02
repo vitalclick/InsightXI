@@ -19,6 +19,7 @@ describe("useAuthStore", () => {
         email: "a@b.dev",
         tier: "PREMIUM",
         role: "USER",
+        suspended: false,
         name: null,
         avatarUrl: null,
         provider: "email",

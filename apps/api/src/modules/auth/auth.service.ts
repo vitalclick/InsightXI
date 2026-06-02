@@ -80,6 +80,9 @@ export class AuthService {
   async login(email: string, password: string): Promise<AuthResult> {
     const user = await this.users.validate(email, password);
     if (!user) throw new UnauthorizedException("Invalid credentials");
+    if (user.suspended) {
+      throw new UnauthorizedException("This account has been suspended");
+    }
     return this.issueToken(user);
   }
 
@@ -104,6 +107,9 @@ export class AuthService {
     const payload = await this.verifyPurpose(refreshToken, "refresh");
     const user = await this.users.findById(payload.sub);
     if (!user) throw new UnauthorizedException("Unknown user");
+    if (user.suspended) {
+      throw new UnauthorizedException("This account has been suspended");
+    }
     return this.issueToken(user);
   }
 

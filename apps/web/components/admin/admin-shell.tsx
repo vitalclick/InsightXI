@@ -7,6 +7,7 @@ import { Icon, Logo } from "../ui/icon";
 import { useThemeStore } from "../../store/theme-store";
 import { useAuthStore } from "../../store/auth-store";
 import { initials } from "./ui";
+import { AdminToaster } from "./toaster";
 
 interface NavItem {
   href: string;
@@ -150,6 +151,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="adm-page">{children}</div>
       </div>
+      <AdminToaster />
     </div>
   );
 }

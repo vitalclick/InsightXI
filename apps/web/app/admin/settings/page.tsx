@@ -1,25 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { api } from "../../../services/api-client";
-import { useAdminData } from "../../../hooks/use-admin";
+import { useAdminAction, useAdminData } from "../../../hooks/use-admin";
 import { Avatar, Panel, Tag, relTime } from "../../../components/admin/ui";
 import { Icon } from "../../../components/ui/icon";
-import type { FeatureFlag } from "../../../lib/types";
 
 export default function AdminSettingsPage() {
   const { data, isLoading } = useAdminData("settings", api.admin.settings);
-  const [flags, setFlags] = useState<FeatureFlag[]>([]);
-
-  useEffect(() => {
-    if (data) setFlags(data.flags);
-  }, [data]);
+  const setFlag = useAdminAction(
+    ({ key, enabled }: { key: string; enabled: boolean }, token) =>
+      api.admin.setFlag(key, enabled, token),
+    { success: "Feature flag updated", invalidate: ["settings", "audit", "overview"] },
+  );
 
   if (isLoading || !data) return <p className="muted">Loading settings…</p>;
-
-  function toggle(key: string) {
-    setFlags((fs) => fs.map((f) => (f.key === key ? { ...f, enabled: !f.enabled } : f)));
-  }
+  const flags = data.flags;
 
   return (
     <>
@@ -58,7 +53,8 @@ export default function AdminSettingsPage() {
                 className={`switch${f.enabled ? " on" : ""}`}
                 aria-label={`Toggle ${f.name}`}
                 aria-pressed={f.enabled}
-                onClick={() => toggle(f.key)}
+                disabled={setFlag.isPending}
+                onClick={() => setFlag.mutate({ key: f.key, enabled: !f.enabled })}
               />
             </div>
           ))}

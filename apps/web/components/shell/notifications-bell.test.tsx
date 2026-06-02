@@ -32,6 +32,7 @@ describe("NotificationsBell", () => {
         email: "a@b.dev",
         tier: "FREE",
         role: "USER",
+        suspended: false,
         name: null,
         avatarUrl: null,
         provider: "email",

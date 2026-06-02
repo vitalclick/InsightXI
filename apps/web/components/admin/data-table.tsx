@@ -24,6 +24,8 @@ interface DataTableProps<T> {
   toolbar?: ReactNode;
   emptyText?: string;
   getId?: (row: T) => string;
+  /** When set, rows become clickable and invoke this handler. */
+  onRowClick?: (row: T) => void;
 }
 
 /** Sortable, searchable, paginated table — React port of the prototype engine. */
@@ -37,6 +39,7 @@ export function DataTable<T extends object>({
   toolbar,
   emptyText = "No records match your filters.",
   getId = (r) => String((r as { id?: unknown }).id ?? JSON.stringify(r)),
+  onRowClick,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -137,7 +140,11 @@ export function DataTable<T extends object>({
                 </tr>
               ) : (
                 pageRows.map((row) => (
-                  <tr key={getId(row)}>
+                  <tr
+                    key={getId(row)}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    style={onRowClick ? { cursor: "pointer" } : undefined}
+                  >
                     {columns.map((c) => (
                       <td key={c.key} style={{ textAlign: c.align ?? "left" }}>
                         {c.render ? c.render(row) : String(row[c.key as keyof T] ?? "")}
