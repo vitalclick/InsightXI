@@ -192,6 +192,11 @@ export class UsersService implements OnModuleInit {
     });
   }
 
+  /** Permanently delete a user account. */
+  async delete(userId: string): Promise<void> {
+    await this.store.delete(userId);
+  }
+
   async setTier(
     email: string,
     tier: SubscriptionTier,

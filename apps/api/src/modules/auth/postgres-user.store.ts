@@ -124,4 +124,8 @@ export class PostgresUserStore extends UserStore {
     );
     return rows[0] ? toRecord(rows[0]) : undefined;
   }
+
+  async delete(id: string): Promise<void> {
+    await this.pg.query(`DELETE FROM users WHERE id = $1`, [id]);
+  }
 }

@@ -47,4 +47,6 @@ export abstract class UserStore {
     email: string,
     tier: SubscriptionTier,
   ): Promise<UserRecord | undefined>;
+  /** Permanently remove a user by id (account deletion / GDPR erasure). */
+  abstract delete(id: string): Promise<void>;
 }

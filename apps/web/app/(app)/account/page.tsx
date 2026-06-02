@@ -39,6 +39,47 @@ export default function AccountPage() {
     }
   }
 
+  const [busy, setBusy] = useState<"export" | "delete" | null>(null);
+
+  async function exportData() {
+    if (!token) return;
+    setBusy("export");
+    setNotice(null);
+    try {
+      const data = await api.exportAccount(token);
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "insightxi-account-data.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      setNotice("Your data export has been downloaded.");
+    } catch {
+      setNotice("Could not export your data. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!token) return;
+    const confirmed = window.confirm(
+      "Delete your account permanently? This removes your profile, subscription record and notifications. This cannot be undone.",
+    );
+    if (!confirmed) return;
+    setBusy("delete");
+    try {
+      await api.deleteAccount(token);
+      logout();
+    } catch {
+      setNotice("Could not delete your account. Please try again.");
+      setBusy(null);
+    }
+  }
+
   async function resendVerification() {
     if (!token) return;
     setNotice(null);
@@ -132,6 +173,40 @@ export default function AccountPage() {
             )}
             <div>
               <button onClick={logout} className="btn btn-ghost">Sign out</button>
+            </div>
+
+            <div
+              style={{
+                marginTop: 22,
+                paddingTop: 18,
+                borderTop: "1px solid var(--line)",
+              }}
+            >
+              <div className="dim" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", marginBottom: 10 }}>
+                Privacy &amp; data
+              </div>
+              <div className="flex aic gap-10 wrap">
+                <button
+                  onClick={exportData}
+                  disabled={busy !== null}
+                  className="btn btn-ghost"
+                  style={{ fontSize: 12.5 }}
+                >
+                  {busy === "export" ? "Preparing…" : "Download my data"}
+                </button>
+                <button
+                  onClick={deleteAccount}
+                  disabled={busy !== null}
+                  className="btn btn-ghost"
+                  style={{ fontSize: 12.5, color: "var(--red, #ef4444)", borderColor: "rgba(239,68,68,.35)" }}
+                >
+                  {busy === "delete" ? "Deleting…" : "Delete account"}
+                </button>
+              </div>
+              <p className="dim" style={{ fontSize: 11, marginTop: 8, lineHeight: 1.5 }}>
+                Export your personal data as JSON, or permanently delete your
+                account. See our <Link href="/privacy">Privacy Policy</Link>.
+              </p>
             </div>
           </div>
         </section>

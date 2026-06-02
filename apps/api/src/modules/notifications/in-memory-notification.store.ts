@@ -31,4 +31,10 @@ export class InMemoryNotificationStore extends NotificationStore {
   async markAllRead(userId: string): Promise<void> {
     for (const n of this.items) if (n.userId === userId) n.read = true;
   }
+
+  async deleteForUser(userId: string): Promise<void> {
+    for (let i = this.items.length - 1; i >= 0; i--) {
+      if (this.items[i].userId === userId) this.items.splice(i, 1);
+    }
+  }
 }

@@ -161,6 +161,42 @@ export class AuthService {
     return this.issueToken(updated);
   }
 
+  // ── Account data: export & deletion (GDPR / POPIA) ────────────────────
+  /** Machine-readable export of everything we hold about the user. */
+  async exportAccount(userId: string): Promise<Record<string, unknown>> {
+    const user = await this.users.findById(userId);
+    if (!user) throw new UnauthorizedException("Unknown user");
+    const notifications = await this.notifications.list(userId);
+    return {
+      exportedAt: new Date().toISOString(),
+      account: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        provider: user.provider,
+        emailVerified: user.emailVerified,
+        tier: user.tier,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionProvider: user.subscriptionProvider,
+        subscriptionRef: user.subscriptionRef,
+        currentPeriodEnd: user.currentPeriodEnd,
+      },
+      notifications,
+    };
+  }
+
+  /** Permanently erase the account and its dependent data. */
+  async deleteAccount(userId: string): Promise<{ deleted: true }> {
+    const user = await this.users.findById(userId);
+    if (!user) throw new UnauthorizedException("Unknown user");
+    // Remove dependent rows first (notifications reference users), then the user.
+    await this.notifications.deleteAllForUser(userId);
+    await this.users.delete(userId);
+    this.logger.log(`Account deleted: ${userId}`);
+    return { deleted: true };
+  }
+
   /** Verify a JWT and assert it was minted for the expected purpose. */
   private async verifyPurpose(
     token: string,
