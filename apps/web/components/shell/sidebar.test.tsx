@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Sidebar } from "./sidebar";
 import { useUiStore } from "../../store/ui-store";
 
@@ -13,43 +13,33 @@ beforeEach(() => {
 });
 
 describe("Sidebar collapsed tooltips", () => {
-  it("shows a tooltip with the item label on hover when collapsed", () => {
+  it("gives every icon a native title tooltip when collapsed", () => {
     useUiStore.setState({ collapsed: true });
     render(<Sidebar />);
 
-    // No tooltip until the user interacts.
-    expect(screen.queryByRole("tooltip")).toBeNull();
-
-    fireEvent.mouseEnter(screen.getByRole("link", { name: "Fixtures" }));
-    expect(screen.getByRole("tooltip")).toHaveTextContent("Fixtures");
-
-    fireEvent.mouseLeave(screen.getByRole("link", { name: "Fixtures" }));
-    expect(screen.queryByRole("tooltip")).toBeNull();
+    for (const label of ["Home", "Fixtures", "Live Center", "Historical", "Upgrade Premium"]) {
+      const link = screen.getByRole("link", { name: label });
+      expect(link).toHaveAttribute("title", label);
+    }
   });
 
-  it("surfaces the tooltip on keyboard focus too", () => {
-    useUiStore.setState({ collapsed: true });
-    render(<Sidebar />);
-
-    fireEvent.focus(screen.getByRole("link", { name: "Historical" }));
-    expect(screen.getByRole("tooltip")).toHaveTextContent("Historical");
-  });
-
-  it("does NOT show a tooltip when the sidebar is expanded (labels are visible)", () => {
+  it("drops the title when expanded (labels are already visible)", () => {
     useUiStore.setState({ collapsed: false });
     render(<Sidebar />);
 
-    fireEvent.mouseEnter(screen.getByRole("link", { name: "Fixtures" }));
-    expect(screen.queryByRole("tooltip")).toBeNull();
+    const link = screen.getByRole("link", { name: "Fixtures" });
+    expect(link).not.toHaveAttribute("title");
   });
 
-  it("keeps an accessible name on every nav item even when collapsed", () => {
-    useUiStore.setState({ collapsed: true });
-    render(<Sidebar />);
-
-    // aria-label backstops the visually-hidden <span> labels in the icon rail.
-    for (const label of ["Home", "Fixtures", "Historical", "Upgrade Premium"]) {
-      expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
+  it("keeps an accessible name on every nav item in both states", () => {
+    for (const collapsed of [true, false]) {
+      useUiStore.setState({ collapsed });
+      const { unmount } = render(<Sidebar />);
+      for (const label of ["Home", "Fixtures", "Live Center", "Historical", "Upgrade Premium"]) {
+        // aria-label backstops the visually-hidden <span> labels in the icon rail.
+        expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
+      }
+      unmount();
     }
   });
 });
