@@ -91,7 +91,13 @@ export class PostgresFootballRepository extends FootballRepository {
     const [{ count }] = await this.pg.query<{ count: string }>(
       "SELECT COUNT(*)::int AS count FROM leagues",
     );
-    if (Number(count) > 0) return;
+    if (Number(count) > 0) {
+      this.logger.log(
+        `Football tables already populated (${count} leagues); skipping seed. ` +
+          `TRUNCATE leagues/teams/matches (or POST /ingestion/run) to refresh from the provider.`,
+      );
+      return;
+    }
 
     const [leagues, teams, matches] = await Promise.all([
       this.provider.getLeagues(),

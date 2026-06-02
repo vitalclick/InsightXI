@@ -91,7 +91,7 @@ describe("ApiFootballProvider", () => {
     const provider = new ApiFootballProvider({
       apiKey: "test-key",
       leagueIds: [39],
-      season: 2025,
+      seasons: [2025],
       fetchImpl,
     });
 
@@ -105,7 +105,7 @@ describe("ApiFootballProvider", () => {
     const provider = new ApiFootballProvider({
       apiKey: "k",
       leagueIds: [39],
-      season: 2025,
+      seasons: [2025],
       fetchImpl: async () => ({ ok: false, status: 429, json: async () => ({}) }),
     });
     await expect(provider.getLeagues()).rejects.toThrow(/429/);

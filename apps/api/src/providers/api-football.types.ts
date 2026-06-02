@@ -5,6 +5,12 @@
 
 export interface AfEnvelope<T> {
   response: T[];
+  /**
+   * API-Football returns HTTP 200 even for misconfigured requests; the reason
+   * (e.g. "season not available for your plan", bad token, rate limit) lives
+   * here. Empty array when OK; an object keyed by field when there's a problem.
+   */
+  errors?: Record<string, string> | string[];
 }
 
 export interface AfLeagueResponse {
