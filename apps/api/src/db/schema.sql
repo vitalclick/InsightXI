@@ -56,10 +56,14 @@ CREATE TABLE IF NOT EXISTS notifications (
   body       TEXT NOT NULL,
   link       TEXT,                                   -- optional in-app deep link
   read       BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TEXT NOT NULL                            -- ISO timestamp
+  created_at TEXT NOT NULL,                           -- ISO timestamp
+  -- Monotonic insertion order. created_at is millisecond-resolution, so
+  -- notifications raised in the same request tie on it; seq is the tiebreaker
+  -- that keeps "newest first" deterministic.
+  seq        BIGSERIAL
 );
 
-CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, created_at DESC, seq DESC);
 
 -- Migrations for existing deployments (idempotent).
 ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
@@ -72,3 +76,4 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_provider TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_ref TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS current_period_end TEXT;
 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS seq BIGSERIAL;

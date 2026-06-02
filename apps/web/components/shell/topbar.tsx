@@ -1,18 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Icon } from "../ui/icon";
 import { ThemeToggle } from "../theme/theme-toggle";
 import { useUiStore } from "../../store/ui-store";
 import { useAuthStore } from "../../store/auth-store";
-import { TOPNAV } from "./nav-config";
 import { SearchBox } from "./search-box";
 import { Freshness } from "./freshness";
 import { NotificationsBell } from "./notifications-bell";
 
 export function Topbar() {
-  const pathname = usePathname();
   const toggleCollapsed = useUiStore((s) => s.toggleCollapsed);
   const toggleMobile = useUiStore((s) => s.toggleMobile);
   const toggleAssistant = useUiStore((s) => s.toggleAssistant);
@@ -30,16 +27,6 @@ export function Topbar() {
       <button className="sb-toggle" onClick={onToggle} aria-label="Toggle sidebar">
         <Icon name="menu" size={18} />
       </button>
-      <nav className="topnav" aria-label="Primary">
-        {TOPNAV.map((l) => {
-          const active = pathname.startsWith(l.href);
-          return (
-            <Link key={l.href} href={l.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
-              {l.label}
-            </Link>
-          );
-        })}
-      </nav>
       <SearchBox />
       <span className="tb-freshness">
         <Freshness />

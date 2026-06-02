@@ -51,7 +51,7 @@ export class PostgresNotificationStore extends NotificationStore {
   async listForUser(userId: string, limit: number): Promise<NotificationRecord[]> {
     const rows = await this.pg.query<NotificationRow>(
       `SELECT ${COLUMNS} FROM notifications
-       WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`,
+       WHERE user_id = $1 ORDER BY created_at DESC, seq DESC LIMIT $2`,
       [userId, limit],
     );
     return rows.map(toRecord);

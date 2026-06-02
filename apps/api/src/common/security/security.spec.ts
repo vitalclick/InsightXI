@@ -62,13 +62,16 @@ describe("security config", () => {
       expect(() => assertProductionConfig()).toThrow(/JWT_SECRET/);
     });
 
-    it("throws in production without configured origins", () => {
+    it("does NOT throw in production without configured origins (fail-closed)", () => {
+      // An empty allow-list makes buildCorsOptions() reject every cross-origin
+      // request rather than reflect it, so a missing origin is a safe default:
+      // it must warn, not hard-stop, or the platform healthcheck never passes.
       process.env.NODE_ENV = "production";
       process.env.JWT_SECRET = "a-strong-unique-secret";
       delete process.env.CORS_ORIGINS;
       delete process.env.WEB_APP_URL;
       delete process.env.PAYMENTS_CALLBACK_URL;
-      expect(() => assertProductionConfig()).toThrow(/CORS_ORIGINS/);
+      expect(() => assertProductionConfig()).not.toThrow();
     });
 
     it("does not throw in production when configured", () => {

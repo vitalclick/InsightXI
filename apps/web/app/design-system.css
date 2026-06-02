@@ -348,6 +348,7 @@ button { font-family: inherit; cursor: pointer; }
 /* Page */
 main.page { padding: 26px 28px 60px; max-width: 1640px; width: 100%; margin: 0 auto; }
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; flex-wrap: wrap; }
+.page-head.center { flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .page-title { font-size: 27px; font-weight: 800; letter-spacing: -0.03em; }
 .page-sub { color: var(--muted); font-size: 14px; margin-top: 5px; }
 

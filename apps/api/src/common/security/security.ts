@@ -22,31 +22,46 @@ const INSECURE_JWT_SECRETS = new Set([
  * In development these are warnings so the offline demo keeps working.
  */
 export function assertProductionConfig(logger = new Logger("Security")): void {
-  const problems: string[] = [];
+  // Fatal problems make the service genuinely unsafe to serve (e.g. forgeable
+  // auth tokens) — these hard-stop in production. Warnings are sub-optimal but
+  // fail *closed*, so they must never prevent boot: a crash here means the
+  // platform healthcheck can never pass and the whole deploy is marked failed.
+  const fatal: string[] = [];
+  const warnings: string[] = [];
 
   if (INSECURE_JWT_SECRETS.has(process.env.JWT_SECRET ?? "")) {
-    problems.push(
+    fatal.push(
       "JWT_SECRET is unset or still the default — set a strong, unique secret.",
     );
   }
 
-  // In production we require an explicit allow-list of web origins.
+  // An empty allow-list is the safe default: buildCorsOptions() then rejects
+  // every cross-origin request (it does NOT reflect arbitrary origins). That is
+  // fail-closed, so a missing list is a warning — never a reason to refuse to
+  // boot. (Previously this hard-stopped, which silently failed deploys whose
+  // Railway service hadn't set CORS_ORIGINS/WEB_APP_URL.)
   if (!resolveAllowedOrigins().length) {
-    problems.push(
-      "No CORS_ORIGINS / WEB_APP_URL configured — set the web origin(s) so the " +
-        "API does not reflect arbitrary origins.",
+    warnings.push(
+      "No CORS_ORIGINS / WEB_APP_URL configured — cross-origin browser requests " +
+        "will be blocked. Set the web origin(s) to let the frontend through.",
     );
   }
-
-  if (!problems.length) return;
 
   if (isProduction()) {
-    // Hard stop — refuse to serve with insecure config in production.
-    throw new Error(
-      `Refusing to start with insecure configuration:\n - ${problems.join("\n - ")}`,
-    );
+    for (const w of warnings) logger.warn(`Insecure config: ${w}`);
+    if (fatal.length) {
+      // Hard stop — refuse to serve with an unsafe security posture.
+      throw new Error(
+        `Refusing to start with insecure configuration:\n - ${fatal.join("\n - ")}`,
+      );
+    }
+    return;
   }
-  for (const p of problems) logger.warn(`Insecure config (dev only): ${p}`);
+
+  // Development: everything is a warning so the offline demo keeps working.
+  for (const p of [...fatal, ...warnings]) {
+    logger.warn(`Insecure config (dev only): ${p}`);
+  }
 }
 
 /**

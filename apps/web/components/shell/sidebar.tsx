@@ -44,10 +44,20 @@ function TagBadge({ tag }: { tag: NavTag }) {
 export function Sidebar() {
   const pathname = usePathname();
   const closeMobile = useUiStore((s) => s.closeMobile);
+  const collapsed = useUiStore((s) => s.collapsed);
+
+  // In the collapsed icon rail the text labels are hidden, so a native `title`
+  // surfaces each item's name on hover. Native tooltips are painted by the
+  // browser above the page, so (unlike a CSS/portal popover) nothing in the
+  // layout — transforms, overflow, the content pane — can clip them. Matches
+  // the `title=` convention already used across the topbar. `aria-label` keeps
+  // an accessible name on the icon-only links for screen readers.
+  const tip = (label: string) =>
+    collapsed ? { title: label, "aria-label": label } : { "aria-label": label };
 
   return (
     <aside className="sidebar">
-      <Link href="/" className="sb-brand" onClick={closeMobile}>
+      <Link href="/" className="sb-brand" onClick={closeMobile} title={collapsed ? "InsightXI" : undefined}>
         <div className="sb-logo">
           <Logo />
         </div>
@@ -68,6 +78,7 @@ export function Sidebar() {
                   onClick={closeMobile}
                   className={`nav-i${active ? " active" : ""}`}
                   aria-current={active ? "page" : undefined}
+                  {...tip(it.label)}
                 >
                   <Icon name={it.icon} />
                   <span>{it.label}</span>
@@ -83,6 +94,7 @@ export function Sidebar() {
           href="/premium"
           onClick={closeMobile}
           className="nav-i"
+          {...tip("Upgrade Premium")}
           style={{ background: "linear-gradient(135deg,rgba(232,194,112,.14),rgba(232,194,112,.03))", border: "1px solid rgba(232,194,112,.2)" }}
         >
           <Icon name="premium" />

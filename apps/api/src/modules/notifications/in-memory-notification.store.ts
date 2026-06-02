@@ -4,10 +4,14 @@ import { NotificationRecord, NotificationStore } from "./notification.store";
 /** Default store — process-local list (resets on restart). */
 @Injectable()
 export class InMemoryNotificationStore extends NotificationStore {
-  private readonly items: NotificationRecord[] = [];
+  private readonly items: Array<NotificationRecord & { _seq: number }> = [];
+  // Monotonic insertion counter. createdAt is a millisecond ISO timestamp, so
+  // two notifications raised in the same request (e.g. welcome + premium) can
+  // tie on createdAt; _seq breaks the tie so "newest first" is deterministic.
+  private seq = 0;
 
   async insert(notification: NotificationRecord): Promise<void> {
-    this.items.push(notification);
+    this.items.push({ ...notification, _seq: ++this.seq });
   }
 
   async listForUser(userId: string, limit: number): Promise<NotificationRecord[]> {
@@ -15,8 +19,9 @@ export class InMemoryNotificationStore extends NotificationStore {
     // (sorting by the ISO timestamp alone is ambiguous within the same ms).
     return this.items
       .filter((n) => n.userId === userId)
-      .reverse()
-      .slice(0, limit);
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b._seq - a._seq)
+      .slice(0, limit)
+      .map(({ _seq, ...rest }) => rest);
   }
 
   async unreadCount(userId: string): Promise<number> {
