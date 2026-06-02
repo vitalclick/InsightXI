@@ -1,6 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { League, Match } from "../common/domain";
 import { PgService } from "../db/pg.service";
+import {
+  FOOTBALL_DATA_PROVIDER,
+  FootballDataProvider,
+} from "../providers/football-data.provider";
 import { FootballDataset, FootballRepository } from "./football.repository";
 
 interface TeamRow {
@@ -28,11 +32,18 @@ interface MatchRow {
 /** Postgres-backed backend (DATA_BACKEND=postgres). */
 @Injectable()
 export class PostgresFootballRepository extends FootballRepository {
-  constructor(private readonly pg: PgService) {
+  private readonly logger = new Logger(PostgresFootballRepository.name);
+
+  constructor(
+    private readonly pg: PgService,
+    @Inject(FOOTBALL_DATA_PROVIDER)
+    private readonly provider: FootballDataProvider,
+  ) {
     super();
   }
 
   protected async load(): Promise<FootballDataset> {
+    await this.seedIfEmpty();
     const leagues = await this.pg.query<League>(
       "SELECT id, name, country FROM leagues ORDER BY name",
     );
@@ -68,5 +79,51 @@ export class PostgresFootballRepository extends FootballRepository {
         awayXg: m.away_xg,
       })),
     };
+  }
+
+  /**
+   * Populate leagues/teams/matches from the configured data provider the first
+   * time the database is empty (idempotent: only seeds when no leagues exist).
+   * Keeps a fresh Postgres/Neon DB fully populated so fixtures, predictions,
+   * standings and the live simulator have data to work with.
+   */
+  private async seedIfEmpty(): Promise<void> {
+    const [{ count }] = await this.pg.query<{ count: string }>(
+      "SELECT COUNT(*)::int AS count FROM leagues",
+    );
+    if (Number(count) > 0) return;
+
+    const [leagues, teams, matches] = await Promise.all([
+      this.provider.getLeagues(),
+      this.provider.getTeams(),
+      this.provider.getMatches(),
+    ]);
+
+    for (const l of leagues) {
+      await this.pg.query(
+        "INSERT INTO leagues (id, name, country) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+        [l.id, l.name, l.country],
+      );
+    }
+    for (const t of teams) {
+      await this.pg.query(
+        "INSERT INTO teams (id, name, short_name, league_id) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
+        [t.id, t.name, t.shortName, t.leagueId],
+      );
+    }
+    for (const m of matches) {
+      await this.pg.query(
+        `INSERT INTO matches (id, league_id, season, matchday, utc_date, status,
+                              home_team_id, away_team_id, home_goals, away_goals, home_xg, away_xg)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT DO NOTHING`,
+        [
+          m.id, m.leagueId, m.season, m.matchday, m.utcDate, m.status,
+          m.homeTeamId, m.awayTeamId, m.homeGoals, m.awayGoals, m.homeXg, m.awayXg,
+        ],
+      );
+    }
+    this.logger.log(
+      `Seeded football data: ${leagues.length} leagues, ${teams.length} teams, ${matches.length} matches`,
+    );
   }
 }
