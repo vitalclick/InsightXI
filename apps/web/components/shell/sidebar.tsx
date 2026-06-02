@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, Logo } from "../ui/icon";
@@ -42,33 +41,23 @@ function TagBadge({ tag }: { tag: NavTag }) {
   );
 }
 
-interface Tip {
-  label: string;
-  top: number;
-}
-
 export function Sidebar() {
   const pathname = usePathname();
   const closeMobile = useUiStore((s) => s.closeMobile);
   const collapsed = useUiStore((s) => s.collapsed);
 
-  // Tooltip for the collapsed icon rail: when labels are hidden, hovering or
-  // focusing an item surfaces its name. Positioned `fixed` so the sidebar's
-  // `overflow-x: hidden` scroll area can't clip it. Inert when expanded.
-  const [tip, setTip] = useState<Tip | null>(null);
-
-  function showTip(e: React.SyntheticEvent<HTMLElement>, label: string) {
-    if (!collapsed) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    setTip({ label, top: r.top + r.height / 2 });
-  }
-  function hideTip() {
-    setTip(null);
-  }
+  // In the collapsed icon rail the text labels are hidden, so a native `title`
+  // surfaces each item's name on hover. Native tooltips are painted by the
+  // browser above the page, so (unlike a CSS/portal popover) nothing in the
+  // layout — transforms, overflow, the content pane — can clip them. Matches
+  // the `title=` convention already used across the topbar. `aria-label` keeps
+  // an accessible name on the icon-only links for screen readers.
+  const tip = (label: string) =>
+    collapsed ? { title: label, "aria-label": label } : { "aria-label": label };
 
   return (
     <aside className="sidebar">
-      <Link href="/" className="sb-brand" onClick={closeMobile}>
+      <Link href="/" className="sb-brand" onClick={closeMobile} title={collapsed ? "InsightXI" : undefined}>
         <div className="sb-logo">
           <Logo />
         </div>
@@ -89,11 +78,7 @@ export function Sidebar() {
                   onClick={closeMobile}
                   className={`nav-i${active ? " active" : ""}`}
                   aria-current={active ? "page" : undefined}
-                  aria-label={it.label}
-                  onMouseEnter={(e) => showTip(e, it.label)}
-                  onFocus={(e) => showTip(e, it.label)}
-                  onMouseLeave={hideTip}
-                  onBlur={hideTip}
+                  {...tip(it.label)}
                 >
                   <Icon name={it.icon} />
                   <span>{it.label}</span>
@@ -109,11 +94,7 @@ export function Sidebar() {
           href="/premium"
           onClick={closeMobile}
           className="nav-i"
-          aria-label="Upgrade Premium"
-          onMouseEnter={(e) => showTip(e, "Upgrade Premium")}
-          onFocus={(e) => showTip(e, "Upgrade Premium")}
-          onMouseLeave={hideTip}
-          onBlur={hideTip}
+          {...tip("Upgrade Premium")}
           style={{ background: "linear-gradient(135deg,rgba(232,194,112,.14),rgba(232,194,112,.03))", border: "1px solid rgba(232,194,112,.2)" }}
         >
           <Icon name="premium" />
@@ -122,11 +103,6 @@ export function Sidebar() {
           </span>
         </Link>
       </div>
-      {collapsed && tip && (
-        <div className="sb-tip" role="tooltip" style={{ top: tip.top }}>
-          {tip.label}
-        </div>
-      )}
     </aside>
   );
 }
