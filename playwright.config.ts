@@ -35,6 +35,9 @@ export default defineConfig({
       port: API_PORT,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
+      // The whole suite shares one localhost IP; don't let the per-IP rate
+      // limiter throttle a fast run.
+      env: { RATE_LIMIT_ENABLED: "false" },
     },
     {
       command: `pnpm --filter @insightxi/web exec next dev -p ${WEB_PORT}`,

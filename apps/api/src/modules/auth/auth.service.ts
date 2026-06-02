@@ -68,7 +68,7 @@ export class AuthService {
     return {
       accessToken: await this.jwt.signAsync(payload),
       refreshToken: await this.jwt.signAsync(
-        { sub: user.id, purpose: "refresh" as TokenPurpose },
+        { sub: user.id, purpose: "refresh" as TokenPurpose, tv: user.tokenVersion },
         { expiresIn: refreshTtl },
       ),
       user: this.users.toPublic(user),
@@ -102,7 +102,18 @@ export class AuthService {
     const payload = await this.verifyPurpose(refreshToken, "refresh");
     const user = await this.users.findById(payload.sub);
     if (!user) throw new UnauthorizedException("Unknown user");
+    // Reject refresh tokens issued before the latest revocation (logout / reset).
+    if ((payload.tv ?? 0) !== user.tokenVersion) {
+      throw new UnauthorizedException("Session expired — please sign in again");
+    }
     return this.issueToken(user);
+  }
+
+  /** Revoke all of the user's refresh tokens (sign out everywhere). Existing
+   * short-lived access tokens lapse on their own TTL. */
+  async logout(userId: string): Promise<{ ok: true }> {
+    await this.users.bumpTokenVersion(userId);
+    return { ok: true };
   }
 
   // ── Email verification ────────────────────────────────────────────────
@@ -158,24 +169,63 @@ export class AuthService {
     }
     const updated = await this.users.setPassword(user.id, newPassword);
     if (!updated) throw new BadRequestException("Unable to reset password");
-    return this.issueToken(updated);
+    // Revoke any sessions established before the reset, then issue a fresh pair.
+    const revoked = (await this.users.bumpTokenVersion(user.id)) ?? updated;
+    return this.issueToken(revoked);
+  }
+
+  // ── Account data: export & deletion (GDPR / POPIA) ────────────────────
+  /** Machine-readable export of everything we hold about the user. */
+  async exportAccount(userId: string): Promise<Record<string, unknown>> {
+    const user = await this.users.findById(userId);
+    if (!user) throw new UnauthorizedException("Unknown user");
+    const notifications = await this.notifications.list(userId);
+    return {
+      exportedAt: new Date().toISOString(),
+      account: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        provider: user.provider,
+        emailVerified: user.emailVerified,
+        tier: user.tier,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionProvider: user.subscriptionProvider,
+        subscriptionRef: user.subscriptionRef,
+        currentPeriodEnd: user.currentPeriodEnd,
+      },
+      notifications,
+    };
+  }
+
+  /** Permanently erase the account and its dependent data. */
+  async deleteAccount(userId: string): Promise<{ deleted: true }> {
+    const user = await this.users.findById(userId);
+    if (!user) throw new UnauthorizedException("Unknown user");
+    // Remove dependent rows first (notifications reference users), then the user.
+    await this.notifications.deleteAllForUser(userId);
+    await this.users.delete(userId);
+    this.logger.log(`Account deleted: ${userId}`);
+    return { deleted: true };
   }
 
   /** Verify a JWT and assert it was minted for the expected purpose. */
   private async verifyPurpose(
     token: string,
     purpose: TokenPurpose,
-  ): Promise<{ sub: string; purpose: TokenPurpose; pv?: string }> {
+  ): Promise<{ sub: string; purpose: TokenPurpose; pv?: string; tv?: number }> {
     try {
       const payload = await this.jwt.verifyAsync<{
         sub: string;
         purpose?: TokenPurpose;
         pv?: string;
+        tv?: number;
       }>(token);
       if (payload.purpose !== purpose) {
         throw new BadRequestException("Invalid token");
       }
-      return { sub: payload.sub, purpose, pv: payload.pv };
+      return { sub: payload.sub, purpose, pv: payload.pv, tv: payload.tv };
     } catch (err) {
       if (err instanceof BadRequestException) throw err;
       throw new BadRequestException("Invalid or expired token");

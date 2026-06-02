@@ -35,4 +35,6 @@ export abstract class NotificationStore {
   /** Mark one notification read; returns true if it belonged to the user. */
   abstract markRead(userId: string, id: string): Promise<boolean>;
   abstract markAllRead(userId: string): Promise<void>;
+  /** Remove all of a user's notifications (account deletion / erasure). */
+  abstract deleteForUser(userId: string): Promise<void>;
 }

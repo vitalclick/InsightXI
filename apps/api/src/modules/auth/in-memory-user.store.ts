@@ -35,4 +35,23 @@ export class InMemoryUserStore extends UserStore {
     user.tier = tier;
     return user;
   }
+
+  async delete(id: string): Promise<void> {
+    for (const [email, user] of this.users) {
+      if (user.id === id) {
+        this.users.delete(email);
+        return;
+      }
+    }
+  }
+
+  async bumpTokenVersion(id: string): Promise<UserRecord | undefined> {
+    for (const user of this.users.values()) {
+      if (user.id === id) {
+        user.tokenVersion += 1;
+        return user;
+      }
+    }
+    return undefined;
+  }
 }

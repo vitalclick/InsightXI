@@ -15,6 +15,8 @@ export class InMemoryNotificationStore extends NotificationStore {
   }
 
   async listForUser(userId: string, limit: number): Promise<NotificationRecord[]> {
+    // Insertion order is creation order; return newest-first deterministically
+    // (sorting by the ISO timestamp alone is ambiguous within the same ms).
     return this.items
       .filter((n) => n.userId === userId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b._seq - a._seq)
@@ -35,5 +37,11 @@ export class InMemoryNotificationStore extends NotificationStore {
 
   async markAllRead(userId: string): Promise<void> {
     for (const n of this.items) if (n.userId === userId) n.read = true;
+  }
+
+  async deleteForUser(userId: string): Promise<void> {
+    for (let i = this.items.length - 1; i >= 0; i--) {
+      if (this.items[i].userId === userId) this.items.splice(i, 1);
+    }
   }
 }

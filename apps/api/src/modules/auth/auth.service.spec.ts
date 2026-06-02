@@ -33,7 +33,14 @@ describe("Auth + subscriptions", () => {
         UsersService,
         { provide: UserStore, useClass: InMemoryUserStore },
         { provide: EmailService, useValue: emailStub },
-        { provide: NotificationsService, useValue: { notify: async () => undefined } },
+        {
+          provide: NotificationsService,
+          useValue: {
+            notify: async () => undefined,
+            list: async () => [],
+            deleteAllForUser: async () => undefined,
+          },
+        },
       ],
     }).compile();
     await moduleRef.init(); // seeds demo users via UsersService.onModuleInit
@@ -134,6 +141,48 @@ describe("Auth + subscriptions", () => {
   it("rejects an access token used as a refresh token", async () => {
     const result = await auth.login("free@insightxi.dev", "password");
     await expect(auth.refresh(result.accessToken)).rejects.toThrow();
+  });
+
+  it("revokes refresh tokens on logout", async () => {
+    const { user, refreshToken } = await auth.login("free@insightxi.dev", "password");
+    // Valid before logout.
+    expect((await auth.refresh(refreshToken)).accessToken).toBeTruthy();
+    await auth.logout(user.id);
+    // The original refresh token is now rejected (token version bumped).
+    await expect(auth.refresh(refreshToken)).rejects.toThrow();
+  });
+
+  it("revokes existing refresh tokens after a password reset", async () => {
+    const { refreshToken } = await auth.register("revoke@example.com", "oldpass123");
+    sent.length = 0;
+    await auth.requestPasswordReset("revoke@example.com");
+    const token = sent
+      .find((m) => m.to === "revoke@example.com")!
+      .text.match(/token=([^\s)]+)/)![1];
+    await auth.resetPassword(token, "brandnew123");
+    // A refresh token minted before the reset no longer works.
+    await expect(auth.refresh(refreshToken)).rejects.toThrow();
+  });
+
+  it("exports the account's personal data", async () => {
+    const { user } = await auth.register("export-me@example.com", "secret123");
+    const dump = (await auth.exportAccount(user.id)) as {
+      account: { email: string };
+      notifications: unknown[];
+      exportedAt: string;
+    };
+    expect(dump.account.email).toBe("export-me@example.com");
+    expect(Array.isArray(dump.notifications)).toBe(true);
+    expect(typeof dump.exportedAt).toBe("string");
+  });
+
+  it("deletes the account so it can no longer sign in", async () => {
+    const { user } = await auth.register("delete-me@example.com", "secret123");
+    expect(await auth.deleteAccount(user.id)).toEqual({ deleted: true });
+    await expect(
+      auth.login("delete-me@example.com", "secret123"),
+    ).rejects.toThrow();
+    await expect(auth.exportAccount(user.id)).rejects.toThrow();
   });
 
   it("activates premium for the plan period after payment", async () => {

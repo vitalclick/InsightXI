@@ -13,6 +13,8 @@ export interface UserRecord {
   provider: AuthProvider;
   /** Whether the email address has been confirmed (OAuth accounts are trusted). */
   emailVerified: boolean;
+  /** Bumped to revoke all outstanding refresh tokens (logout / password reset). */
+  tokenVersion: number;
   subscriptionStatus: SubscriptionStatus;
   /** Gateway that activated the current subscription (paypal/paystack/...). */
   subscriptionProvider: string | null;
@@ -47,4 +49,8 @@ export abstract class UserStore {
     email: string,
     tier: SubscriptionTier,
   ): Promise<UserRecord | undefined>;
+  /** Permanently remove a user by id (account deletion / GDPR erasure). */
+  abstract delete(id: string): Promise<void>;
+  /** Atomically increment the token version; returns the updated record. */
+  abstract bumpTokenVersion(id: string): Promise<UserRecord | undefined>;
 }

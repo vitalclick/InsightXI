@@ -62,8 +62,33 @@ export class LiveService {
     return teams.slice(0, -1).map((t, i) => [t.id, teams[i + 1].id]);
   }
 
+  /** Neutral placeholder when there is no data to simulate (e.g. a fresh
+   * Postgres before the first ingestion). Keeps the gateway tick alive. */
+  private idleState(): LiveSnapshot {
+    return {
+      matchId: "live-idle",
+      homeTeamId: "",
+      awayTeamId: "",
+      homeTeamName: "—",
+      awayTeamName: "—",
+      minute: 0,
+      homeGoals: 0,
+      awayGoals: 0,
+      homeXg: 0,
+      awayXg: 0,
+      momentum: 50,
+      status: "FINISHED",
+      events: [],
+    };
+  }
+
   startNextMatch(): LiveSnapshot {
     const pairs = this.candidatePairs();
+    if (pairs.length === 0) {
+      // No fixtures or teams yet — idle rather than crash on an empty dataset.
+      this.state = this.idleState();
+      return this.state;
+    }
     const [homeId, awayId] = pairs[this.fixtureCursor % pairs.length];
     this.fixtureCursor++;
 

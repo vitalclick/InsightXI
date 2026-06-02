@@ -39,4 +39,12 @@ describe("NotificationsService", () => {
     expect(await service.unreadCount("u1")).toBe(0);
     expect((await service.list("u1")).every((n) => n.read)).toBe(true);
   });
+
+  it("erases only the target user's notifications", async () => {
+    await service.notify("u1", { type: "system", title: "a", body: "b" });
+    await service.notify("u2", { type: "system", title: "keep", body: "b" });
+    await service.deleteAllForUser("u1");
+    expect(await service.list("u1")).toEqual([]);
+    expect((await service.list("u2")).map((n) => n.title)).toEqual(["keep"]);
+  });
 });

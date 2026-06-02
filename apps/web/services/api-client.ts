@@ -64,6 +64,20 @@ async function apiPost<T>(path: string, body: unknown, token?: string): Promise<
   return res.json() as Promise<T>;
 }
 
+async function apiDelete<T>(path: string, token?: string): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!res.ok) {
+    throw new ApiError(res.status, `API ${res.status}: ${res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 /** Optional currency/country hints for localized pricing. */
 function planQuery(hints?: { currency?: string; country?: string }): string {
   const params = new URLSearchParams();
@@ -111,6 +125,10 @@ export const api = {
   oauthApple: (idToken: string, name?: string) =>
     apiPost<AuthResponse>("/auth/oauth/apple", { idToken, name }),
   me: (token: string) => apiGet<PublicUser>("/auth/me", token),
+  exportAccount: (token: string) =>
+    apiGet<Record<string, unknown>>("/auth/account/export", token),
+  deleteAccount: (token: string) =>
+    apiDelete<{ deleted: true }>("/auth/account", token),
 
   // In-app notifications (all require a bearer token).
   notifications: (token: string) =>
@@ -124,6 +142,7 @@ export const api = {
 
   refresh: (refreshToken: string) =>
     apiPost<AuthResponse>("/auth/refresh", { refreshToken }),
+  logout: (token: string) => apiPost<{ ok: true }>("/auth/logout", {}, token),
   verifyEmail: (token: string) =>
     apiPost<{ verified: boolean; user: PublicUser }>("/auth/verify-email", { token }),
   resendVerification: (token: string) =>

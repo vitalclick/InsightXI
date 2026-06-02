@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url            TEXT,
   provider              TEXT NOT NULL DEFAULT 'email',    -- email | google | apple
   email_verified        BOOLEAN NOT NULL DEFAULT FALSE,   -- OAuth accounts trusted on create
+  token_version         INTEGER NOT NULL DEFAULT 0,       -- bump to revoke refresh tokens
   subscription_status   TEXT NOT NULL DEFAULT 'none',     -- none | active | expired | canceled
   subscription_provider TEXT,                             -- paypal | paystack | flutterwave
   subscription_ref      TEXT,
@@ -69,6 +70,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS provider TEXT NOT NULL DEFAULT 'email';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT NOT NULL DEFAULT 'none';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_provider TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_ref TEXT;

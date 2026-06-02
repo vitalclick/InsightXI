@@ -65,6 +65,11 @@ export class NotificationsService {
     await this.store.markAllRead(userId);
     return { ok: true };
   }
+
+  /** Erase all of a user's notifications (called on account deletion). */
+  async deleteAllForUser(userId: string): Promise<void> {
+    await this.store.deleteForUser(userId);
+  }
 }
 
 function toPublic(n: NotificationRecord): PublicNotification {
