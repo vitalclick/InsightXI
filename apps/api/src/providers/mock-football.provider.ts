@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { League, Match, Team } from "../common/domain";
+import { KnockoutFixture, League, Match, Team } from "../common/domain";
 import { buildSeedData } from "../data/seed";
 import { FootballDataProvider } from "./football-data.provider";
 
@@ -21,5 +21,9 @@ export class MockFootballProvider implements FootballDataProvider {
 
   async getMatches(): Promise<Match[]> {
     return this.data.matches;
+  }
+
+  async getKnockoutFixtures(): Promise<KnockoutFixture[]> {
+    return this.data.knockoutFixtures;
   }
 }

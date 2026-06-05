@@ -29,6 +29,7 @@ export class AuthController {
   ) {}
 
   @Post("login")
+  @HttpCode(200)
   login(@Body() dto: CredentialsDto) {
     return this.auth.login(dto.email, dto.password);
   }

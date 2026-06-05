@@ -13,6 +13,7 @@ import { LeaguesModule } from "./modules/leagues/leagues.module";
 import { TeamsModule } from "./modules/teams/teams.module";
 import { MatchesModule } from "./modules/matches/matches.module";
 import { StatisticsModule } from "./modules/statistics/statistics.module";
+import { TournamentModule } from "./modules/tournament/tournament.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { PredictionsModule } from "./modules/predictions/predictions.module";
 import { TacticalModule } from "./modules/tactical/tactical.module";
@@ -52,6 +53,7 @@ import { AdminModule } from "./modules/admin/admin.module";
     TeamsModule,
     MatchesModule,
     StatisticsModule,
+    TournamentModule,
     // Phase 2 — Intelligence Engine
     AnalyticsModule,
     PredictionsModule,

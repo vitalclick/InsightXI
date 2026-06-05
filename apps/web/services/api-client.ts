@@ -32,6 +32,7 @@ import type {
   Team,
   TeamProfile,
   TeamRatings,
+  TournamentBracket,
 } from "../lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -116,6 +117,7 @@ export const api = {
   teams: (league?: string) =>
     apiGet<Team[]>(`/teams${league ? `?league=${league}` : ""}`),
   teamProfile: (id: string) => apiGet<TeamProfile>(`/teams/${id}`),
+  tournamentBracket: () => apiGet<TournamentBracket>("/tournament/bracket"),
   ratings: (leagueId: string) => apiGet<TeamRatings[]>(`/analytics/ratings/${leagueId}`),
   teamRatings: (teamId: string) => apiGet<TeamRatings>(`/analytics/team/${teamId}`),
   h2h: (home: string, away: string) =>

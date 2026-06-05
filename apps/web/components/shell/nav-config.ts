@@ -18,6 +18,7 @@ export const SIDENAV: NavSection[] = [
     section: "Intelligence",
     items: [
       { label: "Home", href: "/dashboard", icon: "home" },
+      { label: "World Cup 2026", href: "/bracket", icon: "trophy", tag: "HOT" },
       { label: "Confidence Board", href: "/board", icon: "grid", tag: "AI" },
       { label: "Confidence Picks", href: "/predictions", icon: "target", tag: "HOT" },
       { label: "Live Center", href: "/live", icon: "live", tag: "LIVE" },

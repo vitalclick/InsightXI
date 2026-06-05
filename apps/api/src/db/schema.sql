@@ -32,6 +32,33 @@ CREATE TABLE IF NOT EXISTS matches (
 CREATE INDEX IF NOT EXISTS idx_matches_league_season ON matches (league_id, season);
 CREATE INDEX IF NOT EXISTS idx_matches_status ON matches (status);
 
+-- Knockout bracket template. Participants are SLOT REFERENCES (group position
+-- or an earlier tie's winner/loser); home_team_id/away_team_id and goals stay
+-- null until the tie resolves from results.
+CREATE TABLE IF NOT EXISTS knockout_fixtures (
+  id                TEXT PRIMARY KEY,
+  tournament_id     TEXT NOT NULL,
+  stage             TEXT NOT NULL,           -- R32 | R16 | QF | SF | THIRD_PLACE | FINAL
+  ord               INTEGER NOT NULL,        -- slot order within the stage
+  utc_date          TEXT NOT NULL,
+  home_kind         TEXT NOT NULL,           -- GROUP_WINNER | GROUP_RUNNER_UP | THIRD_PLACE | MATCH_WINNER | MATCH_LOSER
+  home_group        TEXT,
+  home_third_rank   INTEGER,
+  home_source_match TEXT,
+  home_label        TEXT NOT NULL,
+  away_kind         TEXT NOT NULL,
+  away_group        TEXT,
+  away_third_rank   INTEGER,
+  away_source_match TEXT,
+  away_label        TEXT NOT NULL,
+  home_team_id      TEXT,
+  away_team_id      TEXT,
+  home_goals        INTEGER,
+  away_goals        INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_knockout_tournament ON knockout_fixtures (tournament_id, stage, ord);
+
 CREATE TABLE IF NOT EXISTS users (
   id                    TEXT PRIMARY KEY,
   email                 TEXT UNIQUE NOT NULL,

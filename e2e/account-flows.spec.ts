@@ -60,7 +60,7 @@ test.describe("account data & deletion", () => {
 test.describe("password reset page", () => {
   test("rejects mismatched passwords before calling the API", async ({ page }) => {
     await page.goto("/reset-password?token=anything");
-    await page.getByLabel("New password").fill("secret123");
+    await page.getByLabel("New password", { exact: true }).fill("secret123");
     await page.getByLabel("Confirm new password").fill("different456");
     await page.getByRole("button", { name: "Reset password" }).click();
     await expect(page.getByText(/Passwords do not match/i)).toBeVisible();
@@ -68,7 +68,7 @@ test.describe("password reset page", () => {
 
   test("shows an error for an invalid/expired token", async ({ page }) => {
     await page.goto("/reset-password?token=not-a-real-token");
-    await page.getByLabel("New password").fill("secret123");
+    await page.getByLabel("New password", { exact: true }).fill("secret123");
     await page.getByLabel("Confirm new password").fill("secret123");
     await page.getByRole("button", { name: "Reset password" }).click();
     await expect(

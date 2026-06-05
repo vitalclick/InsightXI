@@ -16,11 +16,12 @@ export class MemoryFootballRepository extends FootballRepository {
   }
 
   protected async load(): Promise<FootballDataset> {
-    const [leagues, teams, matches] = await Promise.all([
+    const [leagues, teams, matches, knockoutFixtures] = await Promise.all([
       this.provider.getLeagues(),
       this.provider.getTeams(),
       this.provider.getMatches(),
+      this.provider.getKnockoutFixtures?.() ?? Promise.resolve([]),
     ]);
-    return { leagues, teams, matches };
+    return { leagues, teams, matches, knockoutFixtures };
   }
 }

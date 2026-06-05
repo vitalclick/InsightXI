@@ -1,5 +1,5 @@
 import { Logger } from "@nestjs/common";
-import { League, Match, Team } from "../common/domain";
+import { KnockoutFixture, League, Match, Team } from "../common/domain";
 import { FootballDataProvider } from "./football-data.provider";
 
 /**
@@ -35,6 +35,16 @@ export class FallbackFootballProvider implements FootballDataProvider {
     return this.guard("matches", () => this.primary.getMatches(), () =>
       this.fallback.getMatches(),
     );
+  }
+
+  /**
+   * Knockout template. Live providers (API-Football) don't model a bracket, so
+   * this serves the fallback (seed) template directly.
+   */
+  async getKnockoutFixtures(): Promise<KnockoutFixture[]> {
+    const primary = await this.primary.getKnockoutFixtures?.();
+    if (primary && primary.length > 0) return primary;
+    return (await this.fallback.getKnockoutFixtures?.()) ?? [];
   }
 
   private async guard<T>(

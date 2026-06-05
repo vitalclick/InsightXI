@@ -1,4 +1,4 @@
-import { League, Match, Team } from "../common/domain";
+import { KnockoutFixture, League, Match, Team } from "../common/domain";
 
 /**
  * Abstraction over a football data source. The mock provider serves seeded
@@ -9,6 +9,11 @@ export interface FootballDataProvider {
   getLeagues(): Promise<League[]>;
   getTeams(): Promise<Team[]>;
   getMatches(): Promise<Match[]>;
+  /**
+   * Knockout bracket template (optional). Live providers that don't model a
+   * tournament bracket can omit this; the repository treats it as empty.
+   */
+  getKnockoutFixtures?(): Promise<KnockoutFixture[]>;
 }
 
 /** DI token for the provider. */
