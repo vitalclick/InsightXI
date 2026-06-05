@@ -1,6 +1,7 @@
 import { Test } from "@nestjs/testing";
 import { DataModule } from "../../repositories/data.module";
 import { AnalyticsService } from "../analytics/analytics.service";
+import { TournamentService } from "../tournament/tournament.service";
 import { PredictionsService } from "./predictions.service";
 import {
   AI_PREDICTION_CLIENT,
@@ -57,6 +58,7 @@ describe("PredictionsService", () => {
       providers: [
         PredictionsService,
         AnalyticsService,
+        TournamentService,
         { provide: AI_PREDICTION_CLIENT, useValue: fake },
       ],
     }).compile();

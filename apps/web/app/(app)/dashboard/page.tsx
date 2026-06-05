@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const { data: fixtures = [] } = useQuery({ queryKey: ["fixtures", ""], queryFn: () => api.fixtures() });
   const { data: results = [] } = useQuery({ queryKey: ["results", ""], queryFn: () => api.results() });
   const { data: ratings = [] } = useQuery({ queryKey: ["ratings", "epl"], queryFn: () => api.ratings("epl") });
+  const { data: bracket } = useQuery({ queryKey: ["tournament-bracket"], queryFn: api.tournamentBracket });
   const { snapshot: live, connected } = useLive();
 
   const top = fixtures.slice(0, 8);
@@ -87,6 +88,38 @@ export default function DashboardPage() {
           </Link>
         }
       />
+
+      {/* FIFA World Cup 2026 — launch tournament highlight */}
+      {bracket?.champion && (
+        <Link
+          href="/bracket"
+          className="card reveal flex aic jcb wrap gap-12"
+          style={{
+            marginBottom: 16,
+            padding: "14px 20px",
+            color: "inherit",
+            textDecoration: "none",
+            background:
+              "linear-gradient(120deg, color-mix(in srgb, var(--blue) 18%, transparent), color-mix(in srgb, var(--green) 10%, transparent) 70%)",
+          }}
+        >
+          <div className="flex aic gap-12" style={{ minWidth: 220 }}>
+            <Crest name={bracket.champion.name} seed={bracket.champion.teamId} size="md" />
+            <div>
+              <div className="label-xs flex aic gap-6">
+                <Icon name="trophy" size={13} /> FIFA World Cup 2026 · projected bracket
+              </div>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "var(--text)" }}>
+                {bracket.champion.name} <span className="dim" style={{ fontWeight: 500, fontSize: 13 }}>projected champion</span>
+              </div>
+            </div>
+          </div>
+          <span className="flex aic gap-10 wrap dim" style={{ fontSize: 12 }}>
+            <span>{bracket.qualifiers.length} qualifiers · {bracket.rounds.length} knockout rounds</span>
+            <span className="btn btn-sm btn-primary">View bracket →</span>
+          </span>
+        </Link>
+      )}
 
       {/* KPI strip */}
       <div className="grid reveal" style={{ gridTemplateColumns: "repeat(4,1fr)", marginBottom: 6 }}>

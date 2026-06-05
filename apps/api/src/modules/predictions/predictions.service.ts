@@ -6,6 +6,8 @@ import {
 } from "@nestjs/common";
 import { FootballRepository } from "../../repositories/football.repository";
 import { AnalyticsService } from "../analytics/analytics.service";
+import { WORLD_CUP_TOURNAMENT_ID } from "../../data/tournament";
+import { TournamentService } from "../tournament/tournament.service";
 import {
   AI_PREDICTION_CLIENT,
   AiPredictionClient,
@@ -35,23 +37,55 @@ export class PredictionsService {
   constructor(
     private readonly repo: FootballRepository,
     private readonly analytics: AnalyticsService,
+    private readonly tournament: TournamentService,
     @Inject(AI_PREDICTION_CLIENT)
     private readonly ai: AiPredictionClient,
   ) {}
 
   async forMatch(matchId: string): Promise<MatchPrediction> {
     const match = this.repo.getMatch(matchId);
-    if (!match) throw new NotFoundException(`Match ${matchId} not found`);
+    if (match) {
+      return this.predictPair(
+        match.homeTeamId,
+        match.awayTeamId,
+        matchId,
+        match.leagueId,
+        this.analytics.leagueAvgGoals(match.leagueId),
+      );
+    }
 
-    const home = this.analytics.ratingsForTeam(match.homeTeamId);
-    const away = this.analytics.ratingsForTeam(match.awayTeamId);
+    // Fall back to a projected World Cup knockout tie (cross-group, neutral).
+    const tie = this.tournament.resolvedTie(matchId);
+    if (tie?.home && tie?.away) {
+      return this.predictPair(
+        tie.home.teamId,
+        tie.away.teamId,
+        matchId,
+        WORLD_CUP_TOURNAMENT_ID,
+        this.neutralLeagueAvg(tie.home.teamId, tie.away.teamId),
+      );
+    }
+
+    throw new NotFoundException(`Match ${matchId} not found`);
+  }
+
+  /** Predict any two teams (a real fixture or a projected knockout tie). */
+  private async predictPair(
+    homeTeamId: string,
+    awayTeamId: string,
+    matchId: string,
+    leagueId: string,
+    leagueAvgGoals: number,
+  ): Promise<MatchPrediction> {
+    const home = this.analytics.ratingsForTeam(homeTeamId);
+    const away = this.analytics.ratingsForTeam(awayTeamId);
 
     let ai: AiPredictionResponse;
     try {
       ai = await this.ai.predict({
         match_id: matchId,
-        league_id: match.leagueId,
-        league_avg_goals: this.analytics.leagueAvgGoals(match.leagueId),
+        league_id: leagueId,
+        league_avg_goals: leagueAvgGoals,
         home: toAiRating(home),
         away: toAiRating(away),
       });
@@ -79,6 +113,17 @@ export class PredictionsService {
       adaptive: ai.adaptive ?? false,
       adjustmentTrace: ai.adjustment_trace ?? [],
     };
+  }
+
+  /** Blend the two sides' group baselines for a neutral knockout tie. */
+  private neutralLeagueAvg(homeTeamId: string, awayTeamId: string): number {
+    const leagueOf = (id: string) => this.repo.getTeam(id)?.leagueId;
+    const avgs = [homeTeamId, awayTeamId]
+      .map(leagueOf)
+      .filter((l): l is string => Boolean(l))
+      .map((l) => this.analytics.leagueAvgGoals(l));
+    if (avgs.length === 0) return 1.4;
+    return avgs.reduce((s, a) => s + a, 0) / avgs.length;
   }
 }
 
