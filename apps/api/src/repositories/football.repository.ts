@@ -1,10 +1,11 @@
 import { OnModuleInit } from "@nestjs/common";
-import { League, Match, Team } from "../common/domain";
+import { KnockoutFixture, League, Match, Team } from "../common/domain";
 
 export interface FootballDataset {
   leagues: League[];
   teams: Team[];
   matches: Match[];
+  knockoutFixtures?: KnockoutFixture[];
 }
 
 /**
@@ -22,6 +23,7 @@ export abstract class FootballRepository implements OnModuleInit {
   private leagues: League[] = [];
   private teams: Team[] = [];
   private matches: Match[] = [];
+  private knockoutFixtures: KnockoutFixture[] = [];
   private teamsById = new Map<string, Team>();
 
   /** Load the full dataset from the backing store. */
@@ -37,6 +39,7 @@ export abstract class FootballRepository implements OnModuleInit {
     this.leagues = data.leagues;
     this.teams = data.teams;
     this.matches = data.matches;
+    this.knockoutFixtures = data.knockoutFixtures ?? [];
     this.teamsById = new Map(this.teams.map((t) => [t.id, t]));
   }
 
@@ -87,6 +90,13 @@ export abstract class FootballRepository implements OnModuleInit {
 
   getMatch(id: string): Match | undefined {
     return this.matches.find((m) => m.id === id);
+  }
+
+  /** Knockout bracket template (optionally filtered by tournament). */
+  getKnockoutFixtures(tournamentId?: string): KnockoutFixture[] {
+    return tournamentId
+      ? this.knockoutFixtures.filter((f) => f.tournamentId === tournamentId)
+      : this.knockoutFixtures;
   }
 
   /** Head-to-head finished matches between two teams, newest first. */

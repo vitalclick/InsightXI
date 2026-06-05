@@ -38,6 +38,62 @@ export interface Match {
   awayXg: number | null;
 }
 
+// ---- Tournament / knockout bracket -----------------------------------------
+
+/** Knockout stages, from the 32-team Round of 32 through to the Final. */
+export type TournamentStage =
+  | "GROUP"
+  | "R32"
+  | "R16"
+  | "QF"
+  | "SF"
+  | "THIRD_PLACE"
+  | "FINAL";
+
+/**
+ * How a knockout slot is filled. Group positions resolve from the group
+ * standings; MATCH_* slots resolve from an earlier tie's result. This lets a
+ * bracket be defined statically (a template) and resolved as results arrive.
+ */
+export type BracketSlotKind =
+  | "GROUP_WINNER"
+  | "GROUP_RUNNER_UP"
+  | "THIRD_PLACE"
+  | "MATCH_WINNER"
+  | "MATCH_LOSER";
+
+export interface BracketSlot {
+  kind: BracketSlotKind;
+  /** Group letter for GROUP_WINNER / GROUP_RUNNER_UP. */
+  group?: string;
+  /** 1-based rank among the qualifying third-placed teams (THIRD_PLACE). */
+  thirdRank?: number;
+  /** Source fixture id for MATCH_WINNER / MATCH_LOSER. */
+  sourceMatchId?: string;
+  /** Human-readable origin, e.g. "Winner Group A". */
+  label: string;
+}
+
+/**
+ * A single knockout tie. Stored as a static template (slot references + date);
+ * `homeTeamId` / `awayTeamId` and goals stay null until the tie is resolvable
+ * from group standings / earlier results.
+ */
+export interface KnockoutFixture {
+  id: string;
+  tournamentId: string;
+  stage: TournamentStage;
+  /** Slot order within the stage; drives the bracket tree. */
+  order: number;
+  utcDate: string;
+  home: BracketSlot;
+  away: BracketSlot;
+  homeTeamId: string | null;
+  awayTeamId: string | null;
+  homeGoals: number | null;
+  awayGoals: number | null;
+}
+
 /** A single row in a computed league table. */
 export interface StandingRow {
   position: number;

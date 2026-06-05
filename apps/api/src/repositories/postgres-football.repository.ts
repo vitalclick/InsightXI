@@ -1,5 +1,12 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import { League, Match } from "../common/domain";
+import {
+  BracketSlot,
+  BracketSlotKind,
+  KnockoutFixture,
+  League,
+  Match,
+  TournamentStage,
+} from "../common/domain";
 import { PgService } from "../db/pg.service";
 import {
   FOOTBALL_DATA_PROVIDER,
@@ -29,6 +36,44 @@ interface MatchRow {
   away_xg: number | null;
 }
 
+interface KnockoutRow {
+  id: string;
+  tournament_id: string;
+  stage: TournamentStage;
+  ord: number;
+  utc_date: string;
+  home_kind: BracketSlotKind;
+  home_group: string | null;
+  home_third_rank: number | null;
+  home_source_match: string | null;
+  home_label: string;
+  away_kind: BracketSlotKind;
+  away_group: string | null;
+  away_third_rank: number | null;
+  away_source_match: string | null;
+  away_label: string;
+  home_team_id: string | null;
+  away_team_id: string | null;
+  home_goals: number | null;
+  away_goals: number | null;
+}
+
+function slotFromRow(
+  kind: BracketSlotKind,
+  group: string | null,
+  thirdRank: number | null,
+  sourceMatch: string | null,
+  label: string,
+): BracketSlot {
+  return {
+    kind,
+    ...(group !== null ? { group } : {}),
+    ...(thirdRank !== null ? { thirdRank } : {}),
+    ...(sourceMatch !== null ? { sourceMatchId: sourceMatch } : {}),
+    label,
+  };
+}
+
 /** Postgres-backed backend (DATA_BACKEND=postgres). */
 @Injectable()
 export class PostgresFootballRepository extends FootballRepository {
@@ -55,6 +100,13 @@ export class PostgresFootballRepository extends FootballRepository {
               home_team_id, away_team_id, home_goals, away_goals, home_xg, away_xg
        FROM matches`,
     );
+    const knockoutRows = await this.pg.query<KnockoutRow>(
+      `SELECT id, tournament_id, stage, ord, utc_date,
+              home_kind, home_group, home_third_rank, home_source_match, home_label,
+              away_kind, away_group, away_third_rank, away_source_match, away_label,
+              home_team_id, away_team_id, home_goals, away_goals
+       FROM knockout_fixtures ORDER BY stage, ord`,
+    );
 
     return {
       leagues,
@@ -78,6 +130,33 @@ export class PostgresFootballRepository extends FootballRepository {
         homeXg: m.home_xg,
         awayXg: m.away_xg,
       })),
+      knockoutFixtures: knockoutRows.map(
+        (k): KnockoutFixture => ({
+          id: k.id,
+          tournamentId: k.tournament_id,
+          stage: k.stage,
+          order: k.ord,
+          utcDate: k.utc_date,
+          home: slotFromRow(
+            k.home_kind,
+            k.home_group,
+            k.home_third_rank,
+            k.home_source_match,
+            k.home_label,
+          ),
+          away: slotFromRow(
+            k.away_kind,
+            k.away_group,
+            k.away_third_rank,
+            k.away_source_match,
+            k.away_label,
+          ),
+          homeTeamId: k.home_team_id,
+          awayTeamId: k.away_team_id,
+          homeGoals: k.home_goals,
+          awayGoals: k.away_goals,
+        }),
+      ),
     };
   }
 
@@ -99,10 +178,11 @@ export class PostgresFootballRepository extends FootballRepository {
       return;
     }
 
-    const [leagues, teams, matches] = await Promise.all([
+    const [leagues, teams, matches, knockoutFixtures] = await Promise.all([
       this.provider.getLeagues(),
       this.provider.getTeams(),
       this.provider.getMatches(),
+      this.provider.getKnockoutFixtures?.() ?? Promise.resolve([]),
     ]);
 
     for (const l of leagues) {
@@ -128,8 +208,26 @@ export class PostgresFootballRepository extends FootballRepository {
         ],
       );
     }
+    for (const k of knockoutFixtures) {
+      await this.pg.query(
+        `INSERT INTO knockout_fixtures (
+            id, tournament_id, stage, ord, utc_date,
+            home_kind, home_group, home_third_rank, home_source_match, home_label,
+            away_kind, away_group, away_third_rank, away_source_match, away_label,
+            home_team_id, away_team_id, home_goals, away_goals)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+         ON CONFLICT DO NOTHING`,
+        [
+          k.id, k.tournamentId, k.stage, k.order, k.utcDate,
+          k.home.kind, k.home.group ?? null, k.home.thirdRank ?? null, k.home.sourceMatchId ?? null, k.home.label,
+          k.away.kind, k.away.group ?? null, k.away.thirdRank ?? null, k.away.sourceMatchId ?? null, k.away.label,
+          k.homeTeamId, k.awayTeamId, k.homeGoals, k.awayGoals,
+        ],
+      );
+    }
     this.logger.log(
-      `Seeded football data: ${leagues.length} leagues, ${teams.length} teams, ${matches.length} matches`,
+      `Seeded football data: ${leagues.length} leagues, ${teams.length} teams, ` +
+        `${matches.length} matches, ${knockoutFixtures.length} knockout fixtures`,
     );
   }
 }

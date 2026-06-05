@@ -15,6 +15,20 @@ import type {
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
+/** Date range across a round's ties, e.g. "Jun 28 – Jul 3". */
+function roundDate(ties: BracketTie[]): string {
+  const dates = ties
+    .map((t) => t.utcDate)
+    .filter((d): d is string => Boolean(d))
+    .sort();
+  if (dates.length === 0) return "";
+  const fmt = (d: string) =>
+    new Date(d).toLocaleDateString([], { month: "short", day: "numeric" });
+  const first = fmt(dates[0]);
+  const last = fmt(dates[dates.length - 1]);
+  return first === last ? first : `${first} – ${last}`;
+}
+
 export default function BracketPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["tournament-bracket"],
@@ -88,6 +102,9 @@ export default function BracketPage() {
                     <div className="label-xs" style={{ marginBottom: 10, textAlign: "center" }}>
                       {round.name}
                       <span className="dim"> · {round.ties.length}</span>
+                      <div className="dim" style={{ fontWeight: 400, marginTop: 2 }}>
+                        {roundDate(round.ties)}
+                      </div>
                     </div>
                     <div className="flex col" style={{ gap: 10 }}>
                       {round.ties.map((tie) => (
@@ -98,12 +115,17 @@ export default function BracketPage() {
                 ))}
 
                 {/* Third-place play-off */}
-                <div style={{ minWidth: 196, flexShrink: 0 }}>
-                  <div className="label-xs" style={{ marginBottom: 10, textAlign: "center" }}>
-                    Third place
+                {data.thirdPlacePlayoff && (
+                  <div style={{ minWidth: 196, flexShrink: 0 }}>
+                    <div className="label-xs" style={{ marginBottom: 10, textAlign: "center" }}>
+                      Third place
+                      <div className="dim" style={{ fontWeight: 400, marginTop: 2 }}>
+                        {roundDate([data.thirdPlacePlayoff])}
+                      </div>
+                    </div>
+                    <TieCard tie={data.thirdPlacePlayoff} />
                   </div>
-                  <TieCard tie={data.thirdPlacePlayoff} />
-                </div>
+                )}
               </div>
             </div>
             <div className="board-ft" style={{ justifyContent: "flex-start" }}>

@@ -474,6 +474,8 @@ export interface BracketTeam {
 export interface BracketTie {
   id: string;
   round: string;
+  stage?: string;
+  utcDate?: string;
   home: BracketTeam | null;
   away: BracketTeam | null;
   homeAdvance: number;
@@ -485,6 +487,7 @@ export interface BracketTie {
 
 export interface BracketRound {
   name: string;
+  stage?: string;
   ties: BracketTie[];
 }
 
@@ -493,7 +496,7 @@ export interface TournamentBracket {
   thirdPlaceRanking: ProjectedStanding[];
   qualifiers: BracketTeam[];
   rounds: BracketRound[];
-  thirdPlacePlayoff: BracketTie;
+  thirdPlacePlayoff: BracketTie | null;
   champion: BracketTeam | null;
   model: string;
   disclaimer: string;

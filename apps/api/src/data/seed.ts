@@ -9,8 +9,9 @@
  * Swap this for a live provider (API-Football) without touching services:
  * everything depends on the FootballDataProvider abstraction, not this file.
  */
-import { League, Match, Team } from "../common/domain";
+import { KnockoutFixture, League, Match, Team } from "../common/domain";
 import { hashSeed, mulberry32, samplePoisson } from "./rng";
+import { buildWorldCupKnockout } from "./tournament";
 import {
   WORLD_CUP_COUNTRY,
   WORLD_CUP_GROUPS,
@@ -234,7 +235,7 @@ function buildGroupStage(
   return matches;
 }
 
-function buildWorldCup(): SeedData {
+function buildWorldCup(): { leagues: League[]; teams: Team[]; matches: Match[] } {
   const leagues: League[] = [];
   const teams: Team[] = [];
   const matches: Match[] = [];
@@ -279,6 +280,7 @@ export interface SeedData {
   leagues: League[];
   teams: Team[];
   matches: Match[];
+  knockoutFixtures: KnockoutFixture[];
 }
 
 let cached: SeedData | null = null;
@@ -311,6 +313,6 @@ export function buildSeedData(): SeedData {
   teams.push(...worldCup.teams);
   matches.push(...worldCup.matches);
 
-  cached = { leagues, teams, matches };
+  cached = { leagues, teams, matches, knockoutFixtures: buildWorldCupKnockout() };
   return cached;
 }
