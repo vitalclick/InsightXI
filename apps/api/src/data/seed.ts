@@ -11,6 +11,7 @@
  */
 import { League, Match, Team } from "../common/domain";
 import { hashSeed, mulberry32, samplePoisson } from "./rng";
+import { WORLD_CUP_GROUPS, WcTeamSeed } from "./world-cup";
 
 /** Fixed "now" so match status (SCHEDULED/FINISHED) is deterministic. */
 export const REFERENCE_DATE = new Date("2026-05-30T00:00:00Z");
@@ -163,6 +164,117 @@ function buildSeason(
   return matches;
 }
 
+/**
+ * FIFA World Cup 2026 — the launch tournament.
+ *
+ * Each of the 12 groups is modelled as its own competition so the standings,
+ * fixtures, ratings and prediction surfaces all work unchanged. Two layers:
+ *
+ *  1. Pre-tournament FORM — the prior `SEASONS` (2023/24, 2024/25) are played
+ *     out as finished warm-up/qualifying results, simulated from each nation's
+ *     hand-tuned ratings. These give the Intelligence Engine real signal (Elo,
+ *     form, attack/defense strength, H2H) before a ball is kicked.
+ *  2. The GROUP STAGE — the actual June 2026 fixtures, in `CURRENT_SEASON`,
+ *     left SCHEDULED so the engine PREDICTS them. A single round-robin (each
+ *     nation plays the other three once), as at a real World Cup.
+ *
+ * Group standings (which query `CURRENT_SEASON`) therefore start empty and
+ * fill as the tournament is played — the form sits in earlier seasons and
+ * never pollutes the group table.
+ */
+const WORLD_CUP_COUNTRY = "FIFA World Cup 2026";
+/** Kick-off of the group stage. The opener is 5 days out from launch. */
+const WORLD_CUP_KICKOFF = "2026-06-11";
+
+function worldCupLeagueId(code: string): string {
+  return `wc26-${code.toLowerCase()}`;
+}
+
+/** Scheduled group-stage fixtures: single round-robin, neutral venues, no result yet. */
+function buildGroupStage(
+  league: League,
+  teams: WcTeamSeed[],
+  groupIndex: number,
+): Match[] {
+  const rounds = roundRobin(teams.length);
+  const base = new Date(WORLD_CUP_KICKOFF);
+  const matches: Match[] = [];
+
+  rounds.forEach((round, roundIdx) => {
+    const matchday = roundIdx + 1;
+    // Spread matchdays across the June 11–27 group window; offset groups by a
+    // day so fixtures don't all stack on the same kickoff.
+    const dayOffset = roundIdx * 5 + (groupIndex % 5);
+
+    round.forEach(([homeIdx, awayIdx], gameIdx) => {
+      const date = new Date(base);
+      date.setUTCDate(date.getUTCDate() + dayOffset);
+      // Two kickoff slots per group matchday.
+      date.setUTCHours(16 + gameIdx * 3, 0, 0, 0);
+
+      const home = teams[homeIdx];
+      const away = teams[awayIdx];
+      matches.push({
+        id: `${league.id}-${CURRENT_SEASON.replace("/", "")}-md${matchday}-g${gameIdx}`,
+        leagueId: league.id,
+        season: CURRENT_SEASON,
+        matchday,
+        utcDate: date.toISOString(),
+        status: "SCHEDULED",
+        homeTeamId: home.id,
+        awayTeamId: away.id,
+        homeGoals: null,
+        awayGoals: null,
+        homeXg: null,
+        awayXg: null,
+      });
+    });
+  });
+
+  return matches;
+}
+
+function buildWorldCup(): SeedData {
+  const leagues: League[] = [];
+  const teams: Team[] = [];
+  const matches: Match[] = [];
+
+  WORLD_CUP_GROUPS.forEach((group, groupIndex) => {
+    const league: League = {
+      id: worldCupLeagueId(group.code),
+      name: `FIFA World Cup 2026 — Group ${group.code}`,
+      country: WORLD_CUP_COUNTRY,
+    };
+    leagues.push(league);
+
+    for (const t of group.teams) {
+      teams.push({
+        id: t.id,
+        name: t.name,
+        shortName: t.shortName,
+        leagueId: league.id,
+      });
+    }
+
+    // Pre-tournament form: play out the earlier seasons (everything before
+    // CURRENT_SEASON) as finished results so the engine has history.
+    const formSeed: LeagueSeed = {
+      league,
+      teams: group.teams,
+      // Earlier than REFERENCE_DATE so these resolve to FINISHED.
+      firstSeasonStart: "2023-09-01",
+    };
+    SEASONS.slice(0, -1).forEach((season, idx) => {
+      matches.push(...buildSeason(formSeed, season, idx));
+    });
+
+    // The actual group stage (scheduled, predicted).
+    matches.push(...buildGroupStage(league, group.teams, groupIndex));
+  });
+
+  return { leagues, teams, matches };
+}
+
 export interface SeedData {
   leagues: League[];
   teams: Team[];
@@ -192,6 +304,12 @@ export function buildSeedData(): SeedData {
       matches.push(...buildSeason(seed, season, idx));
     });
   }
+
+  // FIFA World Cup 2026 — the launch tournament.
+  const worldCup = buildWorldCup();
+  leagues.push(...worldCup.leagues);
+  teams.push(...worldCup.teams);
+  matches.push(...worldCup.matches);
 
   cached = { leagues, teams, matches };
   return cached;
