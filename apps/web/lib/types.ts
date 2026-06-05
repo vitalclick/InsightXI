@@ -439,3 +439,62 @@ export interface SettingsView {
   team: TeamMember[];
   flags: FeatureFlag[];
 }
+
+// ---- FIFA World Cup 2026 — projected tournament bracket --------------------
+
+export type GroupFinish = "winner" | "runner-up" | "third" | "eliminated";
+
+export interface ProjectedStanding {
+  teamId: string;
+  name: string;
+  shortName: string;
+  group: string;
+  position: number;
+  expectedPoints: number;
+  expectedGoalDiff: number;
+  finish: GroupFinish;
+  qualified: boolean;
+}
+
+export interface ProjectedGroup {
+  code: string;
+  leagueId: string;
+  table: ProjectedStanding[];
+}
+
+export interface BracketTeam {
+  teamId: string;
+  name: string;
+  shortName: string;
+  group: string;
+  seed: number;
+  source: string;
+}
+
+export interface BracketTie {
+  id: string;
+  round: string;
+  home: BracketTeam | null;
+  away: BracketTeam | null;
+  homeAdvance: number;
+  awayAdvance: number;
+  expectedGoals: { home: number; away: number };
+  winnerId: string | null;
+  note: string;
+}
+
+export interface BracketRound {
+  name: string;
+  ties: BracketTie[];
+}
+
+export interface TournamentBracket {
+  groups: ProjectedGroup[];
+  thirdPlaceRanking: ProjectedStanding[];
+  qualifiers: BracketTeam[];
+  rounds: BracketRound[];
+  thirdPlacePlayoff: BracketTie;
+  champion: BracketTeam | null;
+  model: string;
+  disclaimer: string;
+}

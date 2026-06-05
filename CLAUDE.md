@@ -349,11 +349,30 @@ provider behind `FootballDataProvider`).
   (premium-gated trends endpoint; free/premium demo accounts)
 * PWA: manifest, themed install, offline app-shell service worker
 
+### Launch — FIFA World Cup 2026 ✅
+
+* The platform's launch tournament. All 48 nations across the 12 groups (as
+  drawn) are seeded as competitions in `apps/api/src/data/world-cup.ts` with
+  hand-tuned, transparent attack/defense priors (not certainty claims). Each
+  group is its own competition (`wc26-a`…`wc26-l`) so the existing Data Hub,
+  standings, fixtures, ratings and prediction surfaces work unchanged.
+* Two data layers: pre-tournament **form** in earlier seasons (finished →
+  feeds Elo/form/strength/H2H) and the June 2026 **group stage** as SCHEDULED
+  fixtures the engine predicts. Group tables start empty and fill as played.
+* **Projected knockout bracket** (`tournament` module → `GET /tournament/bracket`,
+  web `/bracket`): a deterministic, AI-service-independent **global Poisson**
+  projector ranks projected group tables, qualifies top-2 + 8 best thirds (32),
+  seeds a single-elimination bracket by model strength and projects every tie
+  to the final. Presented strictly as a probabilistic projection, never a
+  guaranteed result.
+
 ### Next (beyond MVP)
 
 * Real provider integration (API-Football); seed football data into Postgres
 * Model calibration + drift monitoring, richer feature set
 * Performance hardening to Lighthouse 90+, real manager/lineup data
+* World Cup: knockout fixtures into the data layer once the group stage plays;
+  optionally adopt FIFA's official R32 third-place combination template
 
 > **Persistence.** The data layer is swappable via `DATA_BACKEND=memory|postgres`
 > (default `memory`, deterministic seed). Postgres uses **raw `node-postgres`

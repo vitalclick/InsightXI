@@ -11,7 +11,12 @@
  */
 import { League, Match, Team } from "../common/domain";
 import { hashSeed, mulberry32, samplePoisson } from "./rng";
-import { WORLD_CUP_GROUPS, WcTeamSeed } from "./world-cup";
+import {
+  WORLD_CUP_COUNTRY,
+  WORLD_CUP_GROUPS,
+  WcTeamSeed,
+  worldCupLeagueId,
+} from "./world-cup";
 
 /** Fixed "now" so match status (SCHEDULED/FINISHED) is deterministic. */
 export const REFERENCE_DATE = new Date("2026-05-30T00:00:00Z");
@@ -182,13 +187,8 @@ function buildSeason(
  * fill as the tournament is played — the form sits in earlier seasons and
  * never pollutes the group table.
  */
-const WORLD_CUP_COUNTRY = "FIFA World Cup 2026";
 /** Kick-off of the group stage. The opener is 5 days out from launch. */
 const WORLD_CUP_KICKOFF = "2026-06-11";
-
-function worldCupLeagueId(code: string): string {
-  return `wc26-${code.toLowerCase()}`;
-}
 
 /** Scheduled group-stage fixtures: single round-robin, neutral venues, no result yet. */
 function buildGroupStage(

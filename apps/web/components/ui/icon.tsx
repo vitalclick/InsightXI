@@ -33,6 +33,12 @@ export const ICONS: Record<string, ReactNode> = {
     </>
   ),
   teams: <path d="M12 3l8 4v5c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V7z" />,
+  trophy: (
+    <>
+      <path d="M7 4h10v4a5 5 0 0 1-10 0z" />
+      <path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 21h6M12 13v4" />
+    </>
+  ),
   players: (
     <>
       <circle cx="12" cy="8" r="3.5" />

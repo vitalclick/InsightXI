@@ -150,3 +150,23 @@ export const WORLD_CUP_GROUPS: WcGroupSeed[] = [
     ],
   },
 ];
+
+/** Competition country label shared by all 12 group "leagues". */
+export const WORLD_CUP_COUNTRY = "FIFA World Cup 2026";
+
+/** Stable league id for a group, e.g. "A" → "wc26-a". */
+export function worldCupLeagueId(code: string): string {
+  return `wc26-${code.toLowerCase()}`;
+}
+
+export interface WcRatedTeam extends WcTeamSeed {
+  /** Group letter the nation was drawn into. */
+  group: string;
+}
+
+/** Flat list of all 48 nations tagged with their group — the projector's input. */
+export function worldCupTeams(): WcRatedTeam[] {
+  return WORLD_CUP_GROUPS.flatMap((group) =>
+    group.teams.map((team) => ({ ...team, group: group.code })),
+  );
+}
