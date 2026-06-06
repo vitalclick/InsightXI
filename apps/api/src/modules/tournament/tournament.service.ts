@@ -121,11 +121,12 @@ const BRACKET_STAGES: TournamentStage[] = ["R32", "R16", "QF", "SF", "FINAL"];
 export class TournamentService {
   constructor(private readonly repo: FootballRepository) {}
 
-  private cache: TournamentBracket | null = null;
-
+  /**
+   * Resolve the full projected bracket. Stateless and cheap (a few hundred
+   * Poisson evaluations), so it is recomputed on demand — always reflecting the
+   * latest group results without any cache to invalidate.
+   */
   bracket(): TournamentBracket {
-    if (this.cache) return this.cache;
-
     const groups = this.projectGroups();
     const thirds = this.rankThirds(groups);
     const standby = this.standingIndex(groups, thirds);
@@ -145,7 +146,7 @@ export class TournamentService {
       ties: ties.filter((t) => t.stage === stage),
     })).filter((r) => r.ties.length > 0);
 
-    this.cache = {
+    return {
       groups,
       thirdPlaceRanking: thirds,
       qualifiers,
@@ -160,12 +161,16 @@ export class TournamentService {
         "Projection only — a probabilistic read of how the tournament could " +
         "unfold, not a prediction of results or a betting guarantee.",
     };
-    return this.cache;
   }
 
-  /** Clear the cached projection (e.g. after a data refresh / new results). */
-  invalidate(): void {
-    this.cache = null;
+  /** Find a resolved knockout tie by its fixture id (any round + third place). */
+  resolvedTie(id: string): BracketTie | undefined {
+    const b = this.bracket();
+    for (const round of b.rounds) {
+      const tie = round.ties.find((t) => t.id === id);
+      if (tie) return tie;
+    }
+    return b.thirdPlacePlayoff?.id === id ? b.thirdPlacePlayoff : undefined;
   }
 
   // ---- Group stage ---------------------------------------------------------

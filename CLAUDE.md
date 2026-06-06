@@ -380,6 +380,12 @@ provider behind `FootballDataProvider`).
     environment (WebFetch blocked). Swap the template in `data/tournament.ts`
     for the official slotting without touching the resolver.
   * Presented strictly as a probabilistic projection, never a guaranteed result.
+  * **Wired into the rest of the app:** `MatchesService`, `PredictionsService`
+    and the tactical controller resolve a knockout-tie id via the (global)
+    `TournamentService`, so `/matches/:id`, `/predictions/match/:id` and
+    `/tactical/match/:id` all work for bracket ties — the existing match-intel
+    page is reused unchanged. Bracket ties on `/bracket` deep-link into it, and
+    the dashboard + fixtures surface entry points to the bracket.
 
 ### Next (beyond MVP)
 

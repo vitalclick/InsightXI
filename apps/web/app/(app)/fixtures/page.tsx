@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api-client";
 import { PageHead } from "../../../components/ui/page-head";
+import { Icon } from "../../../components/ui/icon";
 import { LeagueChips } from "../../../components/ui/league-chips";
 import { MatchRow } from "../../../components/match/match-row";
 import { SkeletonRows } from "../../../components/ui/skeleton";
@@ -33,6 +35,11 @@ export default function FixturesPage() {
         eyebrow="Football Data Hub"
         title="Fixtures"
         sub="Upcoming matches with model-ranked outcome probabilities and confidence."
+        actions={
+          <Link href="/bracket" className="btn btn-sm btn-primary flex aic gap-6">
+            <Icon name="trophy" size={14} /> World Cup bracket →
+          </Link>
+        }
       />
       <div className="reveal" style={{ marginBottom: 14 }}>
         <LeagueChips value={league} onChange={setLeague} />

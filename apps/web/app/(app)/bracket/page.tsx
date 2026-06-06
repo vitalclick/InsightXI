@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../services/api-client";
 import { PageHead } from "../../../components/ui/page-head";
@@ -169,7 +170,7 @@ export default function BracketPage() {
 }
 
 function TieCard({ tie }: { tie: BracketTie }) {
-  return (
+  const card = (
     <div
       className="card"
       style={{ padding: 0, overflow: "hidden", boxShadow: "none", border: "1px solid var(--line)" }}
@@ -179,6 +180,20 @@ function TieCard({ tie }: { tie: BracketTie }) {
       <TeamRow team={tie.away} advance={tie.awayAdvance} won={tie.winnerId === tie.away?.teamId} />
     </div>
   );
+
+  // A resolved tie deep-links into full match intelligence for the matchup.
+  if (tie.home && tie.away) {
+    return (
+      <Link
+        href={`/matches/${tie.id}`}
+        title={`Match intel — ${tie.home.name} vs ${tie.away.name}`}
+        style={{ display: "block", color: "inherit", textDecoration: "none" }}
+      >
+        {card}
+      </Link>
+    );
+  }
+  return card;
 }
 
 function TeamRow({
