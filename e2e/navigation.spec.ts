@@ -3,9 +3,9 @@ import { expect, test } from "@playwright/test";
 test.describe("core navigation & data hub", () => {
   test("landing page renders the hero and primary CTAs", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Football Intelligence/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Explore Insights" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /View Live Matches/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Decoded by AI/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: "View Projected Bracket" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Explore Insights/i })).toBeVisible();
   });
 
   test("leagues page renders a populated league table", async ({ page }) => {
