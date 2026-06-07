@@ -35,19 +35,18 @@ import type {
   TournamentBracket,
 } from "../lib/types";
 
-// Explicitly configured public API origin (if any). Used as-is server-side and
-// for the live socket. When it is NOT set, browser REST calls default to the
-// same-origin `/_api` proxy (rewritten to the API by next.config.mjs) so the app
-// works behind a single public URL without the browser reaching the API host or
-// needing CORS. An explicit URL still takes precedence for direct access.
-const EXPLICIT_API_URL = process.env.NEXT_PUBLIC_API_URL;
-const API_URL = EXPLICIT_API_URL ?? "http://localhost:4000";
+// Absolute API origin — used for server-side fetches and the live socket.
+// In production this is baked in at build time (NEXT_PUBLIC_API_URL); locally it
+// defaults to the dev API port.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
-// Base for REST fetches: same-origin proxy in the browser when no explicit URL
-// is configured; the absolute URL on the server (rewrites only apply to inbound
-// requests, so server-side fetches need the real host).
-const REST_BASE =
-  typeof window !== "undefined" && !EXPLICIT_API_URL ? "/_api" : API_URL;
+// Base for REST fetches. In the BROWSER we ALWAYS go through the same-origin
+// `/_api` proxy (rewritten to the real API by next.config.mjs), so the browser
+// never makes a cross-origin request and CORS is never involved — the web server
+// forwards to the API server-side. On the SERVER we use the absolute URL, since
+// rewrites only apply to inbound requests. The rewrite target is configured via
+// API_PROXY_TARGET / NEXT_PUBLIC_API_URL in next.config.mjs.
+const REST_BASE = typeof window !== "undefined" ? "/_api" : API_URL;
 
 /** Error carrying the HTTP status so callers can branch on 401/403. */
 export class ApiError extends Error {
