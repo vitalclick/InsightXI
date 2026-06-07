@@ -35,7 +35,19 @@ import type {
   TournamentBracket,
 } from "../lib/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// Explicitly configured public API origin (if any). Used as-is server-side and
+// for the live socket. When it is NOT set, browser REST calls default to the
+// same-origin `/_api` proxy (rewritten to the API by next.config.mjs) so the app
+// works behind a single public URL without the browser reaching the API host or
+// needing CORS. An explicit URL still takes precedence for direct access.
+const EXPLICIT_API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = EXPLICIT_API_URL ?? "http://localhost:4000";
+
+// Base for REST fetches: same-origin proxy in the browser when no explicit URL
+// is configured; the absolute URL on the server (rewrites only apply to inbound
+// requests, so server-side fetches need the real host).
+const REST_BASE =
+  typeof window !== "undefined" && !EXPLICIT_API_URL ? "/_api" : API_URL;
 
 /** Error carrying the HTTP status so callers can branch on 401/403. */
 export class ApiError extends Error {
@@ -48,7 +60,7 @@ export class ApiError extends Error {
 }
 
 export async function apiGet<T>(path: string, token?: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${REST_BASE}${path}`, {
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -67,7 +79,7 @@ async function apiSend<T>(
   body: unknown,
   token?: string,
 ): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${REST_BASE}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",

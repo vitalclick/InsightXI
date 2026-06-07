@@ -45,6 +45,15 @@ export default function DashboardPage() {
     ? Math.round((ranked.reduce((s, x) => s + x.p!.topSelection.probability, 0) / ranked.length) * 100)
     : 64;
 
+  // World Cup banner enrichment — projected final + nation count from the bracket.
+  const wcFinal = useMemo(
+    () => bracket?.rounds.find((r) => r.stage === "FINAL")?.ties[0],
+    [bracket],
+  );
+  const wcNations = bracket
+    ? bracket.groups.reduce((n, g) => n + g.table.length, 0)
+    : null;
+
   const now = Date.now();
   const within24h = fixtures.filter((m) => {
     const t = new Date(m.utcDate).getTime();
@@ -89,37 +98,60 @@ export default function DashboardPage() {
         }
       />
 
-      {/* FIFA World Cup 2026 — launch tournament highlight */}
-      {bracket?.champion && (
-        <Link
-          href="/bracket"
-          className="card reveal flex aic jcb wrap gap-12"
-          style={{
-            marginBottom: 16,
-            padding: "14px 20px",
-            color: "inherit",
-            textDecoration: "none",
-            background:
-              "linear-gradient(120deg, color-mix(in srgb, var(--blue) 18%, transparent), color-mix(in srgb, var(--green) 10%, transparent) 70%)",
-          }}
-        >
-          <div className="flex aic gap-12" style={{ minWidth: 220 }}>
+      {/* FIFA World Cup 2026 — launch tournament highlight (always an entry
+          point; enriches with the projected champion + final once data loads) */}
+      <Link
+        href="/bracket"
+        className="card reveal flex aic jcb wrap gap-12"
+        style={{
+          marginBottom: 16,
+          padding: "14px 20px",
+          color: "inherit",
+          textDecoration: "none",
+          background:
+            "linear-gradient(120deg, color-mix(in srgb, var(--blue) 18%, transparent), color-mix(in srgb, var(--green) 10%, transparent) 70%)",
+        }}
+      >
+        <div className="flex aic gap-12" style={{ minWidth: 220 }}>
+          {bracket?.champion ? (
             <Crest name={bracket.champion.name} seed={bracket.champion.teamId} size="md" />
-            <div>
-              <div className="label-xs flex aic gap-6">
-                <Icon name="trophy" size={13} /> FIFA World Cup 2026 · projected bracket
-              </div>
-              <div style={{ fontWeight: 800, fontSize: 17, color: "var(--text)" }}>
-                {bracket.champion.name} <span className="dim" style={{ fontWeight: 500, fontSize: 13 }}>projected champion</span>
-              </div>
+          ) : (
+            <span className="xai-ic" style={{ width: 38, height: 38 }}>
+              <Icon name="trophy" size={18} />
+            </span>
+          )}
+          <div>
+            <div className="label-xs flex aic gap-6">
+              <Icon name="trophy" size={13} /> FIFA World Cup 2026 · projected bracket
+            </div>
+            <div style={{ fontWeight: 800, fontSize: 17, color: "var(--text)" }}>
+              {bracket?.champion ? (
+                <>
+                  {bracket.champion.name}{" "}
+                  <span className="dim" style={{ fontWeight: 500, fontSize: 13 }}>projected champion</span>
+                </>
+              ) : (
+                "Explore the projected bracket"
+              )}
             </div>
           </div>
-          <span className="flex aic gap-10 wrap dim" style={{ fontSize: 12 }}>
-            <span>{bracket.qualifiers.length} qualifiers · {bracket.rounds.length} knockout rounds</span>
-            <span className="btn btn-sm btn-primary">View bracket →</span>
+        </div>
+        <span className="flex aic gap-10 wrap dim" style={{ fontSize: 12 }}>
+          {wcFinal?.home && wcFinal.away && (
+            <span className="flex aic gap-5" title="Projected final">
+              <Crest name={wcFinal.home.name} seed={wcFinal.home.teamId} size="xs" />
+              {wcFinal.home.shortName} <span className="dim">vs</span> {wcFinal.away.shortName}
+              <Crest name={wcFinal.away.name} seed={wcFinal.away.teamId} size="xs" />
+              <span className="badge gold" style={{ fontSize: 9 }}>Final</span>
+            </span>
+          )}
+          <span>
+            {wcNations ?? 48} nations · {bracket?.qualifiers.length ?? 32} qualifiers ·{" "}
+            {bracket?.rounds.length ?? 5} knockout rounds
           </span>
-        </Link>
-      )}
+          <span className="btn btn-sm btn-primary">View bracket →</span>
+        </span>
+      </Link>
 
       {/* KPI strip */}
       <div className="grid reveal" style={{ gridTemplateColumns: "repeat(4,1fr)", marginBottom: 6 }}>

@@ -22,9 +22,24 @@ for (const file of [".env.local", ".env"]) {
   }
 }
 
+// Where the web server forwards browser API traffic. Browser REST calls hit the
+// same-origin `/_api/*` path (see services/api-client.ts) so they never need to
+// reach the API host directly (no CORS, works behind a single public origin);
+// the web server rewrites them to this target server-side. Override with
+// API_PROXY_TARGET (e.g. the Railway API URL on Vercel); falls back to the
+// public API URL, then local dev.
+const apiProxyTarget =
+  process.env.API_PROXY_TARGET ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:4000";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Proxy browser → API through this origin so a single public URL serves both.
+  async rewrites() {
+    return [{ source: "/_api/:path*", destination: `${apiProxyTarget}/:path*` }];
+  },
   // Emit a self-contained server bundle for Docker/self-hosting.
   // Vercel ignores this and uses its own build pipeline. Disable with
   // NEXT_DISABLE_STANDALONE=true (e.g. the Lighthouse CI build, which serves
