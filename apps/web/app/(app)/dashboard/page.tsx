@@ -15,13 +15,6 @@ import { useLive } from "../../../hooks/use-live";
 import { clubCode } from "../../../lib/club";
 import * as IX from "../../../lib/ix-charts";
 
-const AI_INSIGHTS = [
-  { t: "Pressing edge detected", d: "Top side recovers the ball <b>14.2× per 90</b> — well above the league mean and their next opponent's build-up tolerance.", tag: "Tactical", cls: "blue" },
-  { t: "xG overperformance flag", d: "A leader is scoring <b>1.4 goals above xG</b> over six games — finishing regression is the base-rate expectation.", tag: "Trend", cls: "amber" },
-  { t: "Set-piece threat", d: "<b>41%</b> of a contender's goals arrive from set pieces; opponents concede 0.6 xG from corners on average.", tag: "Pattern", cls: "violet" },
-  { t: "Away fragility", d: "A mid-table club concedes <b>1.9 xGA</b> on the road versus 1.0 at home — structure breaks down in transition.", tag: "Risk", cls: "red" },
-];
-
 export default function DashboardPage() {
   const { data: fixtures = [] } = useQuery({ queryKey: ["fixtures", ""], queryFn: () => api.fixtures() });
   const { data: results = [] } = useQuery({ queryKey: ["results", ""], queryFn: () => api.results() });
@@ -53,6 +46,69 @@ export default function DashboardPage() {
   const wcNations = bracket
     ? bracket.groups.reduce((n, g) => n + g.table.length, 0)
     : null;
+  // Real bracket-narrowing series for the KPI sparkline (16 → 8 → 4 → 2 → 1).
+  const wcRoundSizes = bracket?.rounds.map((r) => r.ties.length) ?? [16, 8, 4, 2, 1];
+
+  // AI insights from real model output — the top picks' own explanations.
+  const insights = useMemo(
+    () =>
+      ranked
+        .filter((x) => x.p!.explanations.length > 0)
+        .slice(0, 4)
+        .map(({ m, p }) => ({
+          id: m.id,
+          title: `${clubCode(m.homeTeamName)} v ${clubCode(m.awayTeamName)}`,
+          level: p!.confidenceLevel,
+          pick: p!.topSelection.label,
+          prob: Math.round(p!.topSelection.probability * 100),
+          reason: p!.explanations[0],
+        })),
+    [ranked],
+  );
+
+  // Real sparkline series for the KPI strip — no decorative fabricated trends.
+  const mdSeries = useMemo(() => {
+    const by = new Map<number, number>();
+    for (const m of results) {
+      if (m.homeGoals != null) by.set(m.matchday, (by.get(m.matchday) ?? 0) + 1);
+    }
+    return [...by.entries()].sort((a, b) => a[0] - b[0]).map(([, c]) => c);
+  }, [results]);
+  const confSeries = useMemo(
+    () => ranked.map((x) => Math.round(x.p!.topSelection.probability * 100)),
+    [ranked],
+  );
+  const kickoffSeries = useMemo(() => {
+    const now = Date.now();
+    const days = [0, 0, 0, 0, 0];
+    for (const m of fixtures) {
+      const d = Math.floor((new Date(m.utcDate).getTime() - now) / (24 * 3600_000));
+      if (d >= 0 && d < days.length) days[d] += 1;
+    }
+    return days;
+  }, [fixtures]);
+  const spark = (s: number[]) => (s.length ? s : [0]);
+
+  // Season form aggregates computed from real finished matches (no placeholders).
+  const season = useMemo(() => {
+    const played = results.filter((m) => m.homeGoals != null && m.awayGoals != null);
+    const n = played.length;
+    if (!n) return null;
+    const count = (f: (m: (typeof played)[number]) => boolean) =>
+      played.filter(f).length / n;
+    const sum = (f: (m: (typeof played)[number]) => number) =>
+      played.reduce((s, m) => s + f(m), 0);
+    return {
+      n,
+      goalsPg: sum((m) => m.homeGoals! + m.awayGoals!) / n,
+      xgPg: sum((m) => (m.homeXg ?? 0) + (m.awayXg ?? 0)) / n,
+      homeWin: count((m) => m.homeGoals! > m.awayGoals!),
+      draw: count((m) => m.homeGoals! === m.awayGoals!),
+      awayWin: count((m) => m.homeGoals! < m.awayGoals!),
+      btts: count((m) => m.homeGoals! > 0 && m.awayGoals! > 0),
+      over25: count((m) => m.homeGoals! + m.awayGoals! > 2.5),
+    };
+  }, [results]);
 
   const now = Date.now();
   const within24h = fixtures.filter((m) => {
@@ -163,19 +219,19 @@ export default function DashboardPage() {
           <div className="stat-val" style={{ margin: "8px 0 2px" }}>
             <CountUp value={fixtures.length + results.length} />
           </div>
-          <div className="stat-delta up">▲ live model</div>
-          <ChartBox className="spark" draw={(e) => IX.spark(e, [12, 16, 14, 20, 18, 24, 22, 28], { w: 120, h: 34, area: true, color: IX.C.blue })} />
+          <div className="stat-delta" style={{ color: "var(--muted)" }}>fixtures + results</div>
+          <ChartBox className="spark" deps={[mdSeries.join()]} draw={(e) => IX.spark(e, spark(mdSeries), { w: 120, h: 34, area: true, color: IX.C.blue })} />
         </div>
         <div className="kpi card-hover">
           <div className="flex jcb aic">
-            <div className="stat-lab">Model Accuracy</div>
-            <span className="badge green">30D</span>
+            <div className="stat-lab">World Cup Qualifiers</div>
+            <span className="badge gold">WC26</span>
           </div>
           <div className="stat-val" style={{ margin: "8px 0 2px" }}>
-            <CountUp value={73.4} suffix="%" />
+            <CountUp value={bracket?.qualifiers.length ?? 32} />
           </div>
-          <div className="stat-delta up">▲ 2.1pts</div>
-          <ChartBox className="spark" draw={(e) => IX.spark(e, [68, 70, 69, 72, 71, 73, 72, 73], { w: 120, h: 34, area: true, color: IX.C.green })} />
+          <div className="stat-delta" style={{ color: "var(--muted)" }}>of {wcNations ?? 48} nations</div>
+          <ChartBox className="spark" deps={[wcRoundSizes.join()]} draw={(e) => IX.spark(e, spark(wcRoundSizes), { w: 120, h: 34, area: true, color: IX.C.gold })} />
         </div>
         <div className="kpi card-hover">
           <div className="flex jcb aic">
@@ -185,8 +241,8 @@ export default function DashboardPage() {
           <div className="stat-val" style={{ margin: "8px 0 2px" }}>
             <CountUp value={avgConf} suffix="%" />
           </div>
-          <div className="stat-delta up">▲ today&apos;s slate</div>
-          <ChartBox className="spark" deps={[avgConf]} draw={(e) => IX.spark(e, [55, 58, 60, 59, 62, avgConf, 63, avgConf], { w: 120, h: 34, area: true, color: IX.C.cyan })} />
+          <div className="stat-delta" style={{ color: "var(--muted)" }}>today&apos;s slate</div>
+          <ChartBox className="spark" deps={[confSeries.join()]} draw={(e) => IX.spark(e, spark(confSeries), { w: 120, h: 34, area: true, color: IX.C.cyan })} />
         </div>
         <div className="kpi card-hover">
           <div className="flex jcb aic">
@@ -200,9 +256,9 @@ export default function DashboardPage() {
             <CountUp value={within24h} />
           </div>
           <div className="stat-delta" style={{ color: "var(--muted)" }}>
-            next window
+            next 5 days
           </div>
-          <ChartBox className="spark" deps={[within24h]} draw={(e) => IX.spark(e, [1, 2, 1, 3, 2, 3, 2, Math.max(1, within24h)], { w: 120, h: 34, area: true, color: IX.C.red })} />
+          <ChartBox className="spark" deps={[kickoffSeries.join()]} draw={(e) => IX.spark(e, spark(kickoffSeries), { w: 120, h: 34, area: true, color: IX.C.red })} />
         </div>
       </div>
 
@@ -258,7 +314,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* AI insights */}
+          {/* AI insights — real model reasoning from today's top predictions */}
           <section className="card reveal">
             <div className="card-hd">
               <h3>
@@ -267,19 +323,31 @@ export default function DashboardPage() {
                 </span>{" "}
                 AI Match Insights
               </h3>
-              <span className="badge violet">Auto-generated</span>
+              <span className="badge violet">Explainable</span>
             </div>
             <div className="card-bd" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              {AI_INSIGHTS.map((c) => (
-                <div key={c.t} className="card-hover" style={{ background: "var(--surface-1)", border: "1px solid var(--line)", borderRadius: 12, padding: 14 }}>
+              {insights.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/matches/${c.id}`}
+                  className="card-hover"
+                  style={{ background: "var(--surface-1)", border: "1px solid var(--line)", borderRadius: 12, padding: 14, color: "inherit", textDecoration: "none" }}
+                >
                   <div className="flex jcb aic" style={{ marginBottom: 8 }}>
-                    <span className={`badge ${c.cls}`}>{c.tag}</span>
-                    <span className="dim" style={{ fontSize: 11 }}>model</span>
+                    <span className="badge blue">{c.level}</span>
+                    <span className="mono" style={{ fontSize: 11, color: confColor(c.prob) }}>{c.prob}%</span>
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{c.t}</div>
-                  <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: c.d }} />
-                </div>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
+                    {c.title} <span className="dim" style={{ fontWeight: 500, fontSize: 12 }}>· {c.pick}</span>
+                  </div>
+                  <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>{c.reason}</div>
+                </Link>
               ))}
+              {insights.length === 0 && (
+                <div className="dim" style={{ fontSize: 13, gridColumn: "1 / -1", padding: "6px 0" }}>
+                  Insights load when the AI service is reachable.
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -442,35 +510,41 @@ export default function DashboardPage() {
           <div className="card-hd">
             <h3>
               <span className="ic">
-                <Icon name="history" size={16} />
+                <Icon name="results" size={16} />
               </span>{" "}
-              Historical Trends
+              Season Form Index
             </h3>
-            <span className="badge">Home xG · last 10 seasons</span>
+            <span className="badge">{season ? `this season · ${season.n} matches` : "this season"}</span>
           </div>
           <div className="card-bd">
-            <ChartBox
-              draw={(e) =>
-                IX.line(e, {
-                  w: 520,
-                  h: 170,
-                  yLabels: true,
-                  yDec: 1,
-                  yMax: 2.0,
-                  xLabels: ["S17", "S18", "S19", "S20", "S21", "S22", "S23", "S24", "S25", "S26"],
-                  series: [
-                    { color: IX.C.gold, area: true, endDot: true, data: [1.42, 1.51, 1.48, 1.55, 1.61, 1.58, 1.66, 1.72, 1.78, 1.81].map((y, x) => ({ x, y })) },
-                  ],
-                  xMax: 9,
-                })
-              }
-            />
-            <div className="flex jcb" style={{ marginTop: 14 }}>
-              <div className="stat"><div className="stat-val" style={{ fontSize: 20 }}>+0.34</div><div className="stat-lab">xG/game vs 5y avg</div></div>
-              <div className="stat"><div className="stat-val" style={{ fontSize: 20, color: "var(--green)" }}>61%</div><div className="stat-lab">Home win rate</div></div>
-              <div className="stat"><div className="stat-val" style={{ fontSize: 20 }}>2.81</div><div className="stat-lab">Goals/game</div></div>
-              <div className="stat"><div className="stat-val" style={{ fontSize: 20, color: "var(--gold)" }}>38%</div><div className="stat-lab">BTTS rate</div></div>
-            </div>
+            {season ? (
+              <>
+                <ChartBox
+                  deps={[season.n]}
+                  draw={(e) =>
+                    IX.bars(
+                      e,
+                      [
+                        { label: "Home win", v: Math.round(season.homeWin * 100), disp: `${Math.round(season.homeWin * 100)}%`, color: "linear-gradient(90deg,var(--blue),var(--blue-2))" },
+                        { label: "Draw", v: Math.round(season.draw * 100), disp: `${Math.round(season.draw * 100)}%`, color: "linear-gradient(90deg,#54607a,#6b7689)" },
+                        { label: "Away win", v: Math.round(season.awayWin * 100), disp: `${Math.round(season.awayWin * 100)}%`, color: "linear-gradient(90deg,var(--green),var(--green-2))" },
+                        { label: "BTTS", v: Math.round(season.btts * 100), disp: `${Math.round(season.btts * 100)}%`, color: "linear-gradient(90deg,var(--gold),#f0d28a)" },
+                        { label: "Over 2.5", v: Math.round(season.over25 * 100), disp: `${Math.round(season.over25 * 100)}%`, color: "linear-gradient(90deg,var(--cyan),#5ee0ec)" },
+                      ],
+                      { horiz: true, labelW: 64, valW: 44, max: 100 },
+                    )
+                  }
+                />
+                <div className="flex jcb" style={{ marginTop: 14 }}>
+                  <div className="stat"><div className="stat-val" style={{ fontSize: 20 }}>{season.goalsPg.toFixed(2)}</div><div className="stat-lab">Goals/game</div></div>
+                  <div className="stat"><div className="stat-val" style={{ fontSize: 20, color: "var(--green)" }}>{Math.round(season.homeWin * 100)}%</div><div className="stat-lab">Home win rate</div></div>
+                  <div className="stat"><div className="stat-val" style={{ fontSize: 20, color: "var(--gold)" }}>{Math.round(season.btts * 100)}%</div><div className="stat-lab">BTTS rate</div></div>
+                  <div className="stat"><div className="stat-val" style={{ fontSize: 20 }}>{season.xgPg.toFixed(2)}</div><div className="stat-lab">xG/game</div></div>
+                </div>
+              </>
+            ) : (
+              <div className="dim" style={{ fontSize: 13 }}>Season form loads when results are available.</div>
+            )}
           </div>
         </section>
       </div>
