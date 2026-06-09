@@ -17,6 +17,12 @@ COPY apps/web apps/web
 # NEXT_PUBLIC_* must be present at build time (baked into the client bundle).
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Build-time target for the same-origin /_api proxy (next.config rewrites are
+# baked at build). Leave NEXT_PUBLIC_API_URL unset and set API_PROXY_TARGET to
+# the API's URL to serve the app behind one origin with no CORS; set
+# NEXT_PUBLIC_API_URL instead to have the browser call the API host directly.
+ARG API_PROXY_TARGET
+ENV API_PROXY_TARGET=$API_PROXY_TARGET
 RUN pnpm --filter @insightxi/web build
 
 FROM node:20-alpine AS runtime

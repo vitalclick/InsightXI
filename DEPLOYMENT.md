@@ -37,7 +37,7 @@ Directory differs per service. Getting this wrong = instant build failure.
 | --- | --- | --- | --- | --- |
 | **api** | `/` (repo root) | `apps/api/railway.json` | yes | `DATA_BACKEND=memory`, `JWT_SECRET`, `AI_SERVICE_URL`, `CORS_ORIGINS` (or `WEB_APP_URL`) |
 | **ai**  | `apps/ai-service` | `railway.json` (relative to that root) | yes | `PORT=8000` |
-| **web** | `/` (repo root) | `apps/web/railway.json` | yes | build arg `NEXT_PUBLIC_API_URL` |
+| **web** | `/` (repo root) | `apps/web/railway.json` | yes | build arg `API_PROXY_TARGET` (single-origin `/_api` proxy, no CORS) **or** `NEXT_PUBLIC_API_URL` (browser calls the API host directly) |
 
 Why `ai` is the odd one: the API and web Dockerfiles are pnpm-workspace builds
 that `COPY pnpm-lock.yaml` etc. from the repo root, so their context must be `/`.
@@ -92,9 +92,14 @@ Deploy order: **api → ai → web** (web needs the API's public domain at build
 
 ### 3. web
 - Root Directory `/`, config `apps/web/railway.json`, rename to `web`.
-- Variables (set **before** the first build — `NEXT_PUBLIC_*` is baked into the
-  client bundle, so a change requires a **rebuild**, not a restart):
-  - `NEXT_PUBLIC_API_URL` = `https://<api-domain>` (https, no trailing slash)
+- Variables (set **before** the first build — these are baked at build time, so
+  a change requires a **rebuild**, not a restart). Pick **one** strategy:
+  - **Single-origin proxy (recommended, no CORS):** set `API_PROXY_TARGET =
+    https://<api-domain>` and leave `NEXT_PUBLIC_API_URL` unset. The browser
+    calls the same-origin `/_api/*`, which the web server rewrites to the API.
+  - **Direct:** set `NEXT_PUBLIC_API_URL = https://<api-domain>` (https, no
+    trailing slash). The browser calls the API host directly, so the API must
+    allow it via `CORS_ORIGINS`.
 - Networking → **Generate Domain**. Set the target port to the value the deploy
   log prints (Railway's injected `PORT`, typically `8080`).
 - Verify: open the web domain → dashboard loads fixtures; open a match → the
