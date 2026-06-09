@@ -3,7 +3,7 @@
   "short_name": "InsightXI",
   "description": "AI-powered, explainable football intelligence and analytics.",
   "id": "/",
-  "start_url": "/",
+  "start_url": "/m",
   "scope": "/",
   "lang": "en",
   "dir": "ltr",

@@ -27,13 +27,13 @@ export function MoreScreen() {
     { title: "Predictions", sub: "Sure-win board", icon: "target", go: () => nav.showTab("predictions") },
     { title: "Premium", sub: "Elite analytics", icon: "premium", go: () => nav.pushScreen("premium") },
   ];
-  const explore: [string, IconName][] = [
-    ["Results", "results"],
-    ["Leagues", "leagues"],
-    ["Teams", "teams"],
-    ["Players", "players"],
-    ["Historical", "history"],
-    ["Blog", "doc"],
+  const explore: { label: string; icon: IconName; go: () => void }[] = [
+    { label: "Results", icon: "results", go: () => nav.pushScreen("results") },
+    { label: "Standings", icon: "leagues", go: () => nav.pushScreen("standings") },
+    { label: "Teams", icon: "teams", go: () => nav.toast("Teams · full view on web") },
+    { label: "Players", icon: "players", go: () => nav.toast("Players · full view on web") },
+    { label: "Historical", icon: "history", go: () => nav.toast("Historical · full view on web") },
+    { label: "Blog", icon: "doc", go: () => nav.toast("Blog · full view on web") },
   ];
 
   return (
@@ -109,11 +109,11 @@ export function MoreScreen() {
         </div>
         <div className="menu-list">
           {explore.map((e) => (
-            <div className="menu-row tappable" key={e[0]} onClick={() => nav.toast(`${e[0]} · full view on web`)}>
+            <div className="menu-row tappable" key={e.label} onClick={e.go}>
               <div className="mr-ic">
-                <Icon name={e[1]} />
+                <Icon name={e.icon} />
               </div>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{e[0]}</div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{e.label}</div>
               <span className="chev">
                 <Icon name="chev" />
               </span>

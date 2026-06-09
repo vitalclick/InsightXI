@@ -24,6 +24,8 @@ import { MoreScreen } from "./screens/more";
 import { MatchScreen } from "./screens/match";
 import { BoardScreen } from "./screens/board";
 import { PremiumScreen } from "./screens/premium";
+import { ResultsScreen } from "./screens/results";
+import { StandingsScreen } from "./screens/standings";
 
 interface Entry {
   id: ScreenId;
@@ -58,6 +60,10 @@ function ScreenBody({ entry }: { entry: Entry }) {
       return <BoardScreen />;
     case "premium":
       return <PremiumScreen />;
+    case "results":
+      return <ResultsScreen />;
+    case "standings":
+      return <StandingsScreen />;
     default:
       return null;
   }

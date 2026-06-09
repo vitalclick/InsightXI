@@ -9,6 +9,7 @@ import { Chart } from "../chart";
 import { useMobileNav } from "../nav-context";
 import { Crest, FormDots, MiniStat, Tribar } from "../ui";
 import { Icon } from "../icons";
+import { buildMatchReport } from "../../../lib/match-report";
 import { confPct, findMarketPct, outcomePct, type MatchArg } from "../view";
 
 const LINE_SCORE: Record<string, number> = { High: 88, Medium: 55, Low: 25 };
@@ -64,6 +65,18 @@ export function MatchScreen({ match: arg }: { match?: MatchArg }) {
   const o15 = findMarketPct(pred, "Over 1.5");
   const o25 = findMarketPct(pred, "Over 2.5");
   const btts = findMarketPct(pred, "Both Teams") ?? findMarketPct(pred, "BTTS");
+
+  const report = pred
+    ? buildMatchReport({
+        homeName: m.homeTeamName,
+        awayName: m.awayTeamName,
+        pred,
+        homeForm: homeProfile?.recentForm,
+        awayForm: awayProfile?.recentForm,
+        h2h: h2h && h2h.played > 0 ? h2h : undefined,
+        tacticalEdge: tactical?.tacticalEdge,
+      })
+    : null;
 
   return (
     <>
@@ -264,6 +277,36 @@ export function MatchScreen({ match: arg }: { match?: MatchArg }) {
                     })
                   }
                 />
+              </div>
+            </div>
+          )}
+
+          {report && (
+            <div className="block">
+              <div className="block-hd">
+                <h2>
+                  <span className="ic">
+                    <Icon name="doc" />
+                  </span>
+                  Match Report
+                </h2>
+                <span className="badge violet">AI</span>
+              </div>
+              <div className="m-card pad">
+                <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: "-.01em", marginBottom: 6 }}>
+                  {report.headline}
+                </div>
+                <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.55, marginBottom: 10 }}>
+                  {report.summary}
+                </div>
+                {report.paragraphs.map((p, i) => (
+                  <div key={i} style={{ fontSize: 12.5, color: "var(--text-2)", lineHeight: 1.55, marginBottom: 8 }}>
+                    {p}
+                  </div>
+                ))}
+                <div className="dim" style={{ fontSize: 10.5, marginTop: 6, lineHeight: 1.45 }}>
+                  {report.disclaimer}
+                </div>
               </div>
             </div>
           )}

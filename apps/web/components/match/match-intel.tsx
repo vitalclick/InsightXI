@@ -10,6 +10,7 @@ import { ChartBox } from "../charts/chart-box";
 import { formationLayout } from "../../lib/formation";
 import { pressingGrid, attackGrid } from "../../lib/pitch-zones";
 import { clubCode } from "../../lib/club";
+import { buildMatchReport } from "../../lib/match-report";
 import { ScoreMatrix } from "./score-matrix";
 import type { MarketProbability, MatchPrediction, MatchView, TacticalProfile } from "../../lib/types";
 import * as IX from "../../lib/ix-charts";
@@ -87,6 +88,18 @@ export function MatchIntel({ id }: { id: string }) {
       : pred.outcome.awayWin >= pred.outcome.draw
         ? "away"
         : "draw");
+
+  const report = pred
+    ? buildMatchReport({
+        homeName: match.homeTeamName,
+        awayName: match.awayTeamName,
+        pred,
+        homeForm: homeProfile?.recentForm,
+        awayForm: awayProfile?.recentForm,
+        h2h: h2h && h2h.played > 0 ? h2h : undefined,
+        tacticalEdge: tactical?.tacticalEdge,
+      })
+    : null;
 
   return (
     <>
@@ -242,6 +255,43 @@ export function MatchIntel({ id }: { id: string }) {
               </div>
             </div>
           </section>
+
+          {/* MATCH REPORT — transparent rule-based narrative from model outputs */}
+          {report && (
+            <section className="card reveal" style={{ marginBottom: 18 }}>
+              <div className="card-hd">
+                <h3>
+                  <span className="ic"><Icon name="doc" size={16} /></span> AI Match Report
+                </h3>
+                <span className="badge violet">Auto-generated</span>
+              </div>
+              <div className="card-bd grid" style={{ gridTemplateColumns: "1.5fr 1fr", gap: 24, alignItems: "start" }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-.01em", marginBottom: 8 }}>
+                    {report.headline}
+                  </div>
+                  <div className="muted" style={{ fontSize: 13.5, lineHeight: 1.6, marginBottom: 12 }}>
+                    {report.summary}
+                  </div>
+                  {report.paragraphs.map((p, i) => (
+                    <p key={i} style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.6, marginBottom: 10 }}>
+                      {p}
+                    </p>
+                  ))}
+                  <p className="dim" style={{ fontSize: 11.5, marginTop: 6, lineHeight: 1.5 }}>{report.disclaimer}</p>
+                </div>
+                <div>
+                  <div className="label-xs" style={{ marginBottom: 10 }}>Key takeaways</div>
+                  {report.keyPoints.map((k, i) => (
+                    <div className="xai-row" key={i}>
+                      <span className="xai-ic"><Icon name="check" size={15} /></span>
+                      <span className="xai-txt" style={{ fontSize: 13 }}>{k}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* ADAPTIVE INTELLIGENCE — transparency on what the engine learned */}
           {pred.adaptive && (

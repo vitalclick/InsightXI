@@ -4,7 +4,7 @@ import { createContext, useContext } from "react";
 import type { MatchArg } from "./view";
 
 export type TabId = "home" | "live" | "predictions" | "fixtures" | "more";
-export type DetailId = "match" | "board" | "premium";
+export type DetailId = "match" | "board" | "premium" | "results" | "standings";
 export type ScreenId = TabId | DetailId;
 
 export const TABS: TabId[] = ["home", "live", "predictions", "fixtures", "more"];
@@ -18,6 +18,8 @@ export const SCREEN_TITLES: Record<ScreenId, string> = {
   match: "Match Intel",
   board: "Confidence Board",
   premium: "Premium",
+  results: "Results",
+  standings: "Standings",
 };
 
 export interface MobileNav {

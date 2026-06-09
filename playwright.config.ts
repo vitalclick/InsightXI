@@ -26,7 +26,17 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Allow a preinstalled Chromium (e.g. /opt/pw-browsers) when the
+        // Playwright browser download is unavailable; no-op when unset.
+        ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH
+          ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH, args: ["--no-sandbox"] } }
+          : {}),
+      },
+    },
   ],
   webServer: [
     {
