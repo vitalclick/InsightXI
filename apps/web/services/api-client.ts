@@ -13,6 +13,8 @@ import type {
   CheckoutSession,
   ConfirmResult,
   ContentPost,
+  DailyPick,
+  DailyPickHistory,
   EvaluationReport,
   FeatureFlag,
   H2HSummary,
@@ -109,6 +111,9 @@ export const api = {
     ),
   prediction: (matchId: string) =>
     apiGet<MatchPrediction>(`/predictions/match/${matchId}`),
+  dailyPick: () => apiGet<DailyPick | null>("/predictions/daily-pick"),
+  dailyPickHistory: (limit = 30) =>
+    apiGet<DailyPickHistory>(`/predictions/daily-pick/history?limit=${limit}`),
   tactical: (matchId: string) =>
     apiGet<TacticalMatchup>(`/tactical/match/${matchId}`),
   tacticalMatchup: (home: string, away: string) =>

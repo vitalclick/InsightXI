@@ -11,6 +11,7 @@ import { CountUp } from "../../../components/charts/count-up";
 import { ChartBox } from "../../../components/charts/chart-box";
 import { ProbSplit } from "../../../components/match/prob-split";
 import { usePredictions, confColor } from "../../../hooks/use-predictions";
+import { PickOfTheDay } from "../../../components/pick-of-the-day";
 import { useLive } from "../../../hooks/use-live";
 import { clubCode } from "../../../lib/club";
 import * as IX from "../../../lib/ix-charts";
@@ -87,6 +88,9 @@ export default function DashboardPage() {
           </Link>
         }
       />
+
+      {/* Pick of the Day — the single highest-confidence selection */}
+      <PickOfTheDay />
 
       {/* KPI strip */}
       <div className="grid reveal" style={{ gridTemplateColumns: "repeat(4,1fr)", marginBottom: 6 }}>

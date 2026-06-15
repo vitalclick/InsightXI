@@ -363,7 +363,9 @@ provider behind `FootballDataProvider`).
 > Nest app initializes) runs `schema.sql`, which is idempotent
 > (`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`). Set `DATABASE_URL`
 > to a Neon/Postgres connection string. Persisted domains: users (incl.
-> role/suspension), notifications, football data, and the admin subsystems
+> role/suspension), notifications, football data, the daily Pick of the Day
+> (one locked highest-confidence selection per UTC day, settled against the
+> result for an auditable track record), and the admin subsystems
 > (support tickets, content, feature flags, transactions, audit log). The admin
 > *demo user cohort* is always in-memory (it visually pads the users table
 > alongside real accounts).

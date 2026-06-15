@@ -88,6 +88,41 @@ export interface MatchPrediction {
   adjustmentTrace?: string[];
 }
 
+export type DailyPickStatus = "PENDING" | "HIT" | "MISS" | "VOID";
+
+/** The single locked, highest-confidence "Pick of the Day". */
+export interface DailyPick {
+  date: string;
+  matchId: string;
+  leagueId: string;
+  homeTeam: string;
+  awayTeam: string;
+  kickoff: string;
+  market: string;
+  label: string;
+  probability: number;
+  confidenceLevel: string;
+  explanations: string[];
+  modelBackend: string;
+  status: DailyPickStatus;
+  resultNote: string | null;
+  createdAt: string;
+  settledAt: string | null;
+}
+
+export interface DailyPickSummary {
+  settled: number;
+  hits: number;
+  misses: number;
+  voided: number;
+  hitRate: number | null;
+}
+
+export interface DailyPickHistory {
+  picks: DailyPick[];
+  summary: DailyPickSummary;
+}
+
 export interface TacticalProfile {
   teamId: string;
   name: string;

@@ -132,3 +132,27 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_at ON audit_log (at DESC);
+
+-- ── Pick of the Day ─────────────────────────────────────────────────────────
+-- One locked, highest-confidence selection per UTC day, with a result so the
+-- track record is auditable (statistical integrity, not "sure wins").
+CREATE TABLE IF NOT EXISTS daily_picks (
+  pick_date        TEXT PRIMARY KEY,               -- 'YYYY-MM-DD' (UTC); one per day
+  match_id         TEXT NOT NULL,
+  league_id        TEXT NOT NULL,
+  home_team        TEXT NOT NULL,
+  away_team        TEXT NOT NULL,
+  kickoff          TEXT NOT NULL,                  -- ISO utc_date of the fixture
+  market           TEXT NOT NULL,                  -- market code (e.g. home_win)
+  label            TEXT NOT NULL,                  -- human label of the selection
+  probability      DOUBLE PRECISION NOT NULL,
+  confidence_level TEXT NOT NULL,
+  explanations     TEXT NOT NULL DEFAULT '[]',     -- JSON array of reasons
+  model_backend    TEXT NOT NULL,
+  status           TEXT NOT NULL DEFAULT 'PENDING',-- PENDING | HIT | MISS | VOID
+  result_note      TEXT,
+  created_at       TEXT NOT NULL,                  -- ISO timestamp
+  settled_at       TEXT                            -- ISO timestamp; null until resolved
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_picks_date ON daily_picks (pick_date DESC);
