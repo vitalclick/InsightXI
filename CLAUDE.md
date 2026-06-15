@@ -6,7 +6,11 @@
 
 InsightXI is a modern AI-powered football intelligence and analytics platform designed to provide deep football insights, statistical modeling, tactical analysis, historical trends, and explainable predictive analytics.
 
-The platform is NOT a gambling or betting platform. Predictions are presented as statistical probabilities and football intelligence insights.
+## Core Focus (read this first)
+
+> The goal of InsightXI is to perform a thorough analysis and identify the strongest betting opportunity of the day. Quality always comes before quantity. Our focus is not on providing numerous predictions, but on delivering the most reliable and high-confidence bet available each day.
+
+Everything below serves that single outcome — the **Pick of the Day**: one locked, highest-confidence, fully-explained selection per day, settled against the result for an honest track record. The broader analytics (fixtures, tactical intelligence, historical trends, live) exist to *find and justify* that one pick — not to flood users with tips. Outputs remain probabilistic and explainable: InsightXI delivers a single high-confidence call with its reasoning, and never fabricates accuracy or presents "sure wins" / "guaranteed" outcomes.
 
 InsightXI combines:
 
@@ -32,6 +36,7 @@ We do not optimize for:
 
 We optimize for:
 
+* the single strongest, high-confidence pick each day (quality over quantity)
 * transparency
 * explainability
 * statistical integrity
@@ -763,4 +768,4 @@ test:
 
 # Mission Statement
 
-InsightXI transforms football data into intelligent, explainable, and actionable football insights powered by modern analytics and AI.
+InsightXI transforms football data into intelligent, explainable, and actionable football insights powered by modern analytics and AI — distilled each day into a single, thoroughly-analysed, high-confidence Pick of the Day. Quality over quantity: one reliable, fully-reasoned selection beats a flood of predictions.

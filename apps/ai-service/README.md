@@ -2,6 +2,11 @@
 
 FastAPI service for explainable, probabilistic football predictions.
 
+**Focus:** this engine exists to surface InsightXI's **Pick of the Day** — the
+single strongest, highest-confidence selection. Quality over quantity: every
+prediction is probabilistic and ships with its reasoning so the one daily pick
+can be trusted and justified (never "sure wins").
+
 ## Structure
 
 ```txt

@@ -1,7 +1,20 @@
 # InsightXI
 
 **True Football Intelligence Platform** — an AI-powered football analytics platform.
-This is **not** a gambling/betting platform; all outputs are probabilistic and explainable.
+
+## Focus — the strongest pick of the day
+
+> The goal of InsightXI is to perform a thorough analysis and identify the
+> strongest betting opportunity of the day. Quality always comes before quantity.
+> Our focus is not on providing numerous predictions, but on delivering the most
+> reliable and high-confidence bet available each day.
+
+Everything in the platform serves that one outcome: the **Pick of the Day** — a
+single, rigorously-reasoned, highest-confidence selection, locked once per day
+and settled against the result for an honest track record. The wider analytics
+(fixtures, tactical, historical, live) exist to *find and justify* that one pick,
+not to flood users with tips. Outputs stay **probabilistic and explainable** —
+we never present fake certainty or "guaranteed wins".
 
 See [`CLAUDE.md`](./CLAUDE.md) for the full product vision, architecture, stack
 decisions, setup commands, and MVP phasing.

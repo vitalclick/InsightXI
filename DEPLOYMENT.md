@@ -4,6 +4,11 @@ InsightXI is three deployable services hosted in a single **Railway** project
 (web + API + AI) — one region, one dashboard, one bill. Postgres and Redis are
 added inside the same project when you move past mock data.
 
+> **What ships:** the platform's job is to deliver one thing well each day — the
+> **Pick of the Day**, the single highest-confidence selection. The API needs
+> the AI service reachable and fixtures in the DB for that pick to be real; keep
+> both healthy. (See `CLAUDE.md` → *Core Focus*.)
+
 > This runbook reflects an **actual** Railway deployment, including the gotchas
 > that bit us. Read the "Gotchas" table before you start — it will save you the
 > rounds of failed deploys we went through.
