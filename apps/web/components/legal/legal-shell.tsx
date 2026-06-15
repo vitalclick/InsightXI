@@ -22,6 +22,7 @@ export function LegalShell({
         <div className="flex gap-16" style={{ fontSize: 13, color: "var(--muted)" }}>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
+          <Link href="/responsible">Responsible Gambling</Link>
           <Link href="/dashboard">Platform</Link>
         </div>
       </div>

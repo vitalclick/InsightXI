@@ -199,7 +199,7 @@ export function MoreScreen() {
           </div>
         </div>
         <div className="center muted" style={{ fontSize: 11, marginTop: 16, fontFamily: "var(--font-mono)" }}>
-          InsightXI · True Football Intelligence
+          InsightXI · True Football Intelligence · 18+ · bet responsibly
         </div>
       </div>
     </>
