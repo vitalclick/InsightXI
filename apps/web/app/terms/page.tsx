@@ -22,12 +22,15 @@ export default function TermsPage() {
 
       <LegalSection heading="1. What InsightXI is — and is not">
         <p>
-          InsightXI is an analytical football intelligence platform. It presents{" "}
-          <strong>statistical probabilities, models, and explainable insights</strong>{" "}
-          for informational and educational purposes. It is{" "}
-          <strong>not</strong> a gambling, betting, or financial service, and it
-          does not offer guaranteed outcomes, &ldquo;sure wins&rdquo;, or betting
-          advice. Any decisions you make are your own responsibility.
+          InsightXI is a football betting tips and predictions platform. It
+          provides <strong>data-driven betting tips, model predictions, and the
+          analysis behind them</strong> for informational and entertainment
+          purposes. InsightXI is <strong>not</strong> a bookmaker or gambling
+          operator — it does not accept, place, or settle bets — and it is not a
+          financial or investment advisor. No outcome is guaranteed and betting
+          carries risk: any betting decisions you make are your own
+          responsibility. You must be 18+ (or the legal age where you live) and
+          should gamble responsibly.
         </p>
       </LegalSection>
 
@@ -97,10 +100,10 @@ export default function TermsPage() {
       <LegalSection heading="8. Disclaimers">
         <p>
           The Service is provided &ldquo;as is&rdquo; and &ldquo;as
-          available&rdquo; without warranties of any kind. Predictions are
-          probabilistic estimates and may be inaccurate. We do not warrant that
-          the Service will be uninterrupted, error-free, or fit for any
-          particular purpose.
+          available&rdquo; without warranties of any kind. Betting tips and
+          predictions are estimates and may be inaccurate — no result is
+          guaranteed. We do not warrant that the Service will be uninterrupted,
+          error-free, or fit for any particular purpose.
         </p>
       </LegalSection>
 

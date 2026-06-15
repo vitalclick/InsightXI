@@ -117,7 +117,7 @@ export default function LivePage() {
                     <div className="dim" style={{ fontSize: 12, padding: "8px 0" }}>Building the probability curve as the match progresses…</div>
                   )}
                   <div className="dim" style={{ fontSize: 11, marginTop: 4 }}>
-                    Transparent in-play estimate from live momentum, scoreline and time remaining — a probabilistic read, not a guaranteed outcome.
+                    A live in-play read off momentum, scoreline and time remaining.
                   </div>
                 </>
               )}

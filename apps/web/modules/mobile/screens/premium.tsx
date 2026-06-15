@@ -142,9 +142,9 @@ export function PremiumScreen() {
 
       <div className="block">
         <div className="center muted" style={{ fontSize: 11, lineHeight: 1.5, fontFamily: "var(--font-mono)" }}>
-          Cancel anytime · For analytical use only
+          Cancel anytime · Backed by a real win rate
           <br />
-          Not a betting service
+          18+ · bet responsibly
         </div>
       </div>
     </>

@@ -103,8 +103,8 @@ export function PredictionPanel({
       </div>
 
       <p className="text-[11px] text-white/30">
-        Probabilistic intelligence for analytical purposes — not betting advice
-        or a guaranteed outcome.
+        The model&apos;s read on this match — every call backed by its reasoning.
+        18+, bet responsibly.
       </p>
     </section>
   );

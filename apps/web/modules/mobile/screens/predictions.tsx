@@ -33,10 +33,10 @@ export function PredictionsScreen() {
   return (
     <>
       <div className="lg-head">
-        <div className="lg-eyebrow">Highest-conviction picks</div>
-        <div className="lg-title">Sure Win</div>
+        <div className="lg-eyebrow">Today&apos;s highest-conviction bets</div>
+        <div className="lg-title">Best Bets</div>
         <div className="lg-sub">
-          The model&apos;s strongest reads of the day — each fully explained, never a number without a reason.
+          The day&apos;s strongest bets — each fully explained, never a number without a reason.
         </div>
       </div>
 
@@ -180,8 +180,8 @@ export function PredictionsScreen() {
             <Icon name="info" />
           </span>
           <span className="muted" style={{ fontSize: 11.5, lineHeight: 1.45 }}>
-            Predictions reflect <b style={{ color: "var(--text-2)" }}>model confidence</b>, not guaranteed outcomes.
-            For analytical use only — not a betting service.
+            Every bet is ranked by <b style={{ color: "var(--text-2)" }}>model confidence</b> and backed by a real, settled win rate.
+            18+ — bet responsibly.
           </span>
         </div>
       </div>

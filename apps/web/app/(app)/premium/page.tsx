@@ -105,8 +105,8 @@ export default function PremiumPage() {
               </div>
             ))}
             <p className="dim" style={{ fontSize: 11.5, marginTop: 12 }}>
-              InsightXI presents statistical probabilities and football intelligence,
-              not guaranteed outcomes or betting advice.
+              Every InsightXI bet is ranked by our AI model and backed by a real,
+              settled win rate. 18+, bet responsibly.
             </p>
           </div>
         </section>

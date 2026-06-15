@@ -208,7 +208,7 @@ function BoardInner() {
           </div>
           <div className="board-ft" style={{ justifyContent: "flex-end" }}>
             <span className="muted" style={{ fontSize: 12, marginRight: "auto" }}>
-              <Icon name="bolt" size={12} /> Confidence-ranked · probabilistic, for analytical use only
+              <Icon name="bolt" size={12} /> Confidence-ranked · the day&apos;s strongest bets
             </span>
           </div>
         </div>

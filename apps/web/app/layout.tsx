@@ -9,7 +9,7 @@ import { ClientInit } from "../components/client-init";
 export const metadata: Metadata = {
   title: "InsightXI — True Football Intelligence Platform",
   description:
-    "AI-powered football intelligence: explainable predictions, tactical analysis, and historical trends. Not a gambling platform.",
+    "InsightXI delivers the day's best football bet, backed by deep AI analysis, tactical reads and a real, settled win rate.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

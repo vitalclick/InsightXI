@@ -155,8 +155,8 @@ export function CheckoutSheet({ token, plan, currency, onActivated }: CheckoutSh
       {error && <p style={{ fontSize: 12.5, marginTop: 12, color: "var(--red)" }}>{error}</p>}
 
       <p className="dim" style={{ fontSize: 11, marginTop: 14, lineHeight: 1.5 }}>
-        Secure checkout. InsightXI presents statistical football intelligence — not betting advice. Cancel anytime;
-        access runs for the paid {plan.plan.periodDays}-day period.
+        Secure checkout. Every InsightXI bet is ranked by our AI model and backed by a real, settled win rate.
+        18+, bet responsibly. Cancel anytime; access runs for the paid {plan.plan.periodDays}-day period.
       </p>
     </div>
   );

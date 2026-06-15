@@ -65,16 +65,16 @@ export default function Landing() {
               <span className="badge-dot" style={{ background: "var(--blue)" }} /> True Football Intelligence Platform
             </div>
             <h1>
-              Football Intelligence
+              The Day&apos;s Best Bet
               <br />
-              <span className="grad">Beyond Predictions</span>
+              <span className="grad">Backed by the Numbers</span>
             </h1>
             <p className="sub">
-              AI-powered football analytics, tactical insights, historical trends and real-time match intelligence —
-              engineered for people who read the game deeper.
+              One high-confidence football bet a day, ranked by our AI model and shipped with the analysis,
+              tactical edge and real win rate behind it — built for bettors who want the reasoning, not just the tip.
             </p>
             <div className="flex gap-12 wrap">
-              <Link href="/dashboard" className="btn btn-lg btn-primary">Explore Insights</Link>
+              <Link href="/dashboard" className="btn btn-lg btn-primary">See Today&apos;s Best Bet</Link>
               <Link href="/live" className="btn btn-lg btn-ghost"><Icon name="live" size={16} /> View Live Matches</Link>
               <Link href="/premium" className="btn btn-lg btn-gold">Upgrade Premium</Link>
             </div>
@@ -146,8 +146,8 @@ export default function Landing() {
       <section className="sect" style={{ paddingTop: 26 }}>
         <div className="flex jcb aic wrap gap-16" style={{ marginBottom: 24 }}>
           <div>
-            <div className="eyebrow" style={{ marginBottom: 10 }}>Today&apos;s intelligence board</div>
-            <h2 style={{ fontSize: 32, letterSpacing: "-.03em" }}>Confidence-ranked fixtures</h2>
+            <div className="eyebrow" style={{ marginBottom: 10 }}>Today&apos;s best bets</div>
+            <h2 style={{ fontSize: 32, letterSpacing: "-.03em" }}>Confidence-ranked bets</h2>
           </div>
           <Link href="/board" className="btn btn-sm btn-ghost">Open full board →</Link>
         </div>
@@ -178,9 +178,9 @@ export default function Landing() {
       {/* INTELLIGENCE FEATURES */}
       <section className="sect">
         <div className="sect-head">
-          <div className="eyebrow" style={{ justifyContent: "center", display: "flex", marginBottom: 10 }}>01 — Intelligence first</div>
-          <h2>AI Match Intelligence</h2>
-          <p>Every fixture, decoded. Confidence levels, tactical edges and momentum indicators — surfaced the moment they matter.</p>
+          <div className="eyebrow" style={{ justifyContent: "center", display: "flex", marginBottom: 10 }}>01 — Bets you can back</div>
+          <h2>AI-Backed Betting Intelligence</h2>
+          <p>Every fixture, decoded into a call you can bet. Confidence levels, tactical edges and momentum indicators — surfaced the moment they matter.</p>
         </div>
         <div className="grid" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
           {FEATURES.map((f) => (
@@ -206,9 +206,9 @@ export default function Landing() {
           }}
         >
           <div className="badge gold" style={{ marginBottom: 18, height: 28, padding: "0 12px" }}>Premium Intelligence</div>
-          <h2 style={{ fontSize: 38, maxWidth: 640, margin: "0 auto 14px" }}>Unlock the elite analytics layer</h2>
+          <h2 style={{ fontSize: 38, maxWidth: 640, margin: "0 auto 14px" }}>Unlock the elite betting layer</h2>
           <p className="muted" style={{ fontSize: 16, maxWidth: 560, margin: "0 auto 26px" }}>
-            Tactical AI reports, correct-score modelling, lineup-impact and hidden-trend detection — the tools the pros use.
+            Tactical AI reports, correct-score modelling, lineup-impact and hidden-trend detection — the edge serious bettors play with.
           </p>
           <div className="flex gap-12 jcc wrap">
             <Link href="/premium" className="btn btn-lg btn-gold">Upgrade Premium</Link>
@@ -220,7 +220,7 @@ export default function Landing() {
       <footer style={{ borderTop: "1px solid var(--line)", padding: "34px 38px", maxWidth: 1320, margin: "0 auto" }}>
         <div className="flex jcb aic wrap gap-16">
           <div className="lp-brand"><div className="sb-logo"><Logo /></div><b>Insight<span>XI</span></b></div>
-          <div className="muted" style={{ fontSize: 13 }}>True Football Intelligence Platform · For analytical use only — not a betting service.</div>
+          <div className="muted" style={{ fontSize: 13 }}>True Football Intelligence Platform · 18+ — bet responsibly.</div>
           <div className="flex gap-16" style={{ fontSize: 13, color: "var(--muted)" }}>
             <Link href="/dashboard">Platform</Link>
             <Link href="/premium">Premium</Link>

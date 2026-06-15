@@ -28,9 +28,9 @@ export default function PredictionsPage() {
   return (
     <>
       <PageHead
-        eyebrow="Confidence Picks"
-        title="High-confidence reads"
-        sub="The model's strongest probabilistic reads today — every pick shipped with its reasoning."
+        eyebrow="Today's Best Bets"
+        title="Today's strongest bets"
+        sub="The day's strongest bets, ranked by confidence — every bet shipped with the analysis behind it."
       />
 
       <div
@@ -49,14 +49,14 @@ export default function PredictionsPage() {
         }}
       >
         <span className="badge blue">Note</span>
-        These are calibrated statistical probabilities — football intelligence, not betting advice or guaranteed outcomes.
+        Every bet is ranked by our AI model and backed by a real, settled win rate — confident calls, with the reasoning in plain sight. 18+, bet responsibly.
       </div>
 
       {picks.length === 0 ? (
         <section className="card">
           <div className="card-bd empty">
-            <h4>No picks available</h4>
-            <p>Confidence picks appear once the AI service returns predictions for upcoming fixtures.</p>
+            <h4>No bets available</h4>
+            <p>Today&apos;s bets appear once the AI service returns predictions for upcoming fixtures.</p>
           </div>
         </section>
       ) : (

@@ -12,7 +12,7 @@ export const TABS: TabId[] = ["home", "live", "predictions", "fixtures", "more"]
 export const SCREEN_TITLES: Record<ScreenId, string> = {
   home: "InsightXI",
   live: "Live Center",
-  predictions: "Sure Win",
+  predictions: "Best Bets",
   fixtures: "Fixtures",
   more: "More",
   match: "Match Intel",

@@ -17,11 +17,12 @@ export default function PrivacyPage() {
       <p style={{ marginBottom: 24 }}>
         This Privacy Policy explains how InsightXI (&ldquo;we&rdquo;,
         &ldquo;us&rdquo;) collects, uses, discloses, and safeguards your
-        information when you use our football intelligence platform (the
-        &ldquo;Service&rdquo;). InsightXI presents statistical probabilities and
-        analytical insights — it is not a gambling or betting service. We are
-        committed to handling your data transparently and in line with the EU/UK
-        GDPR and South Africa&rsquo;s POPIA.
+        information when you use our football betting tips platform (the
+        &ldquo;Service&rdquo;). InsightXI provides football betting tips and
+        predictions; it is not a bookmaker or gambling operator and does not
+        accept or place bets. We are committed to handling your data
+        transparently and in line with the EU/UK GDPR and South
+        Africa&rsquo;s POPIA.
       </p>
 
       <LegalSection heading="1. Information we collect">
