@@ -10,7 +10,7 @@ InsightXI is a modern AI-powered football intelligence and analytics platform de
 
 > The goal of InsightXI is to perform a thorough analysis and identify the strongest betting opportunity of the day. Quality always comes before quantity. Our focus is not on providing numerous predictions, but on delivering the most reliable and high-confidence bet available each day.
 
-Everything below serves that single outcome — the **Pick of the Day**: one locked, highest-confidence, fully-explained selection per day, settled against the result for an honest track record. The broader analytics (fixtures, tactical intelligence, historical trends, live) exist to *find and justify* that one pick — not to flood users with tips. Outputs remain probabilistic and explainable: InsightXI delivers a single high-confidence call with its reasoning, and never fabricates accuracy or presents "sure wins" / "guaranteed" outcomes.
+Everything below serves that single outcome — the **Pick of the Day**, i.e. the day's single best bet: one locked, highest-confidence bet per day, backed by the full analysis and settled against the result so the win rate is real and auditable. The broader analytics (fixtures, tactical intelligence, historical trends, live) exist to *find and justify* that one bet — we deliver the strongest bet of the day, not a flood of tips. Every bet ships with the reasoning behind it; we never fabricate results or inflate the win rate, because a real, settled track record is exactly what makes the bet worth backing.
 
 InsightXI combines:
 
@@ -29,17 +29,15 @@ InsightXI exists to transform football data into actionable intelligence.
 
 We do not optimize for:
 
-* gambling promotion
-* misleading certainty
-* “sure wins”
-* fake accuracy claims
+* a flood of low-quality tips
+* fabricated accuracy or an inflated win rate
+* manipulating the track record
 
 We optimize for:
 
-* the single strongest, high-confidence pick each day (quality over quantity)
-* transparency
-* explainability
-* statistical integrity
+* the strongest, highest-confidence bet each day (quality over quantity)
+* a real, verifiable win rate
+* the reasoning behind every bet
 * football intelligence
 * modern analytics
 
@@ -206,15 +204,17 @@ Never expose opaque predictions without reasoning.
 
 ---
 
-## 5. Statistical Integrity
+## 5. Honest Track Record
 
-Never display:
+Bets are sold on results, so the results must be real:
 
-* “100% guaranteed”
-* “sure win”
-* misleading confidence claims
+* never fabricate accuracy or the win rate
+* never manipulate or retroactively edit settled bets
+* settle every Pick of the Day against the actual result
+* state real confidence — don't dress a bet up as risk-free or 100% certain
 
-All outputs must be probabilistic.
+Confidence is stated plainly (see the Confidence System). A real, auditable win
+rate is the platform's credibility — don't undercut it with invented numbers.
 
 ---
 
@@ -524,7 +524,7 @@ The platform must feel:
 It must NOT feel:
 
 * spammy
-* gambling-focused
+* like a low-rent tipster
 * overloaded
 * outdated
 
@@ -545,7 +545,7 @@ It must NOT feel:
 ## Avoid
 
 * outdated tables
-* flashing gambling aesthetics
+* flashing, low-rent tipster aesthetics
 * cluttered dashboards
 
 ---
@@ -566,19 +566,16 @@ True Football Intelligence Platform
 
 InsightXI communication must be:
 
-* intelligent
+* sharp and confident
 * analytical
-* professional
-* football-native
-* transparent
+* football-native and betting-native
+* straight about results (real win rate, no invented numbers)
 
 Avoid:
 
-* hype language
-* fake certainty
-* gambling slang
-* “banker”
-* “sure odds”
+* empty hype with nothing behind it
+* fabricated certainty or invented win rates
+* selling a bet as risk-free
 
 ---
 
@@ -753,19 +750,18 @@ test:
 
 ## Never
 
-* fake prediction accuracy
-* display “guaranteed wins”
-* fabricate statistics
-* manipulate historical performance
+* fabricate the win rate or prediction accuracy
+* manipulate or retroactively edit the settled track record
+* sell a bet as risk-free / 100% guaranteed (state real confidence instead)
 
 ## Always
 
-* prioritize explainability
-* prioritize transparency
-* prioritize statistical integrity
+* lead with the day's single best bet (quality over quantity)
+* show the reasoning behind the bet
+* keep the track record real and auditable
 
 ---
 
 # Mission Statement
 
-InsightXI transforms football data into intelligent, explainable, and actionable football insights powered by modern analytics and AI — distilled each day into a single, thoroughly-analysed, high-confidence Pick of the Day. Quality over quantity: one reliable, fully-reasoned selection beats a flood of predictions.
+InsightXI turns football data into the day's single best bet — one thoroughly-analysed, high-confidence Pick of the Day, powered by modern analytics and AI and backed by a real, settled win rate. Quality over quantity: one reliable, fully-reasoned bet beats a flood of tips.

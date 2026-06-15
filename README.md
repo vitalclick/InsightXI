@@ -9,12 +9,14 @@
 > Our focus is not on providing numerous predictions, but on delivering the most
 > reliable and high-confidence bet available each day.
 
-Everything in the platform serves that one outcome: the **Pick of the Day** — a
-single, rigorously-reasoned, highest-confidence selection, locked once per day
-and settled against the result for an honest track record. The wider analytics
-(fixtures, tactical, historical, live) exist to *find and justify* that one pick,
-not to flood users with tips. Outputs stay **probabilistic and explainable** —
-we never present fake certainty or "guaranteed wins".
+Everything in the platform serves that one outcome: the **Pick of the Day** —
+the day's single best bet, locked once per day, backed by the full analysis and
+settled against the result so the win rate is real. The wider analytics
+(fixtures, tactical, historical, live) exist to *find and justify* that one bet
+— we deliver the strongest bet of the day, not a flood of tips. Every bet ships
+with the reasoning behind it and a genuine, settled track record; we don't fake
+results or inflate the win rate, because a verifiable record is what makes the
+bet worth backing.
 
 See [`CLAUDE.md`](./CLAUDE.md) for the full product vision, architecture, stack
 decisions, setup commands, and MVP phasing.

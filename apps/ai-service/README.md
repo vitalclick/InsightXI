@@ -1,11 +1,12 @@
 # InsightXI AI Service
 
-FastAPI service for explainable, probabilistic football predictions.
+FastAPI service that powers InsightXI's bets — confident, data-backed football
+predictions with the reasoning attached.
 
 **Focus:** this engine exists to surface InsightXI's **Pick of the Day** — the
-single strongest, highest-confidence selection. Quality over quantity: every
-prediction is probabilistic and ships with its reasoning so the one daily pick
-can be trusted and justified (never "sure wins").
+day's single strongest, highest-confidence bet. Quality over quantity: every
+prediction ships with the reasoning and feeds a real, settled win rate, so the
+one daily bet is worth backing. We don't fabricate accuracy.
 
 ## Structure
 

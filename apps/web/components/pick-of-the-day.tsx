@@ -17,9 +17,9 @@ const STATUS: Record<DailyPickStatus, { label: string; cls: string }> = {
 };
 
 /**
- * The single highest-confidence "Pick of the Day" — InsightXI's quality-over-
- * quantity headline. Framed as a probabilistic confidence call (never a "sure
- * win"), with the model's reasoning and an honest, settled track record.
+ * The single highest-confidence "Pick of the Day" — the day's best bet and
+ * InsightXI's quality-over-quantity headline, with the analysis behind it and a
+ * real, settled win rate.
  */
 export function PickOfTheDay() {
   const { data: pick, isLoading } = useQuery({
@@ -50,7 +50,7 @@ export function PickOfTheDay() {
           <span className="badge">Highest confidence</span>
         </div>
         <div className="card-bd dim" style={{ padding: "18px", fontSize: 13 }}>
-          Today&apos;s pick appears once fixtures are scheduled and the model is
+          Today&apos;s bet appears once fixtures are scheduled and the model is
           reachable.
         </div>
       </section>
@@ -144,7 +144,7 @@ export function PickOfTheDay() {
         {/* Reasoning + honest track record */}
         <div style={{ borderLeft: "1px solid var(--line)", paddingLeft: 18 }}>
           <div className="stat-lab" style={{ marginBottom: 8 }}>
-            Why this pick
+            Why this bet
           </div>
           <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.6 }}>
             {pick.explanations.slice(0, 4).map((e, i) => (
@@ -175,7 +175,7 @@ export function PickOfTheDay() {
         className="dim"
         style={{ fontSize: 10.5, padding: "0 18px 12px", color: "var(--muted)" }}
       >
-        A statistical confidence call from the model — probabilistic, not a guaranteed outcome.
+        The day&apos;s strongest bet — backed by the full analysis and a real, settled win rate.
       </div>
     </section>
   );
